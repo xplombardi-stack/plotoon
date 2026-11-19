@@ -30,11 +30,11 @@ async function callClaude(key: string, system: string, user: string, tool: Recor
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 3000,
+      max_tokens: 6000,
       system,
       tools: [tool],
-      tool_choice: { type: "tool", name: tool.name },
-      messages: [{ role: "user", content: user }],
+      tool_choice: { type: "auto" },
+      messages: [{ role: "user", content: `${user}\n\nResponda chamando a ferramenta ${tool.name}.` }],
     }),
   });
   if (!res.ok) throw new Error(`anthropic_${res.status}: ${(await res.text()).slice(0, 300)}`);

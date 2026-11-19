@@ -7,19 +7,27 @@ import { Scene } from '../components/art'
 import { Badge, Button, SectionTitle, TextLink, cx, go } from '../components/ui'
 import { useStore } from '../lib/store'
 import { formatCredits } from '../lib/pricing'
+import { LoopVideo } from '../components/LoopVideo'
 import criadorTrabalhando from '../assets/inicio/criador-trabalhando.webp'
+import criadorTrabalhandoMp4 from '../assets/inicio/criador-trabalhando.mp4'
 import criadorNotificacao from '../assets/inicio/criador-notificacao-venda.webp'
+import criadorNotificacaoMp4 from '../assets/inicio/criador-notificacao-venda.mp4'
 import criadoraPlanejando from '../assets/inicio/criadora-planejando.webp'
+import criadoraPlanejandoMp4 from '../assets/inicio/criadora-planejando.mp4'
 import cardRoteiro from '../assets/inicio/card-roteiro.webp'
+import cardRoteiroMp4 from '../assets/inicio/card-roteiro.mp4'
 import cardPersonagem from '../assets/inicio/card-personagem.webp'
+import cardPersonagemMp4 from '../assets/inicio/card-personagem.mp4'
 import cardCreditos from '../assets/inicio/card-creditos.webp'
+import cardCreditosMp4 from '../assets/inicio/card-creditos.mp4'
 import cardVideos from '../assets/inicio/card-videos-exportar.webp'
+import cardVideosMp4 from '../assets/inicio/card-videos-exportar.mp4'
 
-const starters: Array<{ to: 'nova-historinha' | 'novo-personagem' | 'planos' | 'videos'; title: string; sub: string; img: string; pos: string }> = [
-  { to: 'nova-historinha', title: 'Criar historinha', sub: 'Da ideia ao vídeo', img: cardRoteiro, pos: '50% 22%' },
-  { to: 'novo-personagem', title: 'Criar personagem', sub: 'Seu boneco 3D', img: cardPersonagem, pos: '50% 25%' },
-  { to: 'planos', title: 'Créditos', sub: 'Veja e compre', img: cardCreditos, pos: '50% 50%' },
-  { to: 'videos', title: 'Meus vídeos', sub: 'Assista e exporte', img: cardVideos, pos: '50% 45%' },
+const starters: Array<{ to: 'nova-historinha' | 'novo-personagem' | 'planos' | 'videos'; title: string; sub: string; img: string; video: string; pos: string }> = [
+  { to: 'nova-historinha', title: 'Criar historinha', sub: 'Da ideia ao vídeo', img: cardRoteiro, video: cardRoteiroMp4, pos: '50% 22%' },
+  { to: 'novo-personagem', title: 'Criar personagem', sub: 'Seu boneco 3D', img: cardPersonagem, video: cardPersonagemMp4, pos: '50% 25%' },
+  { to: 'planos', title: 'Créditos', sub: 'Veja e compre', img: cardCreditos, video: cardCreditosMp4, pos: '50% 50%' },
+  { to: 'videos', title: 'Meus vídeos', sub: 'Assista e exporte', img: cardVideos, video: cardVideosMp4, pos: '50% 45%' },
 ]
 
 // Composição do banner: imagem principal na frente, duas menores atrás
@@ -28,16 +36,16 @@ function HeroCreators() {
   return (
     <div aria-hidden className="relative mx-auto aspect-[16/9] w-full max-w-[460px] xl:aspect-[4/3] xl:max-w-[500px]">
       <div className={cx(side, 'float-late left-[3%] top-[13%] w-[31%] xl:left-0 xl:top-[15%] xl:w-[34%]')}>
-        <img src={criadoraPlanejando} alt="" width={480} height={640} decoding="async" className="h-full w-full object-cover brightness-[.82]" />
+        <LoopVideo src={criadoraPlanejandoMp4} poster={criadoraPlanejando} eager className="h-full w-full object-cover brightness-[.82]" />
         <span className="absolute inset-0 bg-gradient-to-t from-bg/70 via-transparent to-transparent" />
       </div>
       <div className={cx(side, 'float-slow right-[3%] top-[13%] w-[31%] xl:right-0 xl:top-[15%] xl:w-[34%]')}>
-        <img src={criadorTrabalhando} alt="" width={480} height={640} decoding="async" className="h-full w-full object-cover brightness-[.82]" />
+        <LoopVideo src={criadorTrabalhandoMp4} poster={criadorTrabalhando} eager className="h-full w-full object-cover brightness-[.82]" />
         <span className="absolute inset-0 bg-gradient-to-t from-bg/70 via-transparent to-transparent" />
       </div>
       <div className="float absolute left-1/2 top-0 z-10 aspect-[3/4] w-[40%] -translate-x-1/2 xl:w-[48%]">
         <div className="h-full w-full overflow-hidden rounded-[20px] border border-white/15 bg-side shadow-[0_28px_60px_-22px_#000,0_0_0_1px_#ff8a3d22]">
-          <img src={criadorNotificacao} alt="" width={660} height={880} fetchPriority="high" decoding="async" className="h-full w-full object-cover" />
+          <LoopVideo src={criadorNotificacaoMp4} poster={criadorNotificacao} eager className="h-full w-full object-cover" />
           <span className="absolute inset-0 rounded-[20px] bg-gradient-to-t from-bg/55 via-transparent to-transparent" />
         </div>
         <span className="pop absolute -left-6 bottom-[14%] hidden items-center gap-2 rounded-full border border-line-strong bg-surface/90 py-1.5 pl-1.5 pr-3.5 text-[13px] font-semibold text-ink shadow-[0_12px_30px_-12px_#000] backdrop-blur sm:flex">
@@ -143,13 +151,9 @@ export function Home() {
           {starters.map((s, i) => (
             <a key={s.to} href={`#${s.to}`} className={cx('group rise lift flex flex-col overflow-hidden rounded-[20px] border border-line bg-surface text-ink no-underline', `rise-${i + 1}`)}>
               <span className="relative block aspect-[5/4] overflow-hidden bg-side">
-                <img
-                  src={s.img}
-                  alt=""
-                  width={720}
-                  height={720}
-                  loading="lazy"
-                  decoding="async"
+                <LoopVideo
+                  src={s.video}
+                  poster={s.img}
                   style={{ objectPosition: s.pos }}
                   className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
                 />
