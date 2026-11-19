@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react'
 import { useState } from 'react'
-import { Check, Coins, ImagePlus, Lock, Plus, RefreshCw } from 'lucide-react'
+import { Check, Coins, ImagePlus, Lock, Plus, RefreshCw, Star } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { Toon, type ToonLook } from '../components/art'
 import { ClipArt, clips } from '../components/Showcase'
@@ -205,7 +205,14 @@ export function NewCharacter() {
                   <span className="relative h-[72px] w-24 shrink-0 overflow-hidden rounded-[12px] bg-side">
                     <img src={styleThumb[s.id]} alt="" className="absolute inset-0 h-full w-full object-cover" />
                   </span>
-                  <span className="flex-1 text-[15px] font-semibold text-ink">{s.name}</span>
+                  <span className="flex min-w-0 flex-1 flex-col items-start gap-1">
+                    <span className="text-[15px] font-semibold text-ink">{s.name}</span>
+                    {s.id === 'cinema' && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-[11px] font-bold text-accent-text">
+                        <Star size={11} fill="currentColor" aria-hidden /> Recomendado
+                      </span>
+                    )}
+                  </span>
                   <span className={cx('mr-1 h-5 w-5 rounded-full border-2 transition-colors', on ? 'border-accent bg-accent' : 'border-[#3a4152]')} aria-hidden />
                 </button>
               )
