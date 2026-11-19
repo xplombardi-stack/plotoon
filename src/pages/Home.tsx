@@ -9,6 +9,7 @@ import { useStore } from '../lib/store'
 import { formatCredits } from '../lib/pricing'
 import { LoopVideo } from '../components/LoopVideo'
 import { HeroCreators, clips } from '../components/Showcase'
+import { StoryReel } from '../components/StoryReel'
 
 const starters: Array<{ to: 'nova-historinha' | 'novo-personagem' | 'planos' | 'videos'; title: string; sub: string; img: string; video: string; pos: string }> = [
   { to: 'nova-historinha', title: 'Criar historinha', sub: 'Da ideia ao vídeo', img: clips.roteiro.poster, video: clips.roteiro.video, pos: '50% 22%' },
@@ -124,6 +125,14 @@ export function Home() {
             </a>
           ))}
         </div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <SectionTitle>Inspire-se</SectionTitle>
+          <p className="m-0 text-[14px] text-muted">Historinhas com boneco 3D, do jeito que você vai criar.</p>
+        </div>
+        <StoryReel />
       </section>
 
       <section className="flex flex-col gap-4">

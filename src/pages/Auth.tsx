@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { MailCheck } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
-import { HeroCreators } from '../components/Showcase'
+import { StoryColumns, StoryReel } from '../components/StoryReel'
 import { DEMO } from '../lib/supabase'
 import { Button, CheckDot, Logo, TextLink, go } from '../components/ui'
 
@@ -76,6 +76,10 @@ function Layout({ children }: { children: ReactNode }) {
         <div className="flex flex-1 items-center justify-center py-12">
           <div className="rise flex w-full max-w-[392px] flex-col gap-6">{children}</div>
         </div>
+        <div className="-mx-6 mb-6 flex flex-col gap-3 sm:-mx-12 lg:hidden">
+          <p className="m-0 px-6 text-[14px] font-semibold text-muted sm:px-12">Historinhas que dá pra criar aqui</p>
+          <StoryReel size="sm" />
+        </div>
         <div className="flex flex-wrap gap-5 text-[13px] text-subtle">
           <span>© Plotoon</span>
           <a href="#site" className="text-subtle no-underline hover:text-ink">Termos de uso</a>
@@ -83,19 +87,21 @@ function Layout({ children }: { children: ReactNode }) {
         </div>
       </section>
 
-      <section aria-hidden className="relative hidden min-w-0 flex-[1.1_1_520px] flex-col justify-center gap-9 overflow-hidden border-l border-line bg-side p-12 lg:flex">
-        <div className="aurora"><span /></div>
-        <h2 className="relative text-balance m-0 max-w-[480px] font-display text-[38px] font-extrabold leading-[1.1] tracking-[-0.03em]">
-          Do roteiro ao vídeo pronto, com o seu boneco 3D.
-        </h2>
-        <div className="relative flex flex-col gap-3">
-          {['Mesmo rosto em todas as partes', 'Um Diretor com IA que escreve por você', 'Você vê o custo antes de gerar'].map((t) => (
-            <span key={t} className="flex items-center gap-3 text-[15px] text-soft">
-              <CheckDot /> {t}
-            </span>
-          ))}
+      <section aria-hidden className="relative hidden min-h-screen min-w-0 flex-[1.1_1_520px] overflow-hidden border-l border-line bg-side lg:block">
+        <StoryColumns className="absolute inset-x-8 inset-y-0 h-full [&>div]:h-full" />
+        <div className="absolute inset-0 bg-gradient-to-t from-side from-25% via-side/85 via-45% to-transparent to-75%" />
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-6 p-12">
+          <h2 className="text-balance m-0 max-w-[480px] font-display text-[36px] font-extrabold leading-[1.1] tracking-[-0.03em]">
+            Do roteiro ao vídeo pronto, com o seu boneco 3D.
+          </h2>
+          <div className="flex flex-col gap-3">
+            {['Mesmo rosto em todas as partes', 'Um Diretor com IA que escreve por você', 'Você vê o custo antes de gerar'].map((t) => (
+              <span key={t} className="flex items-center gap-3 text-[15px] text-soft">
+                <CheckDot /> {t}
+              </span>
+            ))}
+          </div>
         </div>
-        <HeroCreators layout="tall" className="!mx-0 max-w-[480px]" />
       </section>
     </div>
   )
