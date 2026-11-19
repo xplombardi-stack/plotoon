@@ -51,7 +51,7 @@ export function StoryReel({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg
   const w = size === 'lg' ? 'w-[180px] sm:w-[230px]' : size === 'sm' ? 'w-[120px] sm:w-[140px]' : 'w-[150px] sm:w-[190px]'
   const list = [...stories, ...stories]
   return (
-    <div aria-label="Exemplos de historinhas" className={cx('reel group relative -mx-1 overflow-hidden py-1', className)}>
+    <div aria-label="Exemplos de historinhas" className={cx('reel group relative overflow-hidden py-1', className)}>
       <div className="reel-track flex w-max gap-4 pr-4">
         {list.map((s, i) => (
           <StoryCard key={i} s={s} className={w} label={size !== 'sm'} />

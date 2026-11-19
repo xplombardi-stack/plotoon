@@ -1,8 +1,8 @@
 import { ArrowRight, Check, ChevronDown, Clapperboard, Coins, Layers, Lock, Play } from 'lucide-react'
 import { plans } from '../data/mock'
 import { LoopVideo } from '../components/LoopVideo'
-import { HeroCreators, clips, type Clip } from '../components/Showcase'
-import { StoryReel } from '../components/StoryReel'
+import { clips, type Clip } from '../components/Showcase'
+import { StoryColumns, StoryReel } from '../components/StoryReel'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
 import { CREDITS_PER_PART, SECONDS_PER_PART } from '../lib/pricing'
 
@@ -61,7 +61,7 @@ export function Landing() {
         {/* HERO */}
         <section className="relative overflow-hidden">
           <div className="aurora"><span /></div>
-          <div className="relative mx-auto grid max-w-[1200px] items-center gap-12 px-5 pb-24 pt-14 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:pt-20">
+          <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-5 pb-16 pt-14 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pb-10 lg:pt-6">
             <div className="flex flex-col gap-6">
               <Badge tone="accent" className="rise self-start !bg-accent-soft !text-accent-text shadow-[0_0_0_1px_#ff8a3d55]">Animação 3D com IA</Badge>
               <h1 className="rise rise-1 text-balance m-0 font-display text-[42px] font-extrabold leading-[1.03] tracking-[-0.04em] sm:text-[60px]">
@@ -82,7 +82,12 @@ export function Landing() {
               </div>
             </div>
 
-            <HeroCreators layout="tall" />
+            <div className="relative hidden h-[640px] lg:block">
+              <StoryColumns className="absolute inset-0 h-full [&>div]:h-full" />
+            </div>
+            <div className="-mx-5 sm:-mx-8 lg:hidden">
+              <StoryReel size="sm" />
+            </div>
           </div>
         </section>
 
