@@ -5,7 +5,7 @@ import { clips, type Clip } from '../components/Showcase'
 import { StoryColumns, StoryReel } from '../components/StoryReel'
 import { StepEditor, StepIdea } from '../components/StepDemos'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
-import { CREDITS_PER_PART, SECONDS_PER_PART } from '../lib/pricing'
+import { MAX_PARTS, partCost } from '../lib/pricing'
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -20,14 +20,15 @@ const steps: Array<{ n: number; title: string; text: string; clip: Clip; pos: st
 const features = [
   { icon: Lock, title: 'Rosto travado', text: 'Seu personagem não muda de cara entre as partes.' },
   { icon: Clapperboard, title: 'Diretor com IA', text: 'Escreve a história e o prompt de cada parte pra você.' },
-  { icon: Layers, title: 'Vídeo em partes', text: `Você escolhe quantas. Cada uma com até ${SECONDS_PER_PART} segundos.` },
+  { icon: Layers, title: 'Vídeo em partes', text: `Até ${MAX_PARTS} partes de 10 ou 15 segundos, juntadas num vídeo só.` },
   { icon: Coins, title: 'Custo antes de gerar', text: 'Você vê os créditos antes de apertar o botão.' },
 ]
 
 const faq = [
   { q: 'Preciso saber editar vídeo?', a: 'Não. Você conta a ideia e o Diretor faz o resto: história, partes, legenda e música.' },
   { q: 'Preciso assinar outra ferramenta?', a: 'Não. Tudo é gerado aqui dentro do Plotoon.' },
-  { q: 'O que é um crédito?', a: `É o que você usa pra gerar. Cada parte de até ${SECONDS_PER_PART} segundos gasta ${CREDITS_PER_PART} créditos, e você vê o total antes de gerar.` },
+  { q: 'O que é um crédito?', a: `É o que você usa pra gerar. Uma parte de 10 segundos gasta ${partCost(10)} créditos e uma de 15 segundos gasta ${partCost(15)}. Você vê o total antes de gerar.` },
+  { q: 'Só dá pra fazer vídeo de 10 segundos?', a: `Não. A historinha é feita em partes: você escolhe quantas (até ${MAX_PARTS}) e se cada uma tem 10 ou 15 segundos. No final, o Plotoon junta todas num vídeo só, pronto pra postar.` },
   { q: 'Funciona no celular?', a: 'Sim. É só abrir pelo navegador do celular.' },
 ]
 

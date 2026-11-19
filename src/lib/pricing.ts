@@ -1,24 +1,26 @@
-// Preços em créditos. No ar, os valores vêm da tabela "settings" do Supabase
-// (edite lá e o app atualiza). Estes números são o padrão da prévia.
-
-export let SECONDS_PER_PART = 10 // cada parte do vídeo tem até 10 segundos
-export let MAX_PARTS = 6 // até 6 partes
-export let CREDITS_PER_PART = 30 // gerar 1 parte
-export let CREDITS_REDO_PART = 30 // refazer 1 parte
-export let CREDITS_PER_CHARACTER = 5 // criar 1 personagem
+// Preços em créditos. Os valores vêm da tabela "settings" do banco e podem mudar sem mexer no código.
+export let SECONDS_PER_PART = 10
+export let MAX_PARTS = 10
+export let MAX_SECONDS_PER_PART = 15
+export let CREDITS_PER_SECOND = 3
+export let CREDITS_PER_CHARACTER = 5
+export const PART_LENGTHS = [10, 15]
 
 export function applySettings(s: Record<string, number>) {
   if (s.seconds_per_part) SECONDS_PER_PART = s.seconds_per_part
   if (s.max_parts) MAX_PARTS = s.max_parts
-  if (s.credits_per_part) CREDITS_PER_PART = s.credits_per_part
-  if (s.credits_redo_part) CREDITS_REDO_PART = s.credits_redo_part
+  if (s.max_seconds_per_part) MAX_SECONDS_PER_PART = s.max_seconds_per_part
+  if (s.credits_per_second) CREDITS_PER_SECOND = s.credits_per_second
   if (s.credits_per_character) CREDITS_PER_CHARACTER = s.credits_per_character
 }
 
-export function storyCost(parts: number) {
-  return parts * CREDITS_PER_PART
+// custo de uma parte (gerar ou refazer)
+export function partCost(seconds = SECONDS_PER_PART) {
+  return Math.ceil(seconds) * CREDITS_PER_SECOND
 }
-
+export function storyCost(parts: number, seconds = SECONDS_PER_PART) {
+  return parts * partCost(seconds)
+}
 export function formatCredits(n: number) {
   return n.toLocaleString('pt-BR')
 }

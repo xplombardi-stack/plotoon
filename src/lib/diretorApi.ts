@@ -9,11 +9,13 @@ type Personagem = { nome: string; estilo: string }
 const cenarios: Backdrop[] = ['noite', 'quarto', 'loja', 'rua', 'escritorio']
 const cenario = (v: unknown): Backdrop => (cenarios.includes(v as Backdrop) ? (v as Backdrop) : 'noite')
 
-export async function pedirRoteiro(opts: { ideia: string; clima: Tone; partes: number; personagens: Personagem[] }): Promise<{ title: string; parts: Part[] } | null> {
+export type ModoDiretor = 'caprichado' | 'rapido'
+
+export async function pedirRoteiro(opts: { ideia: string; clima: Tone; partes: number; segundos: number; modo: ModoDiretor; personagens: Personagem[] }): Promise<{ title: string; parts: Part[] } | null> {
   if (!supabase) return null
   try {
     const { data, error } = await supabase.functions.invoke('diretor', {
-      body: { action: 'roteiro', ideia: opts.ideia, clima: opts.clima, partes: opts.partes, segundos: SECONDS_PER_PART, personagens: opts.personagens },
+      body: { action: 'roteiro', ideia: opts.ideia, clima: opts.clima, partes: opts.partes, segundos: opts.segundos, modo: opts.modo, personagens: opts.personagens },
     })
     const partes = data?.partes as Array<Record<string, unknown>> | undefined
     if (error || !Array.isArray(partes) || partes.length === 0) return null
@@ -40,6 +42,7 @@ export async function pedirAjuste(opts: {
   ideia: string
   personagens: Personagem[]
   parte: Part
+  segundos?: number
 }): Promise<{ resposta: string; scene: string; fala: string; prompt: string } | null> {
   if (!supabase) return null
   try {
@@ -50,7 +53,8 @@ export async function pedirAjuste(opts: {
         titulo: opts.titulo,
         ideia: opts.ideia,
         personagens: opts.personagens,
-        segundos: SECONDS_PER_PART,
+        segundos: opts.segundos ?? SECONDS_PER_PART,
+        modo: 'rapido',
         parte: { numero: opts.parte.num, momento: opts.parte.beat, cena: opts.parte.scene, fala: opts.parte.fala, prompt: opts.parte.prompt },
       },
     })

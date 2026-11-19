@@ -6,7 +6,7 @@ import { Scene } from '../components/art'
 import { ClipArt, clips } from '../components/Showcase'
 import { Button, LinkButton, cx, useToast } from '../components/ui'
 import type { Part } from '../lib/director'
-import { CREDITS_REDO_PART, SECONDS_PER_PART } from '../lib/pricing'
+import { partCost } from '../lib/pricing'
 import { styleList, useStore } from '../lib/store'
 import { pedirAjuste } from '../lib/diretorApi'
 
@@ -69,8 +69,10 @@ export function Editor() {
   const ready = parts.filter((p) => p.status === 'pronta').length
   const allReady = ready === parts.length
   const look = characters.find((c) => c.id === story.characterIds[0])?.look
-  const total = parts.length * SECONDS_PER_PART
-  const start = (cur.num - 1) * SECONDS_PER_PART
+  const secs = story.seconds
+  const redoCost = partCost(secs)
+  const total = parts.length * secs
+  const start = (cur.num - 1) * secs
 
   async function send(e: FormEvent) {
     e.preventDefault()
@@ -81,7 +83,7 @@ export function Editor() {
     const num = cur.num
     const reply = (t: string) => setMsgs((m) => [...m, { id: Date.now() + 1, from: 'director', text: t }])
     if (!live) {
-      window.setTimeout(() => reply(`Feito. Ajustei a parte ${num}. Quer gerar ela de novo? Custa ${CREDITS_REDO_PART} créditos.`), 900)
+      window.setTimeout(() => reply(`Feito. Ajustei a parte ${num}. Quer gerar ela de novo? Custa ${redoCost} créditos.`), 900)
       return
     }
     setThinking(true)
@@ -91,11 +93,12 @@ export function Editor() {
       ideia: story.idea,
       personagens: characters.filter((c) => story.characterIds.includes(c.id)).map((c) => ({ nome: c.name, estilo: styleList.find((s) => s.id === c.style)?.name ?? 'Cinema 3D' })),
       parte: cur,
+      segundos: story.seconds,
     })
     setThinking(false)
     if (!out) return reply('Não consegui falar com o Diretor agora. Tenta de novo em instantes.')
     updatePart(story.id, num, { scene: out.scene, fala: out.fala, prompt: out.prompt })
-    reply(`${out.resposta} Pra ver na tela, gere a parte ${num} de novo (${CREDITS_REDO_PART} créditos).`)
+    reply(`${out.resposta} Pra ver na tela, gere a parte ${num} de novo (${redoCost} créditos).`)
   }
 
   function saveFala() {
@@ -110,7 +113,7 @@ export function Editor() {
     const ok = await redoPart(story.id, sel)
     setRedoing(false)
     if (!ok) return toast.show('Créditos insuficientes')
-    toast.show(`Gerando a parte ${sel} de novo · ${CREDITS_REDO_PART} créditos`)
+    toast.show(`Gerando a parte ${sel} de novo · ${redoCost} créditos`)
   }
 
   return (
@@ -212,7 +215,7 @@ export function Editor() {
                 <p className="m-0 text-[17px] leading-relaxed">“{cur.fala}”</p>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="soft" onClick={redo} disabled={cur.status === 'gerando' || redoing}>
-                    <RefreshCw size={16} /> Refazer parte · {CREDITS_REDO_PART}
+                    <RefreshCw size={16} /> Refazer parte · {redoCost}
                   </Button>
                   <Button
                     variant="ghost"

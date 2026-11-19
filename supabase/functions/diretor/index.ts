@@ -2,7 +2,7 @@
 // Precisa do segredo ANTHROPIC_API_KEY no Supabase (Edge Functions → Secrets).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const MODEL = "claude-sonnet-5-5";
+const MODELS: Record<string, string> = { caprichado: "claude-sonnet-5-5", rapido: "claude-haiku-5-5" };
 const BACKDROPS = ["noite", "quarto", "loja", "rua", "escritorio"];
 
 const cors = {
@@ -24,12 +24,12 @@ Regras:
 - O prompt de cada parte é o texto que vai pro gerador de vídeo. Ele deve dizer: animação 3D estilo cinema, vertical 9:16, a duração, o cenário, quem aparece (pelos nomes, com "mesmo rosto e mesma roupa"), o que acontece, 1 ou 2 takes com ângulo de câmera, e a fala entre aspas com "fala em português do Brasil".
 - Nada de marcas registradas, personagens famosos, conteúdo adulto, violência, apostas ou cassino.`;
 
-async function callClaude(key: string, system: string, user: string, tool: Record<string, unknown>) {
+async function callClaude(key: string, model: string, system: string, user: string, tool: Record<string, unknown>) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
-      model: MODEL,
+      model,
       max_tokens: 6000,
       system,
       tools: [tool],
@@ -74,16 +74,18 @@ Deno.serve(async (req) => {
     .slice(0, 6)
     .map((p: { nome?: string; estilo?: string }) => `${String(p.nome ?? "").slice(0, 40)} (${String(p.estilo ?? "Cinema 3D").slice(0, 20)})`);
   const segundos = Math.min(15, Math.max(4, Number(body.segundos) || 10));
+  const model = MODELS[String(body.modo)] ?? MODELS.caprichado;
 
   try {
     if (body.action === "roteiro") {
-      const partes = Math.min(6, Math.max(1, Number(body.partes) || 3));
+      const partes = Math.min(10, Math.max(1, Number(body.partes) || 3));
       const ideia = String(body.ideia ?? "").slice(0, 600);
       const clima = String(body.clima ?? "motivacional").slice(0, 30);
       if (ideia.trim().length < 3) return json({ error: "ideia_vazia" }, 400);
 
       const out = await callClaude(
         key,
+        model,
         REGRAS,
         `Ideia: ${ideia}\nClima: ${clima}\nPersonagens: ${personagens.join(", ") || "um protagonista"}\nO primeiro personagem é o protagonista.\nEscreva a historinha em exatamente ${partes} parte(s), cada uma com até ${segundos} segundos.`,
         {
@@ -107,6 +109,7 @@ Deno.serve(async (req) => {
       const parte = (body.parte ?? {}) as Record<string, unknown>;
       const out = await callClaude(
         key,
+        model,
         REGRAS,
         `Historinha: ${String(body.titulo ?? "").slice(0, 120)}\nIdeia original: ${String(body.ideia ?? "").slice(0, 600)}\nPersonagens: ${personagens.join(", ")}\nParte ${Number(parte.numero) || 1} (${String(parte.momento ?? "").slice(0, 40)}), até ${segundos} segundos:\n- Cena: ${String(parte.cena ?? "").slice(0, 600)}\n- Fala: ${String(parte.fala ?? "").slice(0, 300)}\n- Prompt: ${String(parte.prompt ?? "").slice(0, 3000)}\n\nPedido do usuário: ${pedido}\nAjuste essa parte conforme o pedido e responda ao usuário em uma frase curta.`,
         {

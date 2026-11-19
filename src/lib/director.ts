@@ -31,6 +31,15 @@ const beatsByCount: Record<number, string[]> = {
   6: ['Gancho', 'Problema', 'Tentativa', 'Virada', 'Conquista', 'Final'],
 }
 
+// de 7 partes pra cima: repete o miolo da história antes do final
+function beatsFor(n: number) {
+  if (beatsByCount[n]) return beatsByCount[n]
+  const meio = ['Problema', 'Tentativa', 'Virada', 'Conquista']
+  const out = ['Gancho']
+  for (let i = 0; out.length < n - 1; i++) out.push(meio[i % meio.length])
+  return [...out, 'Final']
+}
+
 const falas: Record<Tone, Record<string, string>> = {
   motivacional: {
     História: 'Riram do meu sonho. Hoje eles batem palma.',
@@ -98,12 +107,12 @@ export function titleFromIdea(idea: string) {
   return short.charAt(0).toUpperCase() + short.slice(1)
 }
 
-export function buildPrompt(opts: { styleName: string; names: string[]; num: number; beat: string; scene: string; fala: string }) {
-  return `Animação 3D estilo ${opts.styleName.toLowerCase()}, vertical 9:16, ${SECONDS_PER_PART} segundos. Personagens fixos: ${opts.names.join(', ')} (mesmo rosto e mesma roupa em todas as partes). Parte ${opts.num}, ${opts.beat.toLowerCase()}: ${opts.scene} Fala em português do Brasil: “${opts.fala}”`
+export function buildPrompt(opts: { styleName: string; names: string[]; num: number; beat: string; scene: string; fala: string; seconds?: number }) {
+  return `Animação 3D estilo ${opts.styleName.toLowerCase()}, vertical 9:16, ${opts.seconds ?? SECONDS_PER_PART} segundos. Personagens fixos: ${opts.names.join(', ')} (mesmo rosto e mesma roupa em todas as partes). Parte ${opts.num}, ${opts.beat.toLowerCase()}: ${opts.scene} Fala em português do Brasil: “${opts.fala}”`
 }
 
-export function writeScript(opts: { idea: string; tone: Tone; names: string[]; styleName: string; parts: number }): { title: string; parts: Part[] } {
-  const beats = beatsByCount[opts.parts] ?? beatsByCount[3]
+export function writeScript(opts: { idea: string; tone: Tone; names: string[]; styleName: string; parts: number; seconds?: number }): { title: string; parts: Part[] } {
+  const beats = beatsFor(opts.parts)
   const [p = 'O personagem', s] = opts.names
   const parts = beats.map((beat, i) => {
     const scene = sceneFor(beat, opts.idea.trim().replace(/[.!?]+$/, ''), p, s)
@@ -113,7 +122,7 @@ export function writeScript(opts: { idea: string; tone: Tone; names: string[]; s
       beat,
       scene,
       fala,
-      prompt: buildPrompt({ styleName: opts.styleName, names: opts.names, num: i + 1, beat, scene, fala }),
+      prompt: buildPrompt({ styleName: opts.styleName, names: opts.names, num: i + 1, beat, scene, fala, seconds: opts.seconds }),
       backdrop: backdropByBeat[beat] ?? 'noite',
       status: 'rascunho' as const,
     }

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { randomLook, sampleLooks, type Backdrop, type ToonLook } from '../components/art'
 import type { Part, Tone } from './director'
-import { CREDITS_PER_CHARACTER, CREDITS_REDO_PART, storyCost } from './pricing'
+import { CREDITS_PER_CHARACTER, SECONDS_PER_PART, partCost, storyCost } from './pricing'
 import { useAuth } from './auth'
 import { DEMO, supabase } from './supabase'
 
@@ -32,6 +32,7 @@ export type Story = {
   tone: Tone
   characterIds: string[]
   parts: Part[]
+  seconds: number
   status: 'gerando' | 'pronto'
   createdAt: number
 }
@@ -53,7 +54,7 @@ type State = {
 
 type NewCharacter = Omit<Character, 'id' | 'createdAt'> & { imagePath?: string; photoPath?: string }
 export type BonecoResult = { ok: true; look: ToonLook; image?: string; imagePath?: string; photoPath?: string } | { ok: false; error: string }
-type NewStory = { title: string; idea: string; tone: Tone; characterIds: string[]; parts: Part[] }
+type NewStory = { title: string; idea: string; tone: Tone; characterIds: string[]; parts: Part[]; seconds: number }
 
 type Store = State & {
   live: boolean
@@ -78,7 +79,10 @@ const uid = () => Math.random().toString(36).slice(2, 10)
 function loadLocal(): State {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return { ...fresh, ...JSON.parse(raw), loaded: true }
+    if (raw) {
+      const st = { ...fresh, ...JSON.parse(raw), loaded: true } as State
+      return { ...st, stories: st.stories.map((s) => ({ ...s, seconds: s.seconds ?? SECONDS_PER_PART })) }
+    }
   } catch {
     /* sem armazenamento */
   }
@@ -125,7 +129,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const [prof, chars, sts, scs, links, tx] = await Promise.all([
       supabase.from('profiles').select('name, plan, credits').eq('id', userId).single(),
       supabase.from('characters').select('id, name, style, look, photo_path, image_path, created_at').order('created_at', { ascending: false }),
-      supabase.from('stories').select('id, title, idea, tone, status, created_at').order('created_at', { ascending: false }),
+      supabase.from('stories').select('id, title, idea, tone, status, created_at, parts_count, duration_seconds').order('created_at', { ascending: false }),
       supabase.from('scenes').select('story_id, position, beat, description, dialogue, prompt, backdrop, status').order('position'),
       supabase.from('story_characters').select('story_id, character_id'),
       supabase.from('credit_transactions').select('id, amount, reason, created_at').order('created_at', { ascending: false }).limit(30),
@@ -155,6 +159,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       title: s.title,
       idea: s.idea ?? '',
       tone: (s.tone ?? 'motivacional') as Tone,
+      seconds: s.parts_count && s.duration_seconds ? Math.round(Number(s.duration_seconds) / s.parts_count) : SECONDS_PER_PART,
       status: s.status === 'pronto' ? 'pronto' : 'gerando',
       createdAt: new Date(s.created_at).getTime(),
       characterIds: (links.data ?? []).filter((l) => l.story_id === s.id).map((l) => l.character_id),
@@ -247,11 +252,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return true
       },
       createStory: async (s: NewStory) => {
-        const cost = storyCost(s.parts.length)
+        const cost = storyCost(s.parts.length, s.seconds)
         if (state.credits < cost) return null
         const id = uid()
         setState((st) => {
-          const after = spendLocal(st, cost, `${s.parts.length} partes · ${s.title}`)
+          const after = spendLocal(st, cost, `${s.parts.length} partes de ${s.seconds}s · ${s.title}`)
           if (!after) return st
           const story: Story = { ...s, id, parts: s.parts.map((p) => ({ ...p, status: 'gerando' })), status: 'gerando', createdAt: Date.now() }
           return { ...after, stories: [story, ...after.stories], openStoryId: id }
@@ -259,9 +264,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return id
       },
       redoPart: async (storyId: string, num: number) => {
-        if (state.credits < CREDITS_REDO_PART) return false
+        const secs = state.stories.find((x) => x.id === storyId)?.seconds ?? SECONDS_PER_PART
+        if (state.credits < partCost(secs)) return false
         setState((st) => {
-          const after = spendLocal(st, CREDITS_REDO_PART, `Refazer parte ${num}`)
+          const after = spendLocal(st, partCost(secs), `Refazer parte ${num}`)
           if (!after) return st
           return {
             ...after,
@@ -326,6 +332,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           p_tone: s.tone,
           p_character_ids: s.characterIds,
           p_parts: s.parts.map((p) => ({ beat: p.beat, scene: p.scene, fala: p.fala, prompt: p.prompt, backdrop: p.backdrop })),
+          p_seconds: s.seconds,
         })
         if (error || !data) return null
         openRef.current = data as string

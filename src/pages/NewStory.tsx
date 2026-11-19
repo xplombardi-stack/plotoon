@@ -1,20 +1,20 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Clapperboard, Coins, Minus, Plus, RefreshCw, Wand } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Clapperboard, Coins, Film, Minus, Plus, RefreshCw, Sparkles, Wand, Zap } from 'lucide-react'
 import { ideas } from '../data/mock'
 import { AppShell } from '../components/AppShell'
 import { Scene, Toon } from '../components/art'
 import { ClipArt, clips } from '../components/Showcase'
 import { Badge, Button, LinkButton, cx, go, useToast } from '../components/ui'
 import { buildPrompt, tones, writeScript, type Part, type Tone } from '../lib/director'
-import { pedirRoteiro } from '../lib/diretorApi'
-import { MAX_PARTS, SECONDS_PER_PART, formatCredits, storyCost } from '../lib/pricing'
+import { pedirRoteiro, type ModoDiretor } from '../lib/diretorApi'
+import { MAX_PARTS, PART_LENGTHS, SECONDS_PER_PART, formatCredits, partCost, storyCost } from '../lib/pricing'
 import { styleList, useStore } from '../lib/store'
 
 const steps = ['Ideia', 'Elenco', 'Partes', 'Roteiro']
 const DRAFT = 'plotoon:rascunho'
 
-type Draft = { step: number; idea: string; tone: Tone; picked: string[]; parts: number }
+type Draft = { step: number; idea: string; tone: Tone; picked: string[]; parts: number; secs: number; modo: ModoDiretor }
 
 function readDraft(): Partial<Draft> {
   try {
@@ -89,6 +89,9 @@ export function NewStory() {
   const [tone, setTone] = useState<Tone>(saved.tone ?? 'motivacional')
   const [picked, setPicked] = useState<string[]>((saved.picked ?? []).filter((id) => characters.some((c) => c.id === id)))
   const [count, setCount] = useState(saved.parts ?? 3)
+  const [secs, setSecs] = useState(saved.secs ?? SECONDS_PER_PART)
+  const [modo, setModo] = useState<ModoDiretor>(saved.modo ?? 'caprichado')
+  const [writtenKey, setWrittenKey] = useState('')
 
   const [writing, setWriting] = useState(0) // 0 = parado, 1..n = escrevendo
   const [title, setTitle] = useState('')
@@ -100,15 +103,16 @@ export function NewStory() {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(DRAFT, JSON.stringify({ step: Math.min(step, 2), idea, tone, picked, parts: count }))
+      sessionStorage.setItem(DRAFT, JSON.stringify({ step: Math.min(step, 2), idea, tone, picked, parts: count, secs, modo }))
     } catch {
       /* sem armazenamento */
     }
-  }, [step, idea, tone, picked, count])
+  }, [step, idea, tone, picked, count, secs, modo])
 
   const cast = useMemo(() => picked.map((id) => characters.find((c) => c.id === id)).filter(Boolean) as typeof characters, [picked, characters])
   const styleName = styleList.find((s) => s.id === cast[0]?.style)?.name ?? 'Cinema 3D'
-  const cost = storyCost(count)
+  const cost = storyCost(count, secs)
+  const key = `${count}-${secs}-${modo}-${idea}-${tone}-${picked.join(',')}`
   const enough = credits >= cost
 
   function write() {
@@ -116,12 +120,15 @@ export function NewStory() {
     setParts([])
     setResult(null)
     setWriting(1)
-    const modelo = () => ({ ...writeScript({ idea, tone, names: cast.map((c) => c.name), styleName, parts: count }), modelo: true })
+    setWrittenKey(key)
+    const modelo = () => ({ ...writeScript({ idea, tone, names: cast.map((c) => c.name), styleName, parts: count, seconds: secs }), modelo: true })
     if (!live) return setResult(modelo())
     pedirRoteiro({
       ideia: idea,
       clima: tone,
       partes: count,
+      segundos: secs,
+      modo,
       personagens: cast.map((c) => ({ nome: c.name, estilo: styleList.find((s) => s.id === c.style)?.name ?? 'Cinema 3D' })),
     }).then((r) => {
       if (id === ask.current) setResult(r ? { ...r, modelo: false } : modelo())
@@ -144,19 +151,19 @@ export function NewStory() {
   }, [writing, result]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (step === 3 && parts.length !== count && !writing) write()
+    if (step === 3 && writtenKey !== key && !writing) write()
   }, [step])
 
   function editFala(num: number, fala: string) {
     setParts((ps) =>
-      ps.map((p) => (p.num === num ? { ...p, fala, prompt: buildPrompt({ styleName, names: cast.map((c) => c.name), num, beat: p.beat, scene: p.scene, fala }) } : p)),
+      ps.map((p) => (p.num === num ? { ...p, fala, prompt: buildPrompt({ styleName, names: cast.map((c) => c.name), num, beat: p.beat, scene: p.scene, fala, seconds: secs }) } : p)),
     )
   }
 
   async function generate() {
     if (busy) return
     setBusy(true)
-    const id = await createStory({ title: title.trim() || 'Nova historinha', idea, tone, characterIds: picked, parts })
+    const id = await createStory({ title: title.trim() || 'Nova historinha', idea, tone, characterIds: picked, parts, seconds: secs })
     setBusy(false)
     if (!id) return toast.show(credits < cost ? 'Créditos insuficientes' : 'Não deu pra criar agora. Tenta de novo.')
     try {
@@ -164,7 +171,7 @@ export function NewStory() {
     } catch {
       /* sem armazenamento */
     }
-    toast.show(`Gerando ${parts.length} partes · ${cost} créditos`)
+    toast.show(`Gerando ${parts.length} partes de ${secs}s · ${cost} créditos`)
     go('editor')
   }
 
@@ -297,43 +304,105 @@ export function NewStory() {
       )}
 
       {step === 2 && (
-        <Panel title="Em quantas partes?" hint={`Cada parte é um pedaço do vídeo de até ${SECONDS_PER_PART} segundos.`}>
-          <div className="flex items-center gap-5">
-            <button
-              type="button"
-              aria-label="Menos uma parte"
-              disabled={count <= 1}
-              onClick={() => setCount((c) => c - 1)}
-              className="press flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl border border-line-strong text-ink hover:border-accent disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Minus size={22} />
-            </button>
-            <span className="flex flex-col items-center">
-              <span key={count} className="pop font-display text-[56px] font-extrabold leading-none text-glow">{count}</span>
-              <span className="text-[14px] text-muted">{count === 1 ? 'parte' : 'partes'}</span>
+        <Panel title="Em quantas partes?" hint="Sua historinha pode ter várias partes. No final, o Plotoon junta tudo num vídeo só.">
+          <div className="flex items-start gap-3 rounded-2xl border border-sky-line bg-sky-soft/30 p-3.5 text-[14px] leading-relaxed text-soft">
+            <Film size={18} className="mt-0.5 shrink-0 text-sky-text" aria-hidden />
+            <span>
+              Cada parte é um pedaço de <strong className="text-ink">{secs} segundos</strong>. Quer uma história de 1 minuto? Use {Math.ceil(60 / secs)} partes. Pode fazer até{' '}
+              <strong className="text-ink">{MAX_PARTS} partes</strong> ({MAX_PARTS * secs}s), e depois elas viram um vídeo único.
             </span>
-            <button
-              type="button"
-              aria-label="Mais uma parte"
-              disabled={count >= MAX_PARTS}
-              onClick={() => setCount((c) => c + 1)}
-              className="press flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl border border-line-strong text-ink hover:border-accent disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <Plus size={22} />
-            </button>
           </div>
-          <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
+
+          <div className="flex flex-wrap items-center gap-5">
+            <div className="flex items-center gap-5">
+              <button
+                type="button"
+                aria-label="Menos uma parte"
+                disabled={count <= 1}
+                onClick={() => setCount((c) => c - 1)}
+                className="press flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl border border-line-strong text-ink hover:border-accent disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Minus size={22} />
+              </button>
+              <span className="flex w-16 flex-col items-center">
+                <span key={count} className="pop font-display text-[56px] font-extrabold leading-none text-glow">{count}</span>
+                <span className="text-[14px] text-muted">{count === 1 ? 'parte' : 'partes'}</span>
+              </span>
+              <button
+                type="button"
+                aria-label="Mais uma parte"
+                disabled={count >= MAX_PARTS}
+                onClick={() => setCount((c) => c + 1)}
+                className="press flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl border border-line-strong text-ink hover:border-accent disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Plus size={22} />
+              </button>
+            </div>
+            <div role="radiogroup" aria-label="Duração de cada parte" className="flex flex-col gap-1.5">
+              <span className="text-[13px] font-medium text-muted">Cada parte com</span>
+              <div className="flex gap-2">
+                {PART_LENGTHS.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    role="radio"
+                    aria-checked={secs === n}
+                    onClick={() => setSecs(n)}
+                    className={cx('press flex min-h-11 cursor-pointer flex-col items-center justify-center rounded-xl border-2 px-4 leading-tight', secs === n ? 'border-accent bg-[#17130f] text-ink' : 'border-line bg-bg text-soft hover:border-line-strong')}
+                  >
+                    <span className="text-[15px] font-bold">{n}s</span>
+                    <span className="text-[11px] text-muted">{partCost(n)} créditos</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
             {Array.from({ length: count }).map((_, i) => (
-              <div key={i} className="pop flex aspect-[9/14] flex-col justify-between rounded-xl border border-line-strong bg-gradient-to-b from-[#2a1d14] to-[#140e0a] p-2" style={{ animationDelay: `${i * 40}ms` }}>
-                <span className="text-[12px] font-bold text-accent-text">Parte {i + 1}</span>
-                <span className="text-[11px] text-muted">{SECONDS_PER_PART}s</span>
+              <div key={i} className="pop flex items-center gap-1.5" style={{ animationDelay: `${i * 30}ms` }}>
+                <span className="flex h-12 w-[52px] flex-col justify-between rounded-lg border border-line-strong bg-gradient-to-b from-[#2a1d14] to-[#140e0a] px-1.5 py-1">
+                  <span className="text-[10px] font-bold text-accent-text">Parte {i + 1}</span>
+                  <span className="text-[10px] text-muted">{secs}s</span>
+                </span>
+                {i < count - 1 && <Plus size={11} className="text-subtle" aria-hidden />}
               </div>
             ))}
+            <ArrowRight size={16} className="mx-1 text-subtle" aria-hidden />
+            <span className="flex h-12 items-center gap-1.5 rounded-lg border border-sky-line bg-sky-soft/40 px-3 text-[12px] font-bold text-sky-text">
+              <Film size={14} aria-hidden /> Vídeo de {count * secs}s
+            </span>
           </div>
+
+          <div role="radiogroup" aria-label="Como o Diretor escreve" className="flex flex-col gap-2">
+            <span className="text-[13px] font-medium text-muted">Como o Diretor escreve</span>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {([
+                { id: 'caprichado', title: 'Caprichado', sub: 'História mais criativa e bem amarrada', Icon: Sparkles },
+                { id: 'rapido', title: 'Rápido', sub: 'Sai em segundos, mais direto', Icon: Zap },
+              ] as const).map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={modo === o.id}
+                  onClick={() => setModo(o.id)}
+                  className={cx('press flex cursor-pointer items-center gap-3 rounded-xl border-2 p-3 text-left', modo === o.id ? 'border-accent bg-[#17130f]' : 'border-line bg-bg hover:border-line-strong')}
+                >
+                  <o.Icon size={18} className={modo === o.id ? 'text-accent' : 'text-muted'} aria-hidden />
+                  <span className="flex flex-col">
+                    <span className="text-[14px] font-bold text-ink">{o.title}</span>
+                    <span className="text-[12px] text-muted">{o.sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="flex flex-col gap-1 rounded-2xl border border-line bg-bg p-4">
-              <span className="text-[13px] text-muted">Duração</span>
-              <span className="font-display text-[24px] font-bold">até {count * SECONDS_PER_PART}s</span>
+              <span className="text-[13px] text-muted">Duração total</span>
+              <span className="font-display text-[24px] font-bold">{count * secs}s</span>
             </div>
             <div className="neon-border flex flex-col gap-1 rounded-2xl bg-bg p-4">
               <span className="text-[13px] text-muted">Vai gastar</span>

@@ -3,7 +3,7 @@ import { creditPacks, plans } from '../data/mock'
 import { AppShell } from '../components/AppShell'
 import { ClipArt, clips } from '../components/Showcase'
 import { Badge, Button, Card, PageHeader, SectionTitle, cx, useToast } from '../components/ui'
-import { CREDITS_PER_CHARACTER, CREDITS_PER_PART, CREDITS_REDO_PART, SECONDS_PER_PART, formatCredits } from '../lib/pricing'
+import { CREDITS_PER_CHARACTER, formatCredits, partCost } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
 
 const planNames: Record<string, string> = { nenhum: 'Sem plano', start: 'Start', estudio: 'Estúdio', pro: 'Pro' }
@@ -31,8 +31,9 @@ export function Plans() {
         <Card className="rise rise-2 flex flex-col gap-3 p-6">
           <span className="text-[14px] text-muted">Quanto custa</span>
           <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[15px]">
-            <li className="flex justify-between gap-3"><span>1 parte de vídeo ({SECONDS_PER_PART}s)</span><strong>{CREDITS_PER_PART}</strong></li>
-            <li className="flex justify-between gap-3"><span>Refazer 1 parte</span><strong>{CREDITS_REDO_PART}</strong></li>
+            <li className="flex justify-between gap-3"><span>1 parte de vídeo (10s)</span><strong>{partCost(10)}</strong></li>
+            <li className="flex justify-between gap-3"><span>1 parte de vídeo (15s)</span><strong>{partCost(15)}</strong></li>
+            <li className="flex justify-between gap-3"><span>Refazer 1 parte</span><strong>igual à parte</strong></li>
             <li className="flex justify-between gap-3"><span>Gerar 1 boneco</span><strong>{CREDITS_PER_CHARACTER}</strong></li>
           </ul>
         </Card>

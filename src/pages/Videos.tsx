@@ -4,7 +4,6 @@ import { AppShell } from '../components/AppShell'
 import { Scene } from '../components/art'
 import { ClipArt, clips } from '../components/Showcase'
 import { Badge, LinkButton, PageHeader, cx } from '../components/ui'
-import { SECONDS_PER_PART } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
 
 const filters = [
@@ -63,7 +62,7 @@ export function Videos() {
                     <Scene backdrop={s.parts[0]?.backdrop ?? 'noite'} look={look} className="absolute inset-0 h-full w-full" />
                     <span className="absolute inset-x-2.5 top-2.5 flex items-start justify-between gap-2">
                       <Badge tone={s.status === 'pronto' ? 'sky' : 'accent'}>{s.status === 'pronto' ? 'Pronto' : 'Gerando'}</Badge>
-                      <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[12px] font-semibold">{s.parts.length * SECONDS_PER_PART}s</span>
+                      <span className="rounded-md bg-black/60 px-1.5 py-0.5 text-[12px] font-semibold">{s.parts.length * s.seconds}s</span>
                     </span>
                   </span>
                   <span className="flex flex-col gap-0.5">
