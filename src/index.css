@@ -1,0 +1,250 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: #0a0b10;
+  --color-side: #0d0f15;
+  --color-surface: #12151c;
+  --color-surface-2: #1a1e28;
+  --color-line: #232836;
+  --color-line-strong: #2e3442;
+  --color-ink: #f2f4f7;
+  --color-soft: #d5dae2;
+  --color-muted: #a7aebb;
+  --color-subtle: #808999;
+
+  --color-accent: #ff8a3d;
+  --color-accent-hover: #ff9c59;
+  --color-accent-soft: #2a1a0f;
+  --color-accent-line: #5a3418;
+  --color-accent-ink: #1a0e05;
+  --color-accent-text: #ffb98a;
+
+  --color-sky: #5ab0ff;
+  --color-sky-soft: #142338;
+  --color-sky-line: #23405f;
+  --color-sky-text: #8ec8ff;
+
+  --color-violet: #9b7bff;
+  --color-violet-soft: #1e1a2e;
+  --color-violet-text: #c9b8ff;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+html,
+body,
+#root {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: #ff8a3d55;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #7d8696;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+/* ---------- Entradas e movimento ---------- */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.5s var(--ease-spring) both; }
+.rise-1 { animation-delay: 0.06s; }
+.rise-2 { animation-delay: 0.12s; }
+.rise-3 { animation-delay: 0.18s; }
+.rise-4 { animation-delay: 0.24s; }
+
+@keyframes pop {
+  0% { opacity: 0; transform: scale(0.85); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.pop { animation: pop 0.45s var(--ease-spring) both; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.float { animation: float 5s ease-in-out infinite; }
+.float-slow { animation: float 7s ease-in-out infinite; }
+.float-late { animation: float 6s ease-in-out 1.2s infinite; }
+.art-float { animation: float 6s ease-in-out infinite; transform-box: fill-box; }
+
+@keyframes drift {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(6%, -8%) scale(1.08); }
+  66% { transform: translate(-6%, 6%) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* Fundo com luzes neon andando */
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aurora::before,
+.aurora::after,
+.aurora > span {
+  content: "";
+  position: absolute;
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.32;
+  animation: drift 16s ease-in-out infinite;
+}
+.aurora::before { background: #ff8a3d; top: -18%; left: -8%; }
+.aurora::after { background: #5ab0ff; bottom: -22%; right: -6%; animation-delay: -5s; }
+.aurora > span { background: #9b7bff; top: 25%; left: 38%; width: 30%; opacity: 0.22; animation-delay: -10s; }
+
+/* Borda neon girando */
+@property --spin {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes spin-angle {
+  to { --spin: 360deg; }
+}
+.neon-border {
+  position: relative;
+  isolation: isolate;
+}
+.neon-border::before {
+  content: "";
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--spin), transparent 0deg, #ff8a3d 70deg, #ffcf9e 100deg, transparent 150deg, transparent 200deg, #5ab0ff 260deg, transparent 320deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: spin-angle 5s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.glow-accent { box-shadow: 0 0 0 1px #ff8a3d55, 0 10px 40px -10px #ff8a3daa; }
+.glow-sky { box-shadow: 0 0 0 1px #5ab0ff55, 0 10px 40px -12px #5ab0ffaa; }
+.text-glow { text-shadow: 0 0 24px #ff8a3d66; }
+
+/* Brilho passando no botão principal */
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+.shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.45) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.7s ease;
+  pointer-events: none;
+}
+.shine:hover::after { transform: translateX(120%); }
+
+/* Card que pula no hover */
+.lift {
+  transition: transform 0.35s var(--ease-spring), box-shadow 0.35s ease, border-color 0.25s ease;
+}
+.lift:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 18px 50px -18px #ff8a3d88;
+  border-color: #ff8a3d88;
+}
+
+.press { transition: transform 0.2s var(--ease-spring); }
+.press:active { transform: scale(0.96); }
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 #ff8a3d88; }
+  100% { box-shadow: 0 0 0 14px #ff8a3d00; }
+}
+.pulse { animation: pulse-ring 1.8s ease-out infinite; }
+
+/* ---------- Cursor próprio ---------- */
+
+html.custom-cursor,
+html.custom-cursor * {
+  cursor: none !important;
+}
+
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  border-radius: 9999px;
+  will-change: transform;
+}
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  background: #ff8a3d;
+  box-shadow: 0 0 12px #ff8a3d;
+}
+.cursor-ring {
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+}
+.cursor-ring > span {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 1.5px solid #ffb98acc;
+  transition: transform 0.35s var(--ease-spring), border-color 0.2s ease, border-style 0.2s;
+}
+.cursor-ring.is-hover > span {
+  transform: scale(1.6);
+  border: 2px dashed #ff8a3d;
+  animation: cursor-spin 2.4s linear infinite;
+}
+.cursor-ring.is-down > span {
+  transform: scale(0.75);
+}
+@keyframes cursor-spin {
+  from { rotate: 0deg; }
+  to { rotate: 360deg; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

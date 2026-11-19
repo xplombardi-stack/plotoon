@@ -1,0 +1,10 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # valores públicos (endereço do projeto e chave publicável do Supabase)
+  VITE_SUPABASE_URL = "https://unjwtgplrrmjahrdgjim.supabase.co"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_OnTQZqLEtK188J180lWC9A_i_-VLqF9"
+  VITE_DEMO = "0"
