@@ -11,11 +11,11 @@ const cenario = (v: unknown): Backdrop => (cenarios.includes(v as Backdrop) ? (v
 
 export type ModoDiretor = 'caprichado' | 'rapido'
 
-export async function pedirRoteiro(opts: { ideia: string; clima: Tone; partes: number; segundos: number; modo: ModoDiretor; personagens: Personagem[] }): Promise<{ title: string; parts: Part[] } | null> {
+export async function pedirRoteiro(opts: { ideia: string; clima: Tone; partes: number; segundos: number; modo: ModoDiretor; chamada?: string; personagens: Personagem[] }): Promise<{ title: string; parts: Part[] } | null> {
   if (!supabase) return null
   try {
     const { data, error } = await supabase.functions.invoke('diretor', {
-      body: { action: 'roteiro', ideia: opts.ideia, clima: opts.clima, partes: opts.partes, segundos: opts.segundos, modo: opts.modo, personagens: opts.personagens },
+      body: { action: 'roteiro', ideia: opts.ideia, clima: opts.clima, partes: opts.partes, segundos: opts.segundos, modo: opts.modo, chamada: opts.chamada || undefined, personagens: opts.personagens },
     })
     const partes = data?.partes as Array<Record<string, unknown>> | undefined
     if (error || !Array.isArray(partes) || partes.length === 0) return null

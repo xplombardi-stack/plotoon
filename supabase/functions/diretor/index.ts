@@ -82,12 +82,16 @@ Deno.serve(async (req) => {
       const ideia = String(body.ideia ?? "").slice(0, 600);
       const clima = String(body.clima ?? "motivacional").slice(0, 30);
       if (ideia.trim().length < 3) return json({ error: "ideia_vazia" }, 400);
+      const chamada = String(body.chamada ?? "").trim().slice(0, 140);
+      const pedidoChamada = chamada
+        ? `\nO vídeo vai ser usado como anúncio. A parte 1 abre com um gancho que prende nos 2 primeiros segundos. A última parte termina com o protagonista olhando pra câmera e fazendo esta chamada para ação, de um jeito natural e ligado à história: "${chamada}". A fala da chamada é curta e direta, e o prompt dessa parte pede o texto da chamada aparecendo na tela.`
+        : "";
 
       const out = await callClaude(
         key,
         model,
         REGRAS,
-        `Ideia: ${ideia}\nClima: ${clima}\nPersonagens: ${personagens.join(", ") || "um protagonista"}\nO primeiro personagem é o protagonista.\nEscreva a historinha em exatamente ${partes} parte(s), cada uma com até ${segundos} segundos.`,
+        `Ideia: ${ideia}\nClima: ${clima}\nPersonagens: ${personagens.join(", ") || "um protagonista"}\nO primeiro personagem é o protagonista.\nEscreva a historinha em exatamente ${partes} parte(s), cada uma com até ${segundos} segundos.${pedidoChamada}`,
         {
           name: "entregar_roteiro",
           description: "Entrega o título e as partes da historinha.",

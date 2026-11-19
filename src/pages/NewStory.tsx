@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Clapperboard, Coins, Film, Minus, Plus, RefreshCw, Sparkles, Wand, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Clapperboard, Coins, Film, Megaphone, Minus, Plus, RefreshCw, Sparkles, Wand, Zap } from 'lucide-react'
 import { ideas } from '../data/mock'
 import { AppShell } from '../components/AppShell'
 import { Scene, Toon } from '../components/art'
 import { ClipArt, clips } from '../components/Showcase'
 import { Badge, Button, LinkButton, cx, go, useToast } from '../components/ui'
-import { buildPrompt, tones, writeScript, type Part, type Tone } from '../lib/director'
+import { CTA_PRONTAS, buildPrompt, tones, writeScript, type Part, type Tone } from '../lib/director'
 import { pedirRoteiro, type ModoDiretor } from '../lib/diretorApi'
 import { MAX_PARTS, PART_LENGTHS, SECONDS_PER_PART, formatCredits, partCost, storyCost } from '../lib/pricing'
 import { styleList, useStore } from '../lib/store'
@@ -14,7 +14,7 @@ import { styleList, useStore } from '../lib/store'
 const steps = ['Ideia', 'Elenco', 'Partes', 'Roteiro']
 const DRAFT = 'plotoon:rascunho'
 
-type Draft = { step: number; idea: string; tone: Tone; picked: string[]; parts: number; secs: number; modo: ModoDiretor }
+type Draft = { step: number; idea: string; tone: Tone; picked: string[]; parts: number; secs: number; modo: ModoDiretor; comCta: boolean; cta: string }
 
 function readDraft(): Partial<Draft> {
   try {
@@ -91,6 +91,9 @@ export function NewStory() {
   const [count, setCount] = useState(saved.parts ?? 3)
   const [secs, setSecs] = useState(saved.secs ?? SECONDS_PER_PART)
   const [modo, setModo] = useState<ModoDiretor>(saved.modo ?? 'caprichado')
+  const [comCta, setComCta] = useState(saved.comCta ?? false)
+  const [ctaText, setCtaText] = useState(saved.cta ?? CTA_PRONTAS[0])
+  const cta = comCta ? ctaText.trim() : ''
   const [writtenKey, setWrittenKey] = useState('')
 
   const [writing, setWriting] = useState(0) // 0 = parado, 1..n = escrevendo
@@ -103,16 +106,16 @@ export function NewStory() {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(DRAFT, JSON.stringify({ step: Math.min(step, 2), idea, tone, picked, parts: count, secs, modo }))
+      sessionStorage.setItem(DRAFT, JSON.stringify({ step: Math.min(step, 2), idea, tone, picked, parts: count, secs, modo, comCta, cta: ctaText }))
     } catch {
       /* sem armazenamento */
     }
-  }, [step, idea, tone, picked, count, secs, modo])
+  }, [step, idea, tone, picked, count, secs, modo, comCta, ctaText])
 
   const cast = useMemo(() => picked.map((id) => characters.find((c) => c.id === id)).filter(Boolean) as typeof characters, [picked, characters])
   const styleName = styleList.find((s) => s.id === cast[0]?.style)?.name ?? 'Cinema 3D'
   const cost = storyCost(count, secs)
-  const key = `${count}-${secs}-${modo}-${idea}-${tone}-${picked.join(',')}`
+  const key = `${count}-${secs}-${modo}-${cta}-${idea}-${tone}-${picked.join(',')}`
   const enough = credits >= cost
 
   function write() {
@@ -121,7 +124,7 @@ export function NewStory() {
     setResult(null)
     setWriting(1)
     setWrittenKey(key)
-    const modelo = () => ({ ...writeScript({ idea, tone, names: cast.map((c) => c.name), styleName, parts: count, seconds: secs }), modelo: true })
+    const modelo = () => ({ ...writeScript({ idea, tone, names: cast.map((c) => c.name), styleName, parts: count, seconds: secs, cta }), modelo: true })
     if (!live) return setResult(modelo())
     pedirRoteiro({
       ideia: idea,
@@ -129,6 +132,7 @@ export function NewStory() {
       partes: count,
       segundos: secs,
       modo,
+      chamada: cta,
       personagens: cast.map((c) => ({ nome: c.name, estilo: styleList.find((s) => s.id === c.style)?.name ?? 'Cinema 3D' })),
     }).then((r) => {
       if (id === ask.current) setResult(r ? { ...r, modelo: false } : modelo())
@@ -397,6 +401,53 @@ export function NewStory() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className={cx('flex flex-col gap-3 rounded-2xl border-2 p-4', comCta ? 'border-accent bg-[#17130f]' : 'border-line bg-bg')}>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={comCta}
+              onClick={() => setComCta((v) => !v)}
+              className="press flex min-h-11 cursor-pointer items-center gap-3 text-left"
+            >
+              <Megaphone size={18} className={comCta ? 'shrink-0 text-accent' : 'shrink-0 text-muted'} aria-hidden />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="text-[14px] font-bold text-ink">Terminar com chamada pra ação</span>
+                <span className="text-[12px] text-muted">Pra usar como anúncio: gancho forte no começo e um convite no final.</span>
+              </span>
+              <span className={cx('relative h-6 w-11 shrink-0 rounded-full transition-colors', comCta ? 'bg-accent' : 'bg-line-strong')} aria-hidden>
+                <span className={cx('absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all', comCta ? 'left-[22px]' : 'left-0.5')} />
+              </span>
+            </button>
+            {comCta && (
+              <div className="flex flex-col gap-2">
+                <label htmlFor="cta" className="text-[13px] font-medium text-muted">
+                  O que a pessoa deve fazer no final?
+                </label>
+                <input
+                  id="cta"
+                  value={ctaText}
+                  maxLength={140}
+                  onChange={(e) => setCtaText(e.target.value)}
+                  placeholder="Ex.: Segue o perfil e clica no link da bio"
+                  className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-[15px] text-ink outline-none focus:border-accent"
+                />
+                <div className="flex flex-wrap gap-2">
+                  {CTA_PRONTAS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setCtaText(t)}
+                      className={cx('press min-h-9 cursor-pointer rounded-full border px-3 text-[12px]', ctaText === t ? 'border-accent text-ink' : 'border-line text-soft hover:border-line-strong')}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[12px] text-muted">A última parte termina com o seu personagem olhando pra câmera e falando isso.</span>
+              </div>
+            )}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">

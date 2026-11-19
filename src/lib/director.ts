@@ -111,18 +111,29 @@ export function buildPrompt(opts: { styleName: string; names: string[]; num: num
   return `Animação 3D estilo ${opts.styleName.toLowerCase()}, vertical 9:16, ${opts.seconds ?? SECONDS_PER_PART} segundos. Personagens fixos: ${opts.names.join(', ')} (mesmo rosto e mesma roupa em todas as partes). Parte ${opts.num}, ${opts.beat.toLowerCase()}: ${opts.scene} Fala em português do Brasil: “${opts.fala}”`
 }
 
-export function writeScript(opts: { idea: string; tone: Tone; names: string[]; styleName: string; parts: number; seconds?: number }): { title: string; parts: Part[] } {
+// chamada pra ação no fim do vídeo: o personagem olha pra câmera e convida a pessoa
+export const CTA_PRONTAS = ['Segue o perfil e clica no link da bio', 'Comenta "QUERO" que eu te mando', 'Me chama no direct']
+
+function falaChamada(cta: string) {
+  const t = cta.trim().replace(/[.!?]+$/, '')
+  return `Quer fazer igual? ${t.charAt(0).toUpperCase()}${t.slice(1)}!`
+}
+
+export function writeScript(opts: { idea: string; tone: Tone; names: string[]; styleName: string; parts: number; seconds?: number; cta?: string }): { title: string; parts: Part[] } {
   const beats = beatsFor(opts.parts)
   const [p = 'O personagem', s] = opts.names
+  const cta = opts.cta?.trim()
   const parts = beats.map((beat, i) => {
-    const scene = sceneFor(beat, opts.idea.trim().replace(/[.!?]+$/, ''), p, s)
-    const fala = falas[opts.tone][beat]
+    const last = i === beats.length - 1
+    const scene = cta && last ? `${p} olha direto pra câmera, sorri e faz o convite final, com o texto da chamada aparecendo na tela.` : sceneFor(beat, opts.idea.trim().replace(/[.!?]+$/, ''), p, s)
+    const fala = cta && last ? (beats.length === 1 ? `${falas[opts.tone][beat]} ${falaChamada(cta)}` : falaChamada(cta)) : falas[opts.tone][beat]
+    const momento = cta && last ? 'Chamada' : beat
     return {
       num: i + 1,
-      beat,
+      beat: momento,
       scene,
       fala,
-      prompt: buildPrompt({ styleName: opts.styleName, names: opts.names, num: i + 1, beat, scene, fala, seconds: opts.seconds }),
+      prompt: buildPrompt({ styleName: opts.styleName, names: opts.names, num: i + 1, beat: momento, scene, fala, seconds: opts.seconds }),
       backdrop: backdropByBeat[beat] ?? 'noite',
       status: 'rascunho' as const,
     }
