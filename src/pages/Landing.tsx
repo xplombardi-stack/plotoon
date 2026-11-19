@@ -157,7 +157,7 @@ export function Landing() {
                   </div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-display text-[34px] font-extrabold tracking-[-0.02em]">{p.price}</span>
-                    <span className="text-[14px] text-muted">/mês</span>
+                    {p.price.startsWith('R$') && <span className="text-[14px] text-muted">/mês</span>}
                   </div>
                   <span className="text-[14px] font-semibold text-accent-text">{p.credits}</span>
                   <ul className="m-0 flex list-none flex-col gap-3 p-0">

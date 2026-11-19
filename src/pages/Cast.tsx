@@ -2,7 +2,13 @@ import type { ChangeEvent } from 'react'
 import { useState } from 'react'
 import { Check, Coins, ImagePlus, Lock, Plus, RefreshCw } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
-import { ArtCharacter, Toon, type ToonLook } from '../components/art'
+import { Toon, type ToonLook } from '../components/art'
+import { ClipArt, clips } from '../components/Showcase'
+import estiloCinema from '../assets/historias/trader-escritorio.webp'
+import estiloFofinho from '../assets/historias/festa-risada.webp'
+import estiloRealista from '../assets/inicio/criador-trabalhando.webp'
+
+const styleThumb: Record<StyleId, string> = { cinema: estiloCinema, fofinho: estiloFofinho, realista: estiloRealista }
 import { Badge, Button, Card, LinkButton, PageHeader, cx, go, useToast } from '../components/ui'
 import { CREDITS_PER_CHARACTER, formatCredits } from '../lib/pricing'
 import { photoThumb, styleList, timeAgo, useStore, type BonecoResult, type StyleId } from '../lib/store'
@@ -28,7 +34,7 @@ export function Cast() {
       />
       {characters.length === 0 ? (
         <div className="rise flex flex-col items-center gap-5 rounded-[22px] border border-dashed border-[#3a4152] px-6 py-14 text-center">
-          <ArtCharacter className="w-full max-w-[320px] rounded-2xl" />
+          <ClipArt clip={clips.personagem} pos="50% 30%" className="aspect-[4/3] w-full max-w-[320px] rounded-2xl" />
           <h2 className="m-0 font-display text-[24px] font-extrabold">Seu elenco está vazio</h2>
           <p className="m-0 max-w-[440px] text-[15px] text-muted">Mande uma foto e a gente cria o seu boneco 3D. Ele fica com o mesmo rosto em todos os vídeos.</p>
           <LinkButton to="novo-personagem" size="lg">
@@ -40,15 +46,15 @@ export function Cast() {
           {characters.map((c, i) => (
             <article key={c.id} className="pop lift flex flex-col gap-3 rounded-[22px]" style={{ animationDelay: `${i * 50}ms` }}>
               <div className={cx('relative aspect-square overflow-hidden rounded-[22px] border border-line-strong bg-gradient-to-b', styleBg[c.style])}>
-                {c.image ? (
-                  <img src={c.image} alt={`Boneco de ${c.name}`} className="absolute inset-0 h-full w-full object-cover object-top" />
+                {c.image || c.photo ? (
+                  <img src={c.image ?? c.photo} alt={`Boneco de ${c.name}`} className="absolute inset-0 h-full w-full object-cover object-top" />
                 ) : (
                   <Toon look={c.look} className="absolute inset-x-0 bottom-0 w-full" />
                 )}
                 <Badge tone="sky" className="absolute left-2.5 top-2.5 !bg-[#0a1a2bd9]">
                   <Lock size={12} aria-hidden /> Rosto travado
                 </Badge>
-                {c.photo && <img src={c.photo} alt="" className="absolute bottom-2.5 right-2.5 h-11 w-11 rounded-full border-2 border-bg object-cover" />}
+                {c.photo && c.image && <img src={c.photo} alt="" className="absolute bottom-2.5 right-2.5 h-11 w-11 rounded-full border-2 border-bg object-cover" />}
               </div>
               <div className="flex flex-col gap-0.5">
                 <h2 className="m-0 text-[15px] font-bold">{c.name}</h2>
@@ -147,9 +153,11 @@ export function NewCharacter() {
         title="Criar personagem"
         subtitle={`Cada boneco gerado custa ${CREDITS_PER_CHARACTER} créditos · você tem ${formatCredits(credits)}`}
         actions={
+<span className="hidden lg:block">
           <Button size="lg" disabled={!look || !name.trim() || saving} onClick={save} className={look && name.trim() ? 'pulse' : undefined}>
             <Check size={18} /> Salvar no elenco
           </Button>
+          </span>
         }
       />
 
@@ -194,8 +202,8 @@ export function NewCharacter() {
                   onClick={() => setStyle(s.id)}
                   className={cx('press flex cursor-pointer items-center gap-3 rounded-[18px] border-2 p-2 text-left transition-all', on ? 'border-accent bg-[#17130f] glow-accent' : 'border-line bg-[#0f1218] hover:border-line-strong')}
                 >
-                  <span className={cx('relative h-[72px] w-24 shrink-0 overflow-hidden rounded-[12px] bg-gradient-to-b', styleBg[s.id])}>
-                    <Toon look={{ skin: '#e3ad84', hair: '#3b2416', shirt: s.id === 'fofinho' ? '#ff5da2' : s.id === 'cinema' ? '#ff8a3d' : '#5ab0ff', hairStyle: 'curto', glasses: false }} className="absolute inset-x-0 -bottom-2 w-full" />
+                  <span className="relative h-[72px] w-24 shrink-0 overflow-hidden rounded-[12px] bg-side">
+                    <img src={styleThumb[s.id]} alt="" className="absolute inset-0 h-full w-full object-cover object-[50%_25%]" />
                   </span>
                   <span className="flex-1 text-[15px] font-semibold text-ink">{s.name}</span>
                   <span className={cx('mr-1 h-5 w-5 rounded-full border-2 transition-colors', on ? 'border-accent bg-accent' : 'border-[#3a4152]')} aria-hidden />
@@ -240,6 +248,9 @@ export function NewCharacter() {
                 placeholder="Ex.: seu nome"
                 className="min-h-12 rounded-[12px] border border-line-strong bg-bg px-3.5 text-[16px] font-bold uppercase text-ink outline-none placeholder:font-normal placeholder:normal-case focus:border-accent"
               />
+              <Button size="lg" disabled={!name.trim() || saving} onClick={save} className={cx('w-full lg:hidden', name.trim() && 'pulse')}>
+                <Check size={18} /> Salvar no elenco
+              </Button>
             </>
           ) : (
             <div className="flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-[18px] bg-[#0f1218] text-center">

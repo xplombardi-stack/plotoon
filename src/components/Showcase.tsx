@@ -66,3 +66,12 @@ export function HeroCreators({ layout = 'responsive', className }: { layout?: 'r
     </div>
   )
 }
+
+// Vídeo curto no lugar de ilustração
+export function ClipArt({ clip, className, pos }: { clip: Clip; className?: string; pos?: string }) {
+  return (
+    <span aria-hidden className={cx('relative block overflow-hidden bg-side', className)}>
+      <LoopVideo src={clip.video} poster={clip.poster} style={pos ? { objectPosition: pos } : undefined} className="absolute inset-0 h-full w-full object-cover" />
+    </span>
+  )
+}

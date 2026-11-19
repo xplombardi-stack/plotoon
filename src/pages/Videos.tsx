@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
-import { ArtVideos, Scene } from '../components/art'
+import { Scene } from '../components/art'
+import { ClipArt, clips } from '../components/Showcase'
 import { Badge, LinkButton, PageHeader, cx } from '../components/ui'
 import { SECONDS_PER_PART } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
@@ -30,7 +31,7 @@ export function Videos() {
 
       {stories.length === 0 ? (
         <div className="rise flex flex-col items-center gap-5 rounded-[22px] border border-dashed border-[#3a4152] px-6 py-14 text-center">
-          <ArtVideos className="w-full max-w-[320px] rounded-2xl" />
+          <ClipArt clip={clips.videos} className="aspect-[4/3] w-full max-w-[320px] rounded-2xl" />
           <h2 className="m-0 font-display text-[24px] font-extrabold">Nenhum vídeo ainda</h2>
           <p className="m-0 max-w-[420px] text-[15px] text-muted">Conte uma ideia, escolha seu elenco e o Diretor faz o resto.</p>
           <LinkButton to="nova-historinha" size="lg">

@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, Check, ChevronDown, Clapperboard, Coins, Minus, Plus, RefreshCw, Wand } from 'lucide-react'
 import { ideas } from '../data/mock'
 import { AppShell } from '../components/AppShell'
-import { ArtCharacter, ArtStory, Scene, Toon } from '../components/art'
+import { Scene, Toon } from '../components/art'
+import { ClipArt, clips } from '../components/Showcase'
 import { Badge, Button, LinkButton, cx, go, useToast } from '../components/ui'
 import { buildPrompt, tones, writeScript, type Part, type Tone } from '../lib/director'
 import { pedirRoteiro } from '../lib/diretorApi'
@@ -178,7 +179,7 @@ export function NewStory() {
       </div>
 
       {step === 0 && (
-        <Panel title="Qual é a história?" hint="Conta em uma frase. O Diretor escreve o resto." art={<ArtStory className="w-full max-w-[380px] rounded-[18px]" />}>
+        <Panel title="Qual é a história?" hint="Conta em uma frase. O Diretor escreve o resto." art={<ClipArt clip={clips.roteiro} pos="50% 25%" className="aspect-[4/3] w-full max-w-[380px] rounded-[18px]" />}>
           <label htmlFor="ideia-txt" className="sr-only">Sua ideia</label>
           <textarea
             id="ideia-txt"
@@ -225,7 +226,7 @@ export function NewStory() {
         <Panel title="Quem aparece?" hint="O primeiro que você escolher é o protagonista.">
           {characters.length === 0 ? (
             <div className="flex flex-col items-start gap-5 rounded-[18px] border border-dashed border-[#3a4152] p-5 sm:flex-row sm:items-center">
-              <ArtCharacter className="w-full max-w-[220px] rounded-2xl" />
+              <ClipArt clip={clips.personagem} pos="50% 30%" className="aspect-[4/3] w-full max-w-[220px] rounded-2xl" />
               <div className="flex flex-col gap-3">
                 <h3 className="m-0 text-[20px] font-bold">Você ainda não tem personagens</h3>
                 <p className="m-0 text-[15px] text-muted">Cria o seu boneco a partir de uma foto. Depois você volta aqui e continua de onde parou.</p>

@@ -1,7 +1,7 @@
 import { Play } from 'lucide-react'
 import { modules } from '../data/mock'
 import { AppShell } from '../components/AppShell'
-import { ArtLessons } from '../components/art'
+import { ClipArt, clips } from '../components/Showcase'
 import { Badge, PageHeader, SectionTitle, Shot } from '../components/ui'
 
 export function Lessons() {
@@ -12,7 +12,7 @@ export function Lessons() {
       <section className="relative grid items-center gap-6 overflow-hidden rounded-[22px] border border-line bg-surface p-5 sm:p-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="aurora"><span /></div>
         <div className="relative overflow-hidden rounded-2xl">
-          <ArtLessons className="block aspect-video w-full" />
+          <ClipArt clip={clips.videos} className="aspect-video w-full" />
         </div>
         <div className="relative flex flex-col gap-4">
           <Badge tone="violet" className="self-start">Em breve</Badge>

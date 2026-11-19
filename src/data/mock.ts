@@ -46,22 +46,22 @@ export type PlanInfo = {
 
 export const plans: PlanInfo[] = [
   {
-    id: 'start', name: 'Start', tagline: 'Pra começar a postar', price: '[PREÇO]', credits: '[X] créditos por mês',
+    id: 'start', name: 'Start', tagline: 'Pra começar a postar', price: 'Em breve', credits: 'Créditos todo mês',
     features: ['Personagens com rosto travado', 'Diretor escreve a história', 'Vídeos em partes', 'Montagem automática'],
   },
   {
-    id: 'estudio', name: 'Estúdio', tagline: 'Pra postar toda semana', price: '[PREÇO]', credits: '[X] créditos por mês', highlight: true,
+    id: 'estudio', name: 'Estúdio', tagline: 'Pra postar toda semana', price: 'Em breve', credits: 'Mais créditos todo mês', highlight: true,
     features: ['Tudo do Start', 'Mais créditos', 'Refazer partes à vontade', 'Todas as aulas'],
   },
   {
-    id: 'pro', name: 'Pro', tagline: 'Pra quem posta todo dia', price: '[PREÇO]', credits: '[X] créditos por mês',
+    id: 'pro', name: 'Pro', tagline: 'Pra quem posta todo dia', price: 'Em breve', credits: 'Muito mais créditos todo mês',
     features: ['Tudo do Estúdio', 'Muito mais créditos', 'Fila prioritária', 'Suporte no WhatsApp'],
   },
 ]
 
 // Na prévia, comprar adiciona estes créditos pra você testar
 export const creditPacks = [
-  { id: 'c1', credits: 100, price: '[PREÇO]' },
-  { id: 'c2', credits: 300, price: '[PREÇO]', highlight: true },
-  { id: 'c3', credits: 1000, price: '[PREÇO]' },
+  { id: 'c1', credits: 100, price: 'Preço em breve' },
+  { id: 'c2', credits: 300, price: 'Preço em breve', highlight: true },
+  { id: 'c3', credits: 1000, price: 'Preço em breve' },
 ]

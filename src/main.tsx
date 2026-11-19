@@ -8,26 +8,38 @@ import { ToastProvider } from './components/ui'
 import { applySettings } from './lib/pricing'
 import { supabase } from './lib/supabase'
 
-// Lê os preços em créditos do banco antes de abrir o app
-async function boot() {
-  if (supabase) {
-    try {
-      const { data } = await supabase.from('settings').select('key, value')
-      if (data) applySettings(Object.fromEntries(data.map((r) => [r.key, r.value])))
-    } catch {
-      /* segue com os valores padrão */
-    }
-  }
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <AuthProvider>
-        <StoreProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </StoreProvider>
-      </AuthProvider>
-    </StrictMode>,
-  )
+// Preços em créditos: usa os últimos salvos pra abrir na hora, e atualiza do banco em seguida
+const CACHE = 'plotoon:precos'
+try {
+  const saved = localStorage.getItem(CACHE)
+  if (saved) applySettings(JSON.parse(saved))
+} catch {
+  /* sem armazenamento */
 }
-boot()
+if (supabase) {
+  supabase
+    .from('settings')
+    .select('key, value')
+    .then(({ data }) => {
+      if (!data) return
+      const map = Object.fromEntries(data.map((r) => [r.key, r.value]))
+      applySettings(map)
+      try {
+        localStorage.setItem(CACHE, JSON.stringify(map))
+      } catch {
+        /* sem armazenamento */
+      }
+    })
+}
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <AuthProvider>
+      <StoreProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </StoreProvider>
+    </AuthProvider>
+  </StrictMode>,
+)

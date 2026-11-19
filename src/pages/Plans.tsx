@@ -1,7 +1,7 @@
 import { Check, Coins } from 'lucide-react'
 import { creditPacks, plans } from '../data/mock'
 import { AppShell } from '../components/AppShell'
-import { ArtCredits } from '../components/art'
+import { ClipArt, clips } from '../components/Showcase'
 import { Badge, Button, Card, PageHeader, SectionTitle, cx, useToast } from '../components/ui'
 import { CREDITS_PER_CHARACTER, CREDITS_PER_PART, CREDITS_REDO_PART, SECONDS_PER_PART, formatCredits } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
@@ -20,7 +20,7 @@ export function Plans() {
         <Card className="rise flex flex-col gap-3 p-6">
           <span className="text-[14px] text-muted">Seu plano</span>
           <span className="font-display text-[32px] font-extrabold tracking-[-0.02em]">{planNames[plan] ?? plan}</span>
-          <span className="text-[14px] text-muted">Renova em [DATA]</span>
+          <span className="text-[14px] text-muted">{plan === 'nenhum' ? 'Assinatura pela Cakto em breve' : 'Plano ativo'}</span>
         </Card>
         <div className="rise rise-1 neon-border flex flex-col gap-3 rounded-2xl bg-surface p-6">
           <span className="flex items-center gap-2 text-[14px] text-muted">
@@ -44,7 +44,7 @@ export function Plans() {
           {creditPacks.map((p, i) => (
             <div key={p.id} className={cx('rise lift relative flex flex-col gap-4 overflow-hidden rounded-2xl border bg-surface p-5', p.highlight ? 'border-accent' : 'border-line', `rise-${i + 1}`)}>
               {p.highlight && <Badge tone="accent" className="absolute right-4 top-4">Melhor valor</Badge>}
-              <ArtCredits className="h-24 w-24 rounded-2xl" />
+              <ClipArt clip={clips.creditos} className="h-24 w-24 rounded-2xl" />
               <span className="font-display text-[26px] font-extrabold">{formatCredits(p.credits)} créditos</span>
               <span className="text-[15px] text-muted">{p.price}</span>
               <Button variant={p.highlight ? 'primary' : 'secondary'} onClick={() => {
@@ -71,7 +71,7 @@ export function Plans() {
                 </div>
                 <span className="font-display text-[26px] font-extrabold">
                   {p.price}
-                  <span className="text-[14px] font-normal text-muted"> /mês</span>
+                  {p.price.startsWith('R$') && <span className="text-[14px] font-normal text-muted"> /mês</span>}
                 </span>
                 <span className="text-[14px] font-semibold text-accent-text">{p.credits}</span>
                 <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
