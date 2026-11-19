@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import { tints, type Tint } from '../data/mock'
 import { go, type Route } from '../lib/router'
+import logoPlotoon from '../assets/marca/logo-plotoon.webp'
 
 export function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
@@ -11,18 +12,8 @@ export function cx(...parts: Array<string | false | null | undefined>) {
 /* ---------- Marca ---------- */
 
 export function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
-  const box = size === 'lg' ? 'h-9 w-9 rounded-[10px]' : size === 'sm' ? 'h-7 w-7 rounded-[8px]' : 'h-8 w-8 rounded-[9px]'
-  const eye = size === 'lg' ? 'h-[11px] w-[5px]' : 'h-[9px] w-[5px]'
-  const text = size === 'lg' ? 'text-[23px]' : size === 'sm' ? 'text-[18px]' : 'text-[20px]'
-  return (
-    <span className="inline-flex items-center gap-2.5">
-      <span aria-hidden className={cx(box, 'flex items-center justify-center gap-[4px] bg-accent')}>
-        <span className={cx(eye, 'rounded-full bg-accent-ink')} />
-        <span className={cx(eye, 'rounded-full bg-accent-ink')} />
-      </span>
-      <span className={cx(text, 'font-display font-extrabold tracking-[-0.02em] text-ink')}>plotoon</span>
-    </span>
-  )
+  const h = size === 'lg' ? 'h-9' : size === 'sm' ? 'h-7' : 'h-8'
+  return <img src={logoPlotoon} alt="Plotoon" width={645} height={128} className={cx(h, 'block w-auto select-none')} draggable={false} />
 }
 
 /* ---------- Botões e links ---------- */
