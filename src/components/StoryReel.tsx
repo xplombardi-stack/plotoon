@@ -16,6 +16,10 @@ import traderEscritorio from '../assets/historias/trader-escritorio.webp'
 import traderEscritorioMp4 from '../assets/historias/trader-escritorio.mp4'
 import carroNovo from '../assets/historias/carro-novo.webp'
 import carroNovoMp4 from '../assets/historias/carro-novo.mp4'
+import traderDecisao from '../assets/historias/trader-decisao.webp'
+import traderDecisaoMp4 from '../assets/historias/trader-decisao.mp4'
+import outroLado from '../assets/historias/outro-lado-da-linha.webp'
+import outroLadoMp4 from '../assets/historias/outro-lado-da-linha.mp4'
 
 type Story = { title: string; video: string; poster: string }
 
@@ -27,6 +31,8 @@ export const stories: Story[] = [
   { title: 'Só se vive uma vez', video: festaRisadaMp4, poster: festaRisada },
   { title: 'Do quarto pro escritório', video: traderEscritorioMp4, poster: traderEscritorio },
   { title: 'O carro novo', video: carroNovoMp4, poster: carroNovo },
+  { title: 'A decisão', video: traderDecisaoMp4, poster: traderDecisao },
+  { title: 'Do outro lado da linha', video: outroLadoMp4, poster: outroLado },
 ]
 
 function StoryCard({ s, className, label = true }: { s: Story; className?: string; label?: boolean }) {
@@ -64,9 +70,9 @@ export function StoryReel({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg
 // Colunas subindo e descendo (painel do login)
 export function StoryColumns({ className }: { className?: string }) {
   const cols = [
-    { items: [stories[0], stories[3], stories[6], stories[1]], dir: 'up', dur: '46s' },
-    { items: [stories[2], stories[5], stories[4], stories[0]], dir: 'down', dur: '54s' },
-    { items: [stories[4], stories[1], stories[3], stories[2]], dir: 'up', dur: '50s' },
+    { items: [stories[0], stories[3], stories[6]], dir: 'up', dur: '42s' },
+    { items: [stories[2], stories[7], stories[5]], dir: 'down', dur: '50s' },
+    { items: [stories[4], stories[8], stories[1]], dir: 'up', dur: '46s' },
   ]
   return (
     <div aria-hidden className={cx('reel-cols grid grid-cols-3 gap-4', className)}>
