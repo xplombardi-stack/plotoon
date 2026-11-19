@@ -20,16 +20,31 @@ import traderDecisao from '../assets/historias/trader-decisao.webp'
 import traderDecisaoMp4 from '../assets/historias/trader-decisao.mp4'
 import outroLado from '../assets/historias/outro-lado-da-linha.webp'
 import outroLadoMp4 from '../assets/historias/outro-lado-da-linha.mp4'
+import vendedorDuvidou from '../assets/historias/vendedor-duvidou.webp'
+import vendedorDuvidouMp4 from '../assets/historias/vendedor-duvidou.mp4'
+import talvezProxima from '../assets/historias/talvez-da-proxima.webp'
+import talvezProximaMp4 from '../assets/historias/talvez-da-proxima.mp4'
+import chamaramPobre from '../assets/historias/chamaram-de-pobre.webp'
+import chamaramPobreMp4 from '../assets/historias/chamaram-de-pobre.mp4'
+import eraAlugado from '../assets/historias/era-alugado.webp'
+import eraAlugadoMp4 from '../assets/historias/era-alugado.mp4'
+import carroChegou from '../assets/historias/o-carro-dele-chegou.webp'
+import carroChegouMp4 from '../assets/historias/o-carro-dele-chegou.mp4'
 
 type Story = { title: string; video: string; poster: string }
 
 export const stories: Story[] = [
   { title: 'A ligação da festa', video: ligacaoFestaMp4, poster: ligacaoFesta },
+  { title: 'O vendedor duvidou', video: vendedorDuvidouMp4, poster: vendedorDuvidou },
   { title: 'Madrugada no trade', video: traderNoiteMp4, poster: traderNoite },
+  { title: 'Chamaram ele de pobre', video: chamaramPobreMp4, poster: chamaramPobre },
   { title: '1 ano depois', video: pontoOnibusMp4, poster: pontoOnibus },
   { title: 'O gráfico virou', video: traderViradaMp4, poster: traderVirada },
+  { title: 'Era alugado?', video: eraAlugadoMp4, poster: eraAlugado },
   { title: 'Só se vive uma vez', video: festaRisadaMp4, poster: festaRisada },
+  { title: 'Talvez da próxima', video: talvezProximaMp4, poster: talvezProxima },
   { title: 'Do quarto pro escritório', video: traderEscritorioMp4, poster: traderEscritorio },
+  { title: 'O carro dele chegou', video: carroChegouMp4, poster: carroChegou },
   { title: 'O carro novo', video: carroNovoMp4, poster: carroNovo },
   { title: 'A decisão', video: traderDecisaoMp4, poster: traderDecisao },
   { title: 'Do outro lado da linha', video: outroLadoMp4, poster: outroLado },
@@ -70,9 +85,9 @@ export function StoryReel({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg
 // Colunas subindo e descendo (painel do login)
 export function StoryColumns({ className }: { className?: string }) {
   const cols = [
-    { items: [stories[0], stories[3], stories[6]], dir: 'up', dur: '42s' },
-    { items: [stories[2], stories[7], stories[5]], dir: 'down', dur: '50s' },
-    { items: [stories[4], stories[8], stories[1]], dir: 'up', dur: '46s' },
+    { items: [stories[0], stories[3], stories[6], stories[9]], dir: 'up', dur: '52s' },
+    { items: [stories[1], stories[4], stories[7], stories[10]], dir: 'down', dur: '60s' },
+    { items: [stories[2], stories[5], stories[8], stories[13]], dir: 'up', dur: '56s' },
   ]
   return (
     <div aria-hidden className={cx('reel-cols grid grid-cols-3 gap-4', className)}>
