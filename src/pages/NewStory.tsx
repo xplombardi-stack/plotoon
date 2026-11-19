@@ -258,7 +258,11 @@ export function NewStory() {
                     className="press flex cursor-pointer flex-col items-center gap-2 text-ink"
                   >
                     <span className={cx('relative aspect-square w-full overflow-hidden rounded-2xl border-2 bg-gradient-to-b from-[#1e3550] to-[#0f1825] transition-all', on ? 'border-accent glow-accent' : 'border-transparent')}>
-                      <Toon look={c.look} className="absolute inset-x-0 bottom-0 w-full" />
+                      {c.image ? (
+                        <img src={c.image} alt="" className="absolute inset-0 h-full w-full object-cover object-top" />
+                      ) : (
+                        <Toon look={c.look} className="absolute inset-x-0 bottom-0 w-full" />
+                      )}
                       {on && (
                         <span className="pop absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-ink">
                           <Check size={14} strokeWidth={3} />

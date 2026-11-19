@@ -33,7 +33,7 @@ export function Plans() {
           <ul className="m-0 flex list-none flex-col gap-2 p-0 text-[15px]">
             <li className="flex justify-between gap-3"><span>1 parte de vídeo ({SECONDS_PER_PART}s)</span><strong>{CREDITS_PER_PART}</strong></li>
             <li className="flex justify-between gap-3"><span>Refazer 1 parte</span><strong>{CREDITS_REDO_PART}</strong></li>
-            <li className="flex justify-between gap-3"><span>Criar 1 personagem</span><strong>{CREDITS_PER_CHARACTER}</strong></li>
+            <li className="flex justify-between gap-3"><span>Gerar 1 boneco</span><strong>{CREDITS_PER_CHARACTER}</strong></li>
           </ul>
         </Card>
       </div>

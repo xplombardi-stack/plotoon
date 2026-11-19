@@ -2,10 +2,10 @@ import type { ChangeEvent } from 'react'
 import { useState } from 'react'
 import { Check, Coins, ImagePlus, Lock, Plus, RefreshCw } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
-import { ArtCharacter, Toon, randomLook, type ToonLook } from '../components/art'
+import { ArtCharacter, Toon, type ToonLook } from '../components/art'
 import { Badge, Button, Card, LinkButton, PageHeader, cx, go, useToast } from '../components/ui'
 import { CREDITS_PER_CHARACTER, formatCredits } from '../lib/pricing'
-import { photoThumb, styleList, timeAgo, useStore, type StyleId } from '../lib/store'
+import { photoThumb, styleList, timeAgo, useStore, type BonecoResult, type StyleId } from '../lib/store'
 
 const styleBg: Record<StyleId, string> = {
   cinema: 'from-[#4a2e1b] to-[#1a120d]',
@@ -40,7 +40,11 @@ export function Cast() {
           {characters.map((c, i) => (
             <article key={c.id} className="pop lift flex flex-col gap-3 rounded-[22px]" style={{ animationDelay: `${i * 50}ms` }}>
               <div className={cx('relative aspect-square overflow-hidden rounded-[22px] border border-line-strong bg-gradient-to-b', styleBg[c.style])}>
-                <Toon look={c.look} className="absolute inset-x-0 bottom-0 w-full" />
+                {c.image ? (
+                  <img src={c.image} alt={`Boneco de ${c.name}`} className="absolute inset-0 h-full w-full object-cover object-top" />
+                ) : (
+                  <Toon look={c.look} className="absolute inset-x-0 bottom-0 w-full" />
+                )}
                 <Badge tone="sky" className="absolute left-2.5 top-2.5 !bg-[#0a1a2bd9]">
                   <Lock size={12} aria-hidden /> Rosto travado
                 </Badge>
@@ -70,11 +74,13 @@ export function Cast() {
 
 export function NewCharacter() {
   const toast = useToast()
-  const { credits, addCharacter } = useStore()
+  const { credits, addCharacter, gerarBoneco } = useStore()
   const [photo, setPhoto] = useState<string | null>(null)
   const [style, setStyle] = useState<StyleId>('cinema')
   const [name, setName] = useState('')
   const [look, setLook] = useState<ToonLook | null>(null)
+  const [made, setMade] = useState<Extract<BonecoResult, { ok: true }> | null>(null)
+  const [madeStyle, setMadeStyle] = useState<StyleId>('cinema')
   const [working, setWorking] = useState(false)
 
   async function onFile(e: ChangeEvent<HTMLInputElement>) {
@@ -83,17 +89,29 @@ export function NewCharacter() {
     try {
       setPhoto(await photoThumb(file))
       setLook(null)
+      setMade(null)
     } catch {
       toast.show('Não deu pra abrir essa foto. Tenta outra.')
     }
   }
 
-  function generate() {
+  async function generate() {
+    if (!photo || working) return
+    if (credits < CREDITS_PER_CHARACTER) return toast.show('Créditos insuficientes')
     setWorking(true)
-    window.setTimeout(() => {
-      setLook(randomLook())
-      setWorking(false)
-    }, 1800)
+    const r = await gerarBoneco(photo, style)
+    setWorking(false)
+    if (!r.ok) {
+      const msg: Record<string, string> = {
+        creditos_insuficientes: 'Créditos insuficientes',
+        foto_recusada: 'Não deu pra usar essa foto. Tenta outra, com o rosto de frente e boa luz.',
+        boneco_sem_chave: 'A geração de boneco ainda não foi ligada.',
+      }
+      return toast.show(msg[r.error] ?? 'Não deu pra gerar agora. Seus créditos foram devolvidos.')
+    }
+    setMade(r)
+    setMadeStyle(style)
+    setLook(r.look)
   }
 
   const [saving, setSaving] = useState(false)
@@ -101,9 +119,17 @@ export function NewCharacter() {
   async function save() {
     if (!look || saving) return
     setSaving(true)
-    const ok = await addCharacter({ name: name.trim().toUpperCase(), style, look, photo: photo ?? undefined })
+    const ok = await addCharacter({
+      name: name.trim().toUpperCase(),
+      style: madeStyle,
+      look,
+      photo: photo ?? undefined,
+      image: made?.image,
+      imagePath: made?.imagePath,
+      photoPath: made?.photoPath,
+    })
     setSaving(false)
-    if (!ok) return toast.show(credits < CREDITS_PER_CHARACTER ? 'Créditos insuficientes' : 'Não deu pra salvar agora. Tenta de novo.')
+    if (!ok) return toast.show('Não deu pra salvar agora. Tenta de novo.')
     toast.show(`${name.trim().toUpperCase()} entrou pro elenco`)
     let back: string | null = null
     try {
@@ -119,7 +145,7 @@ export function NewCharacter() {
     <AppShell active="novo-personagem">
       <PageHeader
         title="Criar personagem"
-        subtitle={`Custa ${CREDITS_PER_CHARACTER} créditos · você tem ${formatCredits(credits)}`}
+        subtitle={`Cada boneco gerado custa ${CREDITS_PER_CHARACTER} créditos · você tem ${formatCredits(credits)}`}
         actions={
           <Button size="lg" disabled={!look || !name.trim() || saving} onClick={save} className={look && name.trim() ? 'pulse' : undefined}>
             <Check size={18} /> Salvar no elenco
@@ -165,10 +191,7 @@ export function NewCharacter() {
                   type="button"
                   role="radio"
                   aria-checked={on}
-                  onClick={() => {
-                    setStyle(s.id)
-                    setLook(null)
-                  }}
+                  onClick={() => setStyle(s.id)}
                   className={cx('press flex cursor-pointer items-center gap-3 rounded-[18px] border-2 p-2 text-left transition-all', on ? 'border-accent bg-[#17130f] glow-accent' : 'border-line bg-[#0f1218] hover:border-line-strong')}
                 >
                   <span className={cx('relative h-[72px] w-24 shrink-0 overflow-hidden rounded-[12px] bg-gradient-to-b', styleBg[s.id])}>
@@ -183,10 +206,10 @@ export function NewCharacter() {
           <Button size="lg" className="mt-auto w-full" disabled={!photo || working} onClick={generate}>
             {working ? 'Gerando…' : look ? (
               <>
-                <RefreshCw size={16} /> Gerar outro
+                <RefreshCw size={16} /> Gerar outro · {CREDITS_PER_CHARACTER}
               </>
             ) : (
-              'Gerar boneco'
+              <>Gerar boneco · {CREDITS_PER_CHARACTER} créditos</>
             )}
           </Button>
           {!photo && <p className="m-0 text-center text-[13px] text-subtle">Envie a foto primeiro.</p>}
@@ -199,8 +222,12 @@ export function NewCharacter() {
           </h2>
           {look ? (
             <>
-              <div className={cx('pop relative aspect-[3/4] overflow-hidden rounded-[18px] bg-gradient-to-b', styleBg[style])}>
-                <Toon look={look} className="float absolute inset-x-0 bottom-0 w-full" />
+              <div className={cx('pop relative aspect-[3/4] overflow-hidden rounded-[18px] bg-gradient-to-b', styleBg[madeStyle])}>
+                {made?.image ? (
+                  <img src={made.image} alt="Seu boneco 3D" className="absolute inset-0 h-full w-full object-cover" />
+                ) : (
+                  <Toon look={look} className="float absolute inset-x-0 bottom-0 w-full" />
+                )}
                 <Badge tone="sky" className="absolute right-2.5 top-2.5 !bg-[#0a1a2bd9]">
                   <Lock size={12} aria-hidden /> Rosto travado
                 </Badge>

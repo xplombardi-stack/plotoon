@@ -1,7 +1,7 @@
 // Estado do app. Na prévia fica no navegador; no ar, lê e grava no Supabase.
 import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { sampleLooks, type Backdrop, type ToonLook } from '../components/art'
+import { randomLook, sampleLooks, type Backdrop, type ToonLook } from '../components/art'
 import type { Part, Tone } from './director'
 import { CREDITS_PER_CHARACTER, CREDITS_REDO_PART, storyCost } from './pricing'
 import { useAuth } from './auth'
@@ -21,6 +21,7 @@ export type Character = {
   style: StyleId
   look: ToonLook
   photo?: string
+  image?: string
   createdAt: number
 }
 
@@ -50,12 +51,14 @@ type State = {
   loaded: boolean
 }
 
-type NewCharacter = Omit<Character, 'id' | 'createdAt'>
+type NewCharacter = Omit<Character, 'id' | 'createdAt'> & { imagePath?: string; photoPath?: string }
+export type BonecoResult = { ok: true; look: ToonLook; image?: string; imagePath?: string; photoPath?: string } | { ok: false; error: string }
 type NewStory = { title: string; idea: string; tone: Tone; characterIds: string[]; parts: Part[] }
 
 type Store = State & {
   live: boolean
   setName: (name: string) => void
+  gerarBoneco: (foto: string, style: StyleId) => Promise<BonecoResult>
   addCharacter: (c: NewCharacter) => Promise<boolean>
   createStory: (s: NewStory) => Promise<string | null>
   updatePart: (storyId: string, num: number, patch: Partial<Part>) => void
@@ -121,14 +124,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!supabase || !userId) return
     const [prof, chars, sts, scs, links, tx] = await Promise.all([
       supabase.from('profiles').select('name, plan, credits').eq('id', userId).single(),
-      supabase.from('characters').select('id, name, style, look, photo_path, created_at').order('created_at', { ascending: false }),
+      supabase.from('characters').select('id, name, style, look, photo_path, image_path, created_at').order('created_at', { ascending: false }),
       supabase.from('stories').select('id, title, idea, tone, status, created_at').order('created_at', { ascending: false }),
       supabase.from('scenes').select('story_id, position, beat, description, dialogue, prompt, backdrop, status').order('position'),
       supabase.from('story_characters').select('story_id, character_id'),
       supabase.from('credit_transactions').select('id, amount, reason, created_at').order('created_at', { ascending: false }).limit(30),
     ])
 
-    const paths = (chars.data ?? []).map((c) => c.photo_path).filter(Boolean) as string[]
+    const paths = (chars.data ?? []).flatMap((c) => [c.photo_path, c.image_path]).filter(Boolean) as string[]
     const signed: Record<string, string> = {}
     if (paths.length) {
       const { data } = await supabase.storage.from('media').createSignedUrls(paths, 60 * 60)
@@ -143,6 +146,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       style: (c.style ?? 'cinema') as StyleId,
       look: (c.look as ToonLook | null) ?? lookFor(c.id),
       photo: c.photo_path ? signed[c.photo_path] : undefined,
+      image: c.image_path ? signed[c.image_path] : undefined,
       createdAt: new Date(c.created_at).getTime(),
     }))
 
@@ -229,12 +233,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const store = useMemo<Store>(() => {
     const local = {
       setName: (name: string) => setState((st) => ({ ...st, name })),
+      gerarBoneco: async (): Promise<BonecoResult> => {
+        if (state.credits < CREDITS_PER_CHARACTER) return { ok: false, error: 'creditos_insuficientes' }
+        setState((st) => spendLocal(st, CREDITS_PER_CHARACTER, 'Boneco 3D') ?? st)
+        await new Promise((r) => window.setTimeout(r, 1800))
+        return { ok: true, look: randomLook() }
+      },
       addCharacter: async (c: NewCharacter) => {
-        if (state.credits < CREDITS_PER_CHARACTER) return false
-        setState((st) => {
-          const after = spendLocal(st, CREDITS_PER_CHARACTER, `Personagem ${c.name}`)
-          return after ? { ...after, characters: [{ ...c, id: uid(), createdAt: Date.now() }, ...after.characters] } : st
-        })
+        const { imagePath: _i, photoPath: _p, ...rest } = c
+        void _i
+        void _p
+        setState((st) => ({ ...st, characters: [{ ...rest, id: uid(), createdAt: Date.now() }, ...st.characters] }))
         return true
       },
       createStory: async (s: NewStory) => {
@@ -272,15 +281,39 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setState((st) => ({ ...st, name }))
         if (supabase && userId) supabase.from('profiles').update({ name }).eq('id', userId).then(() => undefined)
       },
+      gerarBoneco: async (foto: string, style: StyleId): Promise<BonecoResult> => {
+        if (!supabase) return { ok: false, error: 'falha_boneco' }
+        const { data, error } = await supabase.functions.invoke('boneco', { body: { foto, estilo: style } })
+        if (error) {
+          let code = 'falha_boneco'
+          try {
+            const ctx = (error as { context?: Response }).context
+            const body = ctx ? await ctx.json() : null
+            if (body?.error) code = String(body.error)
+          } catch {
+            /* sem detalhe */
+          }
+          await reload()
+          return { ok: false, error: code }
+        }
+        await reload()
+        return { ok: true, look: randomLook(), image: data?.imagem, imagePath: data?.imagem_path, photoPath: data?.foto_path }
+      },
       addCharacter: async (c: NewCharacter) => {
         if (!supabase || !userId) return false
-        let photoPath: string | null = null
-        if (c.photo?.startsWith('data:')) {
+        let photoPath: string | null = c.photoPath ?? null
+        if (!photoPath && c.photo?.startsWith('data:')) {
           photoPath = `${userId}/fotos/${Date.now()}.jpg`
           const { error } = await supabase.storage.from('media').upload(photoPath, dataUrlToBlob(c.photo), { contentType: 'image/jpeg' })
           if (error) photoPath = null
         }
-        const { error } = await supabase.rpc('save_character', { p_name: c.name, p_style: c.style, p_look: c.look, p_photo_path: photoPath })
+        const { error } = await supabase.rpc('save_character', {
+          p_name: c.name,
+          p_style: c.style,
+          p_look: c.look,
+          p_photo_path: photoPath,
+          p_image_path: c.imagePath ?? null,
+        })
         if (error) return false
         await reload()
         return true
@@ -362,12 +395,11 @@ export function timeAgo(ts: number) {
 }
 
 // Reduz a foto pra uma miniatura leve
-export function photoThumb(file: File): Promise<string> {
+export function photoThumb(file: File, size = 1024): Promise<string> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img = new Image()
     img.onload = () => {
-      const size = 480
       const c = document.createElement('canvas')
       c.width = size
       c.height = size
