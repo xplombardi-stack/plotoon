@@ -30,6 +30,10 @@ import eraAlugado from '../assets/historias/era-alugado.webp'
 import eraAlugadoMp4 from '../assets/historias/era-alugado.mp4'
 import carroChegou from '../assets/historias/o-carro-dele-chegou.webp'
 import carroChegouMp4 from '../assets/historias/o-carro-dele-chegou.mp4'
+import entrouCamiseta from '../assets/historias/entrou-de-camiseta.webp'
+import entrouCamisetaMp4 from '../assets/historias/entrou-de-camiseta.mp4'
+import chaveNaMao from '../assets/historias/a-chave-na-mao.webp'
+import chaveNaMaoMp4 from '../assets/historias/a-chave-na-mao.mp4'
 
 type Story = { title: string; video: string; poster: string }
 
@@ -37,6 +41,7 @@ export const stories: Story[] = [
   { title: 'A ligação da festa', video: ligacaoFestaMp4, poster: ligacaoFesta },
   { title: 'O vendedor duvidou', video: vendedorDuvidouMp4, poster: vendedorDuvidou },
   { title: 'Madrugada no trade', video: traderNoiteMp4, poster: traderNoite },
+  { title: 'Entrou de camiseta', video: entrouCamisetaMp4, poster: entrouCamiseta },
   { title: 'Chamaram ele de pobre', video: chamaramPobreMp4, poster: chamaramPobre },
   { title: '1 ano depois', video: pontoOnibusMp4, poster: pontoOnibus },
   { title: 'O gráfico virou', video: traderViradaMp4, poster: traderVirada },
@@ -46,6 +51,7 @@ export const stories: Story[] = [
   { title: 'Do quarto pro escritório', video: traderEscritorioMp4, poster: traderEscritorio },
   { title: 'O carro dele chegou', video: carroChegouMp4, poster: carroChegou },
   { title: 'O carro novo', video: carroNovoMp4, poster: carroNovo },
+  { title: 'A chave na mão', video: chaveNaMaoMp4, poster: chaveNaMao },
   { title: 'A decisão', video: traderDecisaoMp4, poster: traderDecisao },
   { title: 'Do outro lado da linha', video: outroLadoMp4, poster: outroLado },
 ]
@@ -85,9 +91,9 @@ export function StoryReel({ size = 'md', className }: { size?: 'sm' | 'md' | 'lg
 // Colunas subindo e descendo (painel do login)
 export function StoryColumns({ className }: { className?: string }) {
   const cols = [
-    { items: [stories[0], stories[3], stories[6], stories[9]], dir: 'up', dur: '52s' },
-    { items: [stories[1], stories[4], stories[7], stories[10]], dir: 'down', dur: '60s' },
-    { items: [stories[2], stories[5], stories[8], stories[13]], dir: 'up', dur: '56s' },
+    { items: [stories[0], stories[3], stories[6], stories[9], stories[12]], dir: 'up', dur: '64s' },
+    { items: [stories[1], stories[4], stories[7], stories[10], stories[13]], dir: 'down', dur: '74s' },
+    { items: [stories[2], stories[5], stories[8], stories[11], stories[14]], dir: 'up', dur: '68s' },
   ]
   return (
     <div aria-hidden className={cx('reel-cols grid grid-cols-3 gap-4', className)}>
