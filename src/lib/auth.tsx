@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
-import { DEMO, supabase } from './supabase'
+import { DEMO, authReturn, supabase } from './supabase'
+import { go } from './router'
 
 export type Profile = {
   id: string
@@ -47,6 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       setReady(true)
+      // veio do link do e-mail: confirmação leva pro Início, troca de senha leva pra Conta
+      if (authReturn === 'erro') go('entrar')
+      else if (authReturn && data.session) go(authReturn === 'recovery' ? 'conta' : 'inicio')
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => sub.subscription.unsubscribe()
@@ -79,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { name }, emailRedirectTo: window.location.origin + window.location.pathname + '#inicio' },
+        options: { data: { name }, emailRedirectTo: window.location.origin + '/' },
       })
       if (error) return { error: pt(error.message), needsConfirm: false }
       return { error: null, needsConfirm: !data.session }
@@ -88,14 +92,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) return null
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + window.location.pathname + '#inicio' },
+        options: { redirectTo: window.location.origin + '/' },
       })
       return error ? pt(error.message) : null
     },
     async resetPassword(email) {
       if (!supabase) return null
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname + '#conta',
+        redirectTo: window.location.origin + '/',
       })
       return error ? pt(error.message) : null
     },
