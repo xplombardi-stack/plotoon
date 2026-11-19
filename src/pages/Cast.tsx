@@ -4,9 +4,9 @@ import { Check, Coins, ImagePlus, Lock, Plus, RefreshCw } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { Toon, type ToonLook } from '../components/art'
 import { ClipArt, clips } from '../components/Showcase'
-import estiloCinema from '../assets/historias/trader-escritorio.webp'
-import estiloFofinho from '../assets/historias/festa-risada.webp'
-import estiloRealista from '../assets/inicio/criador-trabalhando.webp'
+import estiloCinema from '../assets/estilos/estilo-cinema.webp'
+import estiloFofinho from '../assets/estilos/estilo-fofinho.webp'
+import estiloRealista from '../assets/estilos/estilo-realista.webp'
 
 const styleThumb: Record<StyleId, string> = { cinema: estiloCinema, fofinho: estiloFofinho, realista: estiloRealista }
 import { Badge, Button, Card, LinkButton, PageHeader, cx, go, useToast } from '../components/ui'
@@ -203,7 +203,7 @@ export function NewCharacter() {
                   className={cx('press flex cursor-pointer items-center gap-3 rounded-[18px] border-2 p-2 text-left transition-all', on ? 'border-accent bg-[#17130f] glow-accent' : 'border-line bg-[#0f1218] hover:border-line-strong')}
                 >
                   <span className="relative h-[72px] w-24 shrink-0 overflow-hidden rounded-[12px] bg-side">
-                    <img src={styleThumb[s.id]} alt="" className="absolute inset-0 h-full w-full object-cover object-[50%_25%]" />
+                    <img src={styleThumb[s.id]} alt="" className="absolute inset-0 h-full w-full object-cover" />
                   </span>
                   <span className="flex-1 text-[15px] font-semibold text-ink">{s.name}</span>
                   <span className={cx('mr-1 h-5 w-5 rounded-full border-2 transition-colors', on ? 'border-accent bg-accent' : 'border-[#3a4152]')} aria-hidden />
