@@ -3,6 +3,7 @@ import { plans } from '../data/mock'
 import { LoopVideo } from '../components/LoopVideo'
 import { clips, type Clip } from '../components/Showcase'
 import { StoryColumns, StoryReel } from '../components/StoryReel'
+import { StepEditor, StepIdea } from '../components/StepDemos'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
 import { CREDITS_PER_PART, SECONDS_PER_PART } from '../lib/pricing'
 
@@ -10,10 +11,10 @@ function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-const steps: Array<{ n: number; title: string; text: string; clip: Clip; pos: string }> = [
-  { n: 1, title: 'Crie seu boneco', text: 'Mande uma foto. Sai você em 3D, com o mesmo rosto em todas as cenas.', clip: clips.personagem, pos: '50% 28%' },
-  { n: 2, title: 'Conte a ideia', text: 'Uma frase basta. O Diretor escreve a história em partes.', clip: clips.roteiro, pos: '50% 25%' },
-  { n: 3, title: 'Poste o vídeo', text: 'As partes são geradas e montadas. Sai pronto em 9:16.', clip: clips.videos, pos: '50% 45%' },
+const steps: Array<{ n: number; title: string; text: string; clip: Clip; pos: string; demo?: 'ideia' | 'editor' }> = [
+  { n: 1, title: 'Crie seu boneco', text: 'Mande uma foto. Sai você em 3D, com o mesmo rosto em todas as cenas.', clip: clips.personagem, pos: '50% 30%' },
+  { n: 2, title: 'Conte a ideia', text: 'Uma frase basta. O Diretor escreve a história em partes.', clip: clips.roteiro, pos: '50% 25%', demo: 'ideia' },
+  { n: 3, title: 'Poste o vídeo', text: 'As partes são geradas e montadas. Sai pronto em 9:16.', clip: clips.videos, pos: '50% 45%', demo: 'editor' },
 ]
 
 const features = [
@@ -99,7 +100,13 @@ export function Landing() {
               {steps.map((s) => (
                 <article key={s.n} className="lift flex flex-col overflow-hidden rounded-[22px] border border-line bg-surface">
                   <div className="aspect-[4/3] overflow-hidden bg-side">
-                    <LoopVideo src={s.clip.video} poster={s.clip.poster} style={{ objectPosition: s.pos }} className="h-full w-full object-cover" />
+                    {s.demo === 'ideia' ? (
+                      <StepIdea className="h-full w-full" />
+                    ) : s.demo === 'editor' ? (
+                      <StepEditor className="h-full w-full" />
+                    ) : (
+                      <LoopVideo src={s.clip.video} poster={s.clip.poster} style={{ objectPosition: s.pos }} className="h-full w-full object-cover" />
+                    )}
                   </div>
                   <div className="flex flex-col gap-2 p-5">
                     <span className="flex items-center gap-3">
