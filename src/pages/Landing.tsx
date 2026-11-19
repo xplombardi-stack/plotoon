@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react'
 import { ArrowRight, Check, ChevronDown, Clapperboard, Coins, Layers, Lock, Play } from 'lucide-react'
-import { examples, plans } from '../data/mock'
-import { ArtCharacter, ArtStory, ArtVideos, Scene } from '../components/art'
+import { plans } from '../data/mock'
+import { LoopVideo } from '../components/LoopVideo'
+import { HeroCreators, clips, type Clip } from '../components/Showcase'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
 import { CREDITS_PER_PART, SECONDS_PER_PART } from '../lib/pricing'
 
@@ -9,10 +9,16 @@ function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-const steps: Array<{ n: number; title: string; text: string; art: ReactNode }> = [
-  { n: 1, title: 'Crie seu boneco', text: 'Mande uma foto. Sai você em 3D, com o mesmo rosto em todas as cenas.', art: <ArtCharacter className="h-full w-full" /> },
-  { n: 2, title: 'Conte a ideia', text: 'Uma frase basta. O Diretor escreve a história em partes.', art: <ArtStory className="h-full w-full" /> },
-  { n: 3, title: 'Poste o vídeo', text: 'As partes são geradas e montadas. Sai pronto em 9:16.', art: <ArtVideos className="h-full w-full" /> },
+const steps: Array<{ n: number; title: string; text: string; clip: Clip; pos: string }> = [
+  { n: 1, title: 'Crie seu boneco', text: 'Mande uma foto. Sai você em 3D, com o mesmo rosto em todas as cenas.', clip: clips.personagem, pos: '50% 28%' },
+  { n: 2, title: 'Conte a ideia', text: 'Uma frase basta. O Diretor escreve a história em partes.', clip: clips.roteiro, pos: '50% 25%' },
+  { n: 3, title: 'Poste o vídeo', text: 'As partes são geradas e montadas. Sai pronto em 9:16.', clip: clips.videos, pos: '50% 45%' },
+]
+
+const looks: Array<{ title: string; caption: string; clip: Clip; pos: string }> = [
+  { title: 'A primeira venda online', caption: 'Plim! Venda aprovada', clip: clips.notificacao, pos: '60% 50%' },
+  { title: 'Madrugada no computador', caption: 'Ninguém viu o começo', clip: clips.trabalhando, pos: '58% 50%' },
+  { title: 'O plano de cada cena', caption: 'Cada detalhe pensado', clip: clips.planejando, pos: '56% 50%' },
 ]
 
 const features = [
@@ -81,14 +87,7 @@ export function Landing() {
               </div>
             </div>
 
-            <div aria-hidden className="relative flex items-center justify-center gap-4">
-              <Scene backdrop={examples[2].backdrop} look={examples[2].look} className="float-late mt-16 aspect-[9/16] w-[30%] max-w-[170px] rounded-[20px] border border-line-strong" />
-              <div className="float relative w-[36%] max-w-[210px]">
-                <Scene backdrop={examples[0].backdrop} look={examples[0].look} className="block aspect-[9/16] w-full rounded-[22px] border border-accent-line glow-accent" />
-                <span className="absolute inset-x-3 bottom-6 text-center font-display text-[16px] font-extrabold uppercase leading-tight [text-shadow:0_2px_0_#000]">{examples[0].caption}</span>
-              </div>
-              <Scene backdrop={examples[4].backdrop} look={examples[4].look} className="float-slow mt-16 aspect-[9/16] w-[30%] max-w-[170px] rounded-[20px] border border-sky-line glow-sky" />
-            </div>
+            <HeroCreators layout="tall" />
           </div>
         </section>
 
@@ -99,7 +98,9 @@ export function Landing() {
             <div className="grid gap-5 md:grid-cols-3">
               {steps.map((s) => (
                 <article key={s.n} className="lift flex flex-col overflow-hidden rounded-[22px] border border-line bg-surface">
-                  <div className="aspect-[4/3] overflow-hidden">{s.art}</div>
+                  <div className="aspect-[4/3] overflow-hidden bg-side">
+                    <LoopVideo src={s.clip.video} poster={s.clip.poster} style={{ objectPosition: s.pos }} className="h-full w-full object-cover" />
+                  </div>
                   <div className="flex flex-col gap-2 p-5">
                     <span className="flex items-center gap-3">
                       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent font-display text-[16px] font-bold text-accent-ink shadow-[0_0_16px_#ff8a3d88]">{s.n}</span>
@@ -117,20 +118,21 @@ export function Landing() {
         <section id="exemplos" className="scroll-mt-20">
           <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-20 sm:px-8">
             <div className="flex flex-col items-center gap-3 text-center">
-              <h2 className="text-balance m-0 font-display text-[34px] font-extrabold tracking-[-0.03em] sm:text-[44px]">Feito no Plotoon</h2>
-              <p className="m-0 text-[16px] text-muted">Historinhas curtas, feitas pra prender do começo ao fim.</p>
+              <h2 className="text-balance m-0 font-display text-[34px] font-extrabold tracking-[-0.03em] sm:text-[44px]">O estilo dos seus vídeos</h2>
+              <p className="m-0 text-[16px] text-muted">Personagens 3D com cara de cinema, em vídeos curtos que prendem do começo ao fim.</p>
             </div>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              {examples.map((e, i) => (
-                <figure key={e.id} className={cx('lift m-0 flex flex-col gap-2.5 rounded-[20px]', i % 2 === 1 && 'lg:mt-8')}>
-                  <div className="relative aspect-[9/16] overflow-hidden rounded-[20px] border border-line-strong">
-                    <Scene backdrop={e.backdrop} look={e.look} className="absolute inset-0 h-full w-full" label={`Exemplo: ${e.title}`} />
-                    <span className="absolute left-1/2 top-[38%] flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur">
-                      <Play size={20} fill="currentColor" />
+            <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:mx-auto sm:grid sm:w-full sm:max-w-[920px] sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:px-0">
+              {looks.map((e, i) => (
+                <figure key={e.title} className={cx('lift m-0 flex w-[72%] shrink-0 snap-center flex-col gap-3 rounded-[22px] sm:mx-auto sm:w-full sm:max-w-[300px]', i === 1 && 'sm:mt-10')}>
+                  <div className="relative aspect-[9/16] overflow-hidden rounded-[22px] border border-line-strong bg-side shadow-[0_24px_60px_-28px_#000]">
+                    <LoopVideo src={e.clip.video} poster={e.clip.poster} style={{ objectPosition: e.pos }} className="absolute inset-0 h-full w-full object-cover" />
+                    <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+                    <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur">
+                      <Play size={11} fill="currentColor" /> 9:16
                     </span>
-                    <span className="absolute inset-x-2 bottom-4 text-center font-display text-[13px] font-extrabold uppercase leading-tight [text-shadow:0_2px_0_#000]">{e.caption}</span>
+                    <span className="absolute inset-x-3 bottom-6 text-center font-display text-[20px] font-extrabold uppercase leading-[1.1] text-white [text-shadow:0_2px_0_#000,0_0_14px_rgba(0,0,0,.8)]">{e.caption}</span>
                   </div>
-                  <figcaption className="text-[14px] font-semibold">{e.title}</figcaption>
+                  <figcaption className="text-center text-[15px] font-semibold">{e.title}</figcaption>
                 </figure>
               ))}
             </div>

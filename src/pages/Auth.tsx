@@ -3,8 +3,7 @@ import { useState } from 'react'
 import { MailCheck } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
-import { examples } from '../data/mock'
-import { Scene } from '../components/art'
+import { HeroCreators } from '../components/Showcase'
 import { DEMO } from '../lib/supabase'
 import { Button, CheckDot, Logo, TextLink, go } from '../components/ui'
 
@@ -96,11 +95,7 @@ function Layout({ children }: { children: ReactNode }) {
             </span>
           ))}
         </div>
-        <div className="relative flex items-end gap-4">
-          <Scene backdrop={examples[3].backdrop} look={examples[3].look} className="float-late aspect-[9/16] w-[140px] rounded-2xl border border-line-strong" />
-          <Scene backdrop={examples[0].backdrop} look={examples[0].look} className="float aspect-[9/16] w-[170px] rounded-2xl border border-accent-line glow-accent" />
-          <Scene backdrop={examples[1].backdrop} look={examples[1].look} className="float-slow aspect-[9/16] w-[140px] rounded-2xl border border-sky-line" />
-        </div>
+        <HeroCreators layout="tall" className="!mx-0 max-w-[480px]" />
       </section>
     </div>
   )
