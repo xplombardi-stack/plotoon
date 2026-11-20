@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
-import { Coins, FolderOpen, House, LayoutGrid, Plus, Sparkles, X } from 'lucide-react'
+import { Coins, FolderOpen, House, LayoutGrid, Plus, X } from 'lucide-react'
+import { MentorIcon } from './MentorIcon'
 import type { Route } from '../lib/router'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
@@ -142,7 +143,7 @@ function CreateGrid({ onPick }: { onPick?: () => void }) {
 }
 
 function BottomBar({ activeId, onCreate, onMore, moreOpen }: { activeId?: ModuleId; onCreate: () => void; onMore: () => void; moreOpen: boolean }) {
-  const tab = (id: ModuleId, label: string, Icon: typeof House) => {
+  const tab = (id: ModuleId, label: string, Icon: ComponentType<{ size?: number; strokeWidth?: number }>) => {
     const on = activeId === id
     return (
       <a href={`#${id}`} aria-current={on ? 'page' : undefined} className={cx('press flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-semibold no-underline', on ? 'text-accent' : 'text-muted')}>
@@ -157,7 +158,7 @@ function BottomBar({ activeId, onCreate, onMore, moreOpen }: { activeId?: Module
     <nav aria-label="Menu" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-side/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
       <div className="mx-auto flex max-w-[520px] items-end px-2">
         {tab('inicio', 'Início', House)}
-        {tab('mentor', 'Mentor', Sparkles)}
+        {tab('mentor', 'Mentor', MentorIcon)}
         <div className="flex flex-1 justify-center">
           <button
             type="button"

@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { ArrowRight, Clapperboard, Megaphone, Mic, Plus, Users, Wand2 } from 'lucide-react'
+import { ArrowRight, Check, Clapperboard, Clock, Coins, Megaphone, Mic, PackageOpen, Plus, UserRound, Users, Wand2, X } from 'lucide-react'
+import { MentorIcon } from '../components/MentorIcon'
+import { PRODUTO_PEDIDO, ProductVideoStudio, SampleProductVideo } from '../components/ProductVideo'
+import { CREDITS_PER_PRODUCT_VIDEO, CREDITS_PER_SECOND } from '../lib/pricing'
+import { go } from '../lib/router'
 import { AppShell } from '../components/AppShell'
 import { LoopVideo } from '../components/LoopVideo'
 import { ModuleHeader, SoonNotice, SoonPill } from '../components/Module'
@@ -11,13 +15,17 @@ import { timeAgo, useStore } from '../lib/store'
 import { useBusiness } from '../lib/business'
 
 const TABS = [
-  { id: 'historinhas', label: 'Historinhas', icon: Clapperboard, ready: true },
+  { id: 'produto', label: 'Vídeo do produto', icon: PackageOpen, ready: true },
+  { id: 'historinhas', label: 'Historinha com boneco', icon: Clapperboard, ready: true },
   { id: 'ia', label: 'Vídeo com IA', icon: Wand2, ready: false },
   { id: 'criativo', label: 'Criativo de anúncio', icon: Megaphone, ready: false },
   { id: 'avatar', label: 'Avatar falando', icon: Mic, ready: false },
 ] as const
 type Tab = (typeof TABS)[number]['id']
 const TAB_KEY = 'plotoon:aba-video'
+export const VIDEO_PEDIDO = 'plotoon:video-pedido'
+
+type Pedido = { ideia: string; titulo?: string; formato?: string }
 
 function Stories() {
   const { stories, characters, openStory } = useStore()
@@ -148,17 +156,140 @@ function SoonTab({ title, sub, examples, fields, cost }: { title: string; sub: s
   )
 }
 
+
+// Quando o Mentor (ou o Calendário) pede um vídeo: explica os 2 estilos antes de começar
+function Chooser({ pedido, onPick, onClose }: { pedido: Pedido; onPick: (s: 'produto' | 'historinha') => void; onClose: () => void }) {
+  const { characters } = useStore()
+  const sug = pedido.formato === 'produto' ? 'produto' : pedido.formato === 'historinha' ? 'historinha' : null
+  const cards = [
+    {
+      id: 'produto' as const,
+      title: 'Vídeo do produto',
+      sub: 'Seu produto em destaque, com texto animado, música e chamada pra ação. Ideal pra vitrine, loja e anúncio.',
+      steps: ['Você manda as fotos do produto', 'A IA escreve o roteiro (gancho, benefícios, oferta)', 'O vídeo aparece na hora: ajusta e baixa'],
+      facts: [
+        { icon: Clock, t: 'Pronto em 1 minuto' },
+        { icon: Coins, t: `${CREDITS_PER_PRODUCT_VIDEO} créditos` },
+        { icon: Check, t: 'Não precisa de boneco' },
+      ],
+      art: <SampleProductVideo className="h-full" />,
+      cta: 'Fazer vídeo do produto',
+    },
+    {
+      id: 'historinha' as const,
+      title: 'Historinha com boneco 3D',
+      sub: 'Você vira um personagem 3D numa historinha que prende do começo ao fim. Ideal pra viralizar e criar conexão.',
+      steps: [characters.length ? 'Seu boneco já está pronto' : 'Você cria seu boneco 1 vez (com uma foto)', 'O Diretor escreve a história em partes', 'A IA gera cada parte e junta num vídeo só'],
+      facts: [
+        { icon: Clock, t: 'Alguns minutos' },
+        { icon: Coins, t: `≈ ${CREDITS_PER_SECOND * 30} créditos (30s)` },
+        { icon: UserRound, t: characters.length ? 'Boneco pronto' : 'Precisa do boneco' },
+      ],
+      art: <LoopVideo src={reel[0].video} poster={reel[0].poster} className="absolute inset-0 h-full w-full object-cover" />,
+      cta: 'Fazer historinha',
+    },
+  ]
+  return (
+    <section className="rise flex flex-col gap-5 rounded-[26px] border border-accent-line bg-gradient-to-b from-[#ff8a3d14] to-transparent p-4 sm:p-6" aria-label="Escolha o estilo do vídeo">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-2">
+          <h2 className="m-0 font-display text-[23px] font-extrabold leading-tight sm:text-[26px]">Como você quer esse vídeo?</h2>
+          <p className="m-0 flex items-start gap-2 rounded-xl bg-bg/60 px-3 py-2 text-[14px] text-soft">
+            <MentorIcon size={17} className="mt-0.5 shrink-0 text-[#c4b5fd]" />
+            <span>
+              <strong className="font-semibold text-ink">{pedido.titulo || 'A ideia'}:</strong> {pedido.ideia}
+            </span>
+          </p>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted hover:bg-surface hover:text-ink">
+          <X size={20} />
+        </button>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {cards.map((c) => (
+          <article key={c.id} className={cx('flex min-w-0 gap-4 rounded-[22px] border bg-surface p-3.5 sm:p-4', sug === c.id ? 'border-accent' : 'border-line')}>
+            <span className="relative block aspect-[9/16] w-[38%] max-w-[170px] shrink-0 self-start overflow-hidden rounded-[16px] border border-line-strong">{c.art}</span>
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                {sug === c.id && (
+                  <Badge tone="violet" className="self-start">
+                    O Mentor indicou
+                  </Badge>
+                )}
+                <h3 className="m-0 font-display text-[19px] font-bold leading-tight">{c.title}</h3>
+                <p className="m-0 text-[13.5px] text-muted">{c.sub}</p>
+              </div>
+              <ol className="m-0 flex list-none flex-col gap-1.5 p-0">
+                {c.steps.map((s, i) => (
+                  <li key={s} className="flex items-start gap-2 text-[13px] text-soft">
+                    <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[11px] font-bold text-accent-text">{i + 1}</span>
+                    {s}
+                  </li>
+                ))}
+              </ol>
+              <div className="flex flex-wrap gap-1.5">
+                {c.facts.map((f) => (
+                  <span key={f.t} className="inline-flex items-center gap-1 rounded-full bg-bg/70 px-2.5 py-1 text-[12px] font-semibold text-soft">
+                    <f.icon size={13} /> {f.t}
+                  </span>
+                ))}
+              </div>
+              <Button onClick={() => onPick(c.id)} variant={sug === c.id || (!sug && c.id === 'produto') ? 'primary' : 'secondary'} className="mt-auto w-full">
+                {c.cta} <ArrowRight size={16} />
+              </Button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 const fieldCls = 'min-h-12 w-full rounded-[14px] border border-line-strong bg-bg/70 px-4 text-[15px] text-ink outline-none placeholder:text-subtle'
 
 export function VideoStudio() {
   const { business } = useBusiness()
   const [tab, setTab] = useState<Tab>(() => {
     try {
-      return (sessionStorage.getItem(TAB_KEY) as Tab) || 'historinhas'
+      return (sessionStorage.getItem(TAB_KEY) as Tab) || 'produto'
     } catch {
-      return 'historinhas'
+      return 'produto'
     }
   })
+  const [pedido, setPedido] = useState<Pedido | null>(() => {
+    try {
+      const raw = sessionStorage.getItem(VIDEO_PEDIDO)
+      return raw ? (JSON.parse(raw) as Pedido) : null
+    } catch {
+      return null
+    }
+  })
+  function closePedido() {
+    setPedido(null)
+    try {
+      sessionStorage.removeItem(VIDEO_PEDIDO)
+    } catch {
+      /* sem armazenamento */
+    }
+  }
+  function pickStyle(s: 'produto' | 'historinha') {
+    if (!pedido) return
+    try {
+      if (s === 'produto') sessionStorage.setItem(PRODUTO_PEDIDO, pedido.ideia)
+      else {
+        sessionStorage.setItem('plotoon:ideia', pedido.ideia)
+        sessionStorage.removeItem('plotoon:rascunho')
+      }
+    } catch {
+      /* sem armazenamento */
+    }
+    closePedido()
+    if (s === 'historinha') return go('nova-historinha')
+    pick('produto')
+    setReset((n) => n + 1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  const [reset, setReset] = useState(0)
   function pick(t: Tab) {
     setTab(t)
     try {
@@ -184,6 +315,8 @@ export function VideoStudio() {
         }
       />
 
+      {pedido && <Chooser pedido={pedido} onPick={pickStyle} onClose={closePedido} />}
+
       <div role="tablist" aria-label="Tipos de vídeo" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
         {TABS.map((t) => (
           <button
@@ -203,7 +336,8 @@ export function VideoStudio() {
         ))}
       </div>
 
-      <div role="tabpanel" key={tab}>
+      <div role="tabpanel" key={`${tab}-${reset}`}>
+        {tab === 'produto' && <ProductVideoStudio />}
         {tab === 'historinhas' && <Stories />}
         {tab === 'ia' && (
           <SoonTab

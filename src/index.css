@@ -209,46 +209,80 @@ html.custom-cursor * {
   cursor: none !important;
 }
 
-.cursor-dot,
-.cursor-ring {
+.plotoon-cursor {
   position: fixed;
   top: 0;
   left: 0;
-  pointer-events: none;
   z-index: 9999;
-  border-radius: 9999px;
+  pointer-events: none;
+  margin: -3px 0 0 -3px; /* a ponta da seta é o ponto do clique */
+  opacity: 0;
   will-change: transform;
 }
-.cursor-dot {
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
-  background: #ff8a3d;
-  box-shadow: 0 0 12px #ff8a3d;
+.plotoon-cursor.is-on { opacity: 1; }
+.plotoon-cursor > svg {
+  display: block;
+  transform-origin: 3px 3px;
+  filter: drop-shadow(0 0 3px #ff8a3d99) drop-shadow(0 2px 4px #0009);
+  transition: transform 0.28s var(--ease-spring), filter 0.25s ease;
+  animation: cursor-breathe 2.6s ease-in-out infinite;
 }
-.cursor-ring {
-  width: 34px;
-  height: 34px;
-  margin: -17px 0 0 -17px;
+.plotoon-cursor.is-hover > svg {
+  transform: scale(1.14);
+  filter: drop-shadow(0 0 7px #ff8a3d) drop-shadow(0 0 16px #ff8a3d88);
+  animation: none;
 }
-.cursor-ring > span {
+.plotoon-cursor.is-down > svg {
+  transform: scale(0.88);
+  filter: drop-shadow(0 0 10px #ff8a3d) drop-shadow(0 0 22px #ff8a3daa);
+}
+@keyframes cursor-breathe {
+  0%, 100% { filter: drop-shadow(0 0 3px #ff8a3d88) drop-shadow(0 2px 4px #0009); }
+  50% { filter: drop-shadow(0 0 7px #ff8a3dcc) drop-shadow(0 2px 4px #0009); }
+}
+
+/* clique: pulso circular laranja + risquinhos de destaque */
+.cursor-click {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9998;
+  pointer-events: none;
+}
+.cursor-click > span {
   position: absolute;
-  inset: 0;
+  left: -18px;
+  top: -18px;
+  width: 36px;
+  height: 36px;
   border-radius: 9999px;
-  border: 1.5px solid #ffb98acc;
-  transition: transform 0.35s var(--ease-spring), border-color 0.2s ease, border-style 0.2s;
+  border: 2px solid #ff8a3d;
+  animation: cursor-ripple 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
 }
-.cursor-ring.is-hover > span {
-  transform: scale(1.6);
-  border: 2px dashed #ff8a3d;
-  animation: cursor-spin 2.4s linear infinite;
+.cursor-click > span.r1 { background: radial-gradient(circle, #ff8a3d55, #ff8a3d00 70%); }
+.cursor-click > span.r2 { animation-delay: 0.08s; border-width: 1.5px; opacity: 0; }
+.cursor-click > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 10px;
+  border-radius: 3px;
+  background: #ff8a3d;
+  transform-origin: 50% 100%;
+  animation: cursor-spark 0.45s ease-out forwards;
 }
-.cursor-ring.is-down > span {
-  transform: scale(0.75);
+.cursor-click > i:nth-of-type(1) { --a: -20deg; }
+.cursor-click > i:nth-of-type(2) { --a: 25deg; }
+.cursor-click > i:nth-of-type(3) { --a: 70deg; }
+@keyframes cursor-ripple {
+  0% { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(2.1); opacity: 0; }
 }
-@keyframes cursor-spin {
-  from { rotate: 0deg; }
-  to { rotate: 360deg; }
+@keyframes cursor-spark {
+  0% { transform: rotate(var(--a)) translateY(-12px) scaleY(0.2); opacity: 0; }
+  35% { opacity: 1; }
+  100% { transform: rotate(var(--a)) translateY(-30px) scaleY(1); opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -289,3 +323,39 @@ html.custom-cursor * {
 /* borracha passando no ícone */
 @keyframes eraser { from { left: -40%; } to { left: 110%; } }
 .eraser { animation: eraser 0.38s linear both; }
+
+/* ---------- Antes e depois (cortina passando sozinha) ---------- */
+.ba-after { animation: ba-wipe 7s cubic-bezier(0.65, 0, 0.35, 1) infinite both; }
+.ba-line { animation: ba-line 7s cubic-bezier(0.65, 0, 0.35, 1) infinite both; }
+.ba-tag-antes { animation: ba-antes 7s linear infinite both; }
+.ba-tag-depois { animation: ba-depois 7s linear infinite both; }
+@keyframes ba-wipe {
+  0%, 14% { clip-path: inset(0 100% 0 0); }
+  42%, 84% { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 100% 0 0); }
+}
+@keyframes ba-line {
+  0%, 14% { left: 0%; opacity: 0; }
+  16% { opacity: 1; }
+  40% { left: 100%; opacity: 1; }
+  42%, 84% { left: 100%; opacity: 0; }
+  86% { opacity: 1; }
+  100% { left: 0%; opacity: 0; }
+}
+@keyframes ba-antes {
+  0%, 22% { opacity: 1; }
+  28%, 92% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes ba-depois {
+  0%, 34% { opacity: 0; }
+  40%, 84% { opacity: 1; }
+  90%, 100% { opacity: 0; }
+}
+/* no Estúdio de Imagem: a foto crua some e mostra a peça pronta, e volta */
+.ba-after-rev { animation: ba-rev 7s cubic-bezier(0.65, 0, 0.35, 1) infinite both; }
+@keyframes ba-rev {
+  0%, 14% { clip-path: inset(0 0 0 0); }
+  42%, 84% { clip-path: inset(0 0 0 100%); }
+  100% { clip-path: inset(0 0 0 0); }
+}

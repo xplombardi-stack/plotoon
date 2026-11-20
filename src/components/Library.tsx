@@ -110,7 +110,7 @@ export function useLibraryEntries(): Entry[] {
         title: i.title,
         createdAt: i.createdAt,
         image: i.preview,
-        video: i.file && /\.(mp4|webm|mov)(\?|$)/i.test(i.file) ? i.file : undefined,
+        video: i.file && (/\.(mp4|webm|mov)(\?|$)/i.test(i.file) || (i.kind === 'video' && i.file.startsWith('blob:'))) ? i.file : undefined,
         file: i.file,
         body: i.body,
         reuse: () => {

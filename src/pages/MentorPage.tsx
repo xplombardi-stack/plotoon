@@ -1,7 +1,8 @@
 // Mentor: chat com o Claude que conhece o negócio, lê prints e sugere ações.
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowRight, History, ImagePlus, MessageSquarePlus, Send, Sparkles, Trash2, X } from 'lucide-react'
+import { ArrowRight, AtSign, Camera, Check, History, ImagePlus, MessageSquarePlus, Send, Trash2, X } from 'lucide-react'
+import { MentorIcon } from '../components/MentorIcon'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader, ModuleIcon } from '../components/Module'
 import { Button, cx, useToast } from '../components/ui'
@@ -11,10 +12,11 @@ import { CREDITS_PER_MENTOR, CREDITS_PER_MENTOR_IMAGES } from '../lib/pricing'
 import { shrinkImage, timeAgo, useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
 
-type Msg = { id: string; role: 'user' | 'assistant'; text: string; images: string[]; actions: MentorAction[]; at: number }
+type Diag = { nota: number; itens: Array<{ area: string; status: 'bom' | 'melhorar' | 'falta' | 'nao_vi'; dica: string }> }
+type Msg = { id: string; role: 'user' | 'assistant'; text: string; images: string[]; actions: MentorAction[]; diag?: Diag | null; at: number }
 type Thread = { id: string; title: string; at: number }
 
-const SUGESTOES = ['Tô perdido no meu negócio. Por onde eu começo?', 'O que eu posto essa semana pra vender mais?', 'Quanto eu devo cobrar pelo meu produto?', 'Analisa meu Instagram (vou mandar os prints)']
+const SUGESTOES = ['Tô perdido no meu negócio. Por onde eu começo?', 'O que eu posto essa semana pra vender mais?', 'Quanto eu devo cobrar pelo meu produto?', 'Meu produto é bom mas não vende. O que eu faço?']
 
 /* ---------- texto com listas e negrito, sem HTML ---------- */
 function Inline({ text }: { text: string }) {
@@ -76,7 +78,7 @@ function Rich({ text }: { text: string }) {
   )
 }
 
-function ActionCards({ actions }: { actions: MentorAction[] }) {
+function ActionCards({ actions, onInstagram }: { actions: MentorAction[]; onInstagram: () => void }) {
   if (!actions.length) return null
   return (
     <div className="flex flex-col gap-2 rounded-[16px] border border-accent-line bg-[#ff8a3d0d] p-3">
@@ -86,9 +88,12 @@ function ActionCards({ actions }: { actions: MentorAction[] }) {
           <ModuleIcon id={ACTION_MODULE[a.tipo]} size="sm" />
           <span className="flex min-w-0 flex-1 basis-[160px] flex-col">
             <span className="text-[14px] font-semibold leading-snug text-ink">{a.titulo}</span>
-            <span className="line-clamp-2 text-[12.5px] text-muted">{a.detalhe}</span>
+            <span className="line-clamp-2 text-[12.5px] text-muted">
+              {a.tipo === 'video' && (a.formato === 'produto' || a.formato === 'historinha') && <strong className="font-semibold text-soft">{a.formato === 'produto' ? 'Vídeo do produto · ' : 'Historinha com boneco · '}</strong>}
+              {a.detalhe}
+            </span>
           </span>
-          <Button size="sm" onClick={() => runAction(a)} className="w-full shrink-0 sm:w-auto">
+          <Button size="sm" onClick={() => (a.tipo === 'instagram' ? onInstagram() : runAction(a))} className="w-full shrink-0 sm:w-auto">
             {ACTION_BUTTON[a.tipo]} <ArrowRight size={14} />
           </Button>
         </div>
@@ -97,7 +102,53 @@ function ActionCards({ actions }: { actions: MentorAction[] }) {
   )
 }
 
-function Bubble({ m }: { m: Msg }) {
+const DIAG_STATUS = {
+  bom: { label: 'Bom', dot: 'bg-[#34d399]', text: 'text-[#6ee7b7]' },
+  melhorar: { label: 'Melhorar', dot: 'bg-[#facc15]', text: 'text-[#fde68a]' },
+  falta: { label: 'Falta', dot: 'bg-[#ef4444]', text: 'text-[#fca5a5]' },
+  nao_vi: { label: 'Não deu pra ver', dot: 'bg-[#64748b]', text: 'text-muted' },
+} as const
+
+function DiagnosticCard({ d }: { d: Diag }) {
+  const pct = Math.max(0, Math.min(10, d.nota)) / 10
+  const cor = d.nota >= 7.5 ? '#34d399' : d.nota >= 5 ? '#facc15' : '#ff8a3d'
+  return (
+    <div className="pop flex flex-col gap-3 rounded-[16px] border border-line bg-surface p-3.5 sm:p-4">
+      <div className="flex items-center gap-3.5">
+        <span className="relative flex h-16 w-16 shrink-0 items-center justify-center">
+          <svg viewBox="0 0 64 64" className="absolute inset-0 -rotate-90">
+            <circle cx="32" cy="32" r="27" fill="none" stroke="#ffffff14" strokeWidth="7" />
+            <circle cx="32" cy="32" r="27" fill="none" stroke={cor} strokeWidth="7" strokeLinecap="round" strokeDasharray={`${pct * 169.6} 169.6`} />
+          </svg>
+          <span className="font-display text-[19px] font-extrabold text-ink">{d.nota.toLocaleString('pt-BR')}</span>
+        </span>
+        <span className="flex flex-col">
+          <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#c4b5fd]">Raio-x do Instagram</span>
+          <span className="text-[15px] font-semibold text-ink">Nota {d.nota.toLocaleString('pt-BR')} de 10</span>
+          <span className="text-[12.5px] text-muted">{d.itens.filter((i) => i.status === 'falta' || i.status === 'melhorar').length} pontos pra arrumar</span>
+        </span>
+      </div>
+      <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
+        {d.itens.map((it, i) => {
+          const st = DIAG_STATUS[it.status] ?? DIAG_STATUS.nao_vi
+          return (
+            <li key={i} className="flex gap-2.5 rounded-xl bg-bg/50 px-3 py-2.5">
+              <span className={cx('mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full', st.dot)} />
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="flex flex-wrap items-center gap-x-2 text-[13.5px] font-semibold text-ink">
+                  {it.area} <span className={cx('text-[11.5px] font-bold', st.text)}>{st.label}</span>
+                </span>
+                <span className="text-[13px] text-muted">{it.dica}</span>
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+function Bubble({ m, onInstagram }: { m: Msg; onInstagram: () => void }) {
   if (m.role === 'user')
     return (
       <div className="pop flex flex-col items-end gap-2">
@@ -118,36 +169,149 @@ function Bubble({ m }: { m: Msg }) {
         <div className="rounded-[18px] rounded-tl-md border border-line bg-surface px-4 py-3 text-[15px] leading-relaxed text-soft">
           <Rich text={m.text} />
         </div>
-        <ActionCards actions={m.actions} />
+        {m.diag && m.diag.itens?.length > 0 && <DiagnosticCard d={m.diag} />}
+        <ActionCards actions={m.actions} onInstagram={onInstagram} />
       </div>
     </div>
   )
 }
 
 /* ---------- prévia (sem IA): respostas de exemplo ---------- */
-function demoReply(q: string, nome: string, hasImages: boolean): { text: string; actions: MentorAction[] } {
-  if (hasImages || /instagram|insta|@/i.test(q))
-    return hasImages
-      ? {
-          text: `Olhei os prints do ${nome}. O que está travando:\n\n- **Bio sem chamada pra ação:** ninguém sabe como comprar.\n- **Fotos escuras:** o produto não brilha.\n- **Pouco vídeo:** o alcance fica baixo.\n\n**Próximo passo:** arruma a bio hoje e posta 1 vídeo amanhã.`,
-          actions: [
-            { tipo: 'copy', titulo: 'Bio nova que vende', detalhe: `Bio do Instagram do ${nome} com chamada pro WhatsApp`, formato: 'legenda' },
-            { tipo: 'video', titulo: 'Vídeo mostrando o produto', detalhe: `Historinha curta mostrando o produto do ${nome} sendo feito e entregue` },
-          ],
-        }
-      : { text: 'Bora! Eu não consigo abrir o Instagram, mas analiso pelos prints. Manda pelo clipe: **a bio**, **o feed** e **um post**.', actions: [] }
+function demoReply(q: string, nome: string, hasImages: boolean): { text: string; actions: MentorAction[]; diag?: Diag } {
+  if (hasImages)
+    return {
+      text: `Olhei o Instagram do ${nome}. As 3 coisas mais urgentes:\n\n- **Bio sem chamada pra ação:** quem chega não sabe como comprar.\n- **Fotos escuras:** o produto não brilha no feed.\n- **Quase nenhum Reels:** o alcance fica preso nos seus seguidores.\n\n**Primeiro passo:** arruma a bio hoje e posta 1 vídeo do produto amanhã.`,
+      diag: {
+        nota: 5.5,
+        itens: [
+          { area: 'Foto de perfil', status: 'bom', dica: 'A logo aparece bem, mantém.' },
+          { area: 'Nome e bio', status: 'melhorar', dica: 'Diga o que você vende e pra quem na primeira linha.' },
+          { area: 'Link e chamada', status: 'falta', dica: 'Coloque o link do WhatsApp com "Peça aqui".' },
+          { area: 'Visual do feed', status: 'melhorar', dica: 'Fotos mais claras e com fundo limpo.' },
+          { area: 'Vídeos e Reels', status: 'falta', dica: 'Poste 3 Reels por semana mostrando o produto.' },
+          { area: 'Prova social', status: 'melhorar', dica: 'Crie um destaque com prints de clientes.' },
+          { area: 'Preço e oferta', status: 'nao_vi', dica: 'Não deu pra ver nos prints: mostre a faixa de preço.' },
+        ],
+      },
+      actions: [
+        { tipo: 'copy', titulo: 'Bio nova que vende', detalhe: `Bio do Instagram do ${nome} com chamada pro WhatsApp`, formato: 'legenda' },
+        { tipo: 'video', titulo: 'Vídeo do produto pro feed', detalhe: `Vídeo curto mostrando o produto do ${nome} de perto, com o preço e chamada pro WhatsApp`, formato: 'produto' },
+      ],
+    }
+  if (/instagram|insta|@/i.test(q))
+    return { text: 'Bora! Eu analiso pelos prints. Toca em **Analisar meu Instagram** e manda 3 prints: **o perfil**, **o feed** e **um post**.', actions: [{ tipo: 'instagram', titulo: 'Analisar meu Instagram', detalhe: 'Perfil, feed e um post' }] }
   return {
-    text: `Pra ${nome}, eu começaria assim:\n\n- **Mostre o produto de perto** em vídeo curto.\n- **Uma oferta clara** essa semana.\n- **Peça pra comprar** em todo post.\n\n**Próximo passo:** faz o vídeo hoje.`,
-    actions: [{ tipo: 'video', titulo: 'Vídeo com virada', detalhe: `O cliente que duvidou e virou fã do ${nome}` }],
+    text: `Pra ${nome}, eu começaria assim:\n\n- **Mostre o produto de perto** em vídeo curto.\n- **Uma oferta clara** essa semana.\n- **Peça pra comprar** em todo post.\n\nAntes de te dar um plano fechado, me deixa ver o seu Instagram? Assim eu vejo o que está faltando.`,
+    actions: [
+      { tipo: 'instagram', titulo: 'Analisar meu Instagram', detalhe: 'Manda 3 prints: perfil, feed e um post' },
+      { tipo: 'video', titulo: 'Vídeo do produto', detalhe: `Vídeo curto mostrando o produto do ${nome} com oferta e chamada pro WhatsApp`, formato: 'produto' },
+    ],
   }
+}
+
+/* ---------- passo a passo: mandar os prints do Instagram ---------- */
+const SLOTS = [
+  { k: 'perfil', t: 'Seu perfil', d: 'O topo do perfil: foto, bio, link e destaques' },
+  { k: 'feed', t: 'Seu feed', d: 'Rola um pouco e tira print dos últimos posts' },
+  { k: 'post', t: 'Um post ou Reels', d: 'Um que você goste, com as curtidas aparecendo' },
+] as const
+
+function InstagramSheet({ arroba, onClose, onSend }: { arroba: string; onClose: () => void; onSend: (at: string, imgs: string[]) => void }) {
+  const [at, setAt] = useState(arroba)
+  const [imgs, setImgs] = useState<Record<string, string>>({})
+  const [slot, setSlot] = useState<string>('perfil')
+  const file = useRef<HTMLInputElement>(null)
+  const total = Object.keys(imgs).length
+
+  async function pick(f?: File | null) {
+    if (!f) return
+    try {
+      const d = await shrinkImage(f, 1400)
+      setImgs((x) => ({ ...x, [slot]: d }))
+    } catch {
+      /* imagem ruim */
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label="Analisar meu Instagram">
+      <button type="button" aria-label="Fechar" className="absolute inset-0 cursor-default bg-black/70" onClick={onClose} />
+      <div className="sheet-up relative flex max-h-[92vh] w-full max-w-[620px] flex-col gap-4 overflow-y-auto rounded-t-[26px] border border-line-strong bg-side p-5 pb-[max(20px,env(safe-area-inset-bottom))] sm:rounded-[26px] sm:p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white">
+              <Camera size={24} />
+            </span>
+            <div className="flex flex-col">
+              <h2 className="m-0 font-display text-[20px] font-extrabold leading-tight">Analisar meu Instagram</h2>
+              <span className="text-[13.5px] text-muted">O Mentor olha os prints e diz o que está faltando pra vender mais.</span>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full hover:bg-surface">
+            <X size={20} />
+          </button>
+        </div>
+
+        <label className="flex flex-col gap-2">
+          <span className="text-[14px] font-semibold text-ink">Seu @ no Instagram</span>
+          <span className="flex min-h-12 items-center gap-2 rounded-[14px] border border-line-strong bg-bg/70 px-3.5 focus-within:border-accent">
+            <AtSign size={17} className="text-muted" />
+            <input value={at} onChange={(e) => setAt(e.target.value.replace(/^@+/, '').replace(/\s/g, ''))} placeholder="seunegocio" maxLength={40} className="min-w-0 flex-1 bg-transparent text-[16px] text-ink outline-none placeholder:text-subtle" />
+          </span>
+        </label>
+
+        <div className="flex flex-col gap-2">
+          <span className="text-[14px] font-semibold text-ink">Mande 3 prints</span>
+          <div className="grid grid-cols-3 gap-2.5">
+            {SLOTS.map((s, i) => (
+              <button
+                key={s.k}
+                type="button"
+                onClick={() => {
+                  setSlot(s.k)
+                  file.current?.click()
+                }}
+                className={cx('press relative flex aspect-[9/14] cursor-pointer flex-col items-center justify-end gap-1 overflow-hidden rounded-[16px] border-2 p-2 text-center', imgs[s.k] ? 'border-[#34d399]' : 'border-dashed border-line-strong hover:border-accent')}
+              >
+                {imgs[s.k] ? (
+                  <>
+                    <img src={imgs[s.k]} alt={`Print: ${s.t}`} className="absolute inset-0 h-full w-full object-cover" />
+                    <span className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                    <span className="relative flex items-center gap-1 text-[12px] font-bold text-white">
+                      <Check size={13} strokeWidth={3} className="text-[#6ee7b7]" /> {s.t}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[12px] font-bold text-accent-ink">{i + 1}</span>
+                    <ImagePlus size={22} className="mb-auto mt-auto text-muted" />
+                    <span className="text-[12.5px] font-bold text-ink">{s.t}</span>
+                    <span className="text-[11px] leading-tight text-muted">{s.d}</span>
+                  </>
+                )}
+              </button>
+            ))}
+          </div>
+          <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} onChange={(e) => (pick(e.target.files?.[0]), (e.target.value = ''))} />
+          <p className="m-0 text-[12.5px] text-muted">No celular: abre seu perfil no Instagram e aperta os botões de tirar print. O Mentor só vê os prints que você mandar. Ler direto pelo @, sem print, vai chegar quando der pra conectar o Instagram.</p>
+        </div>
+
+        <Button size="lg" disabled={total === 0} onClick={() => onSend(at, SLOTS.map((s) => imgs[s.k]).filter(Boolean) as string[])} className="w-full">
+          Analisar {total ? `${total} print${total > 1 ? 's' : ''}` : ''} · {CREDITS_PER_MENTOR_IMAGES} créditos
+        </Button>
+      </div>
+    </div>
+  )
 }
 
 const SIGN_TTL = 60 * 60
 
 export function MentorPage() {
   const { live, credits, addCredits, reload } = useStore()
-  const { business } = useBusiness()
+  const { business, saveBusiness } = useBusiness()
   const toast = useToast()
+  const [igOpen, setIgOpen] = useState(false)
+  const [lendo, setLendo] = useState(0)
   const [threads, setThreads] = useState<Thread[]>([])
   const [threadId, setThreadId] = useState<string | null>(null)
   const [msgs, setMsgs] = useState<Msg[]>([])
@@ -181,7 +345,7 @@ export function MentorPage() {
     setMsgs([])
     if (!live || !supabase) return
     setLoadingThread(true)
-    const { data } = await supabase.from('mentor_messages').select('id, role, content, images, actions, created_at').eq('thread_id', id).order('created_at')
+    const { data } = await supabase.from('mentor_messages').select('id, role, content, images, actions, diagnostico, created_at').eq('thread_id', id).order('created_at')
     const paths = (data ?? []).flatMap((m) => m.images ?? [])
     const signed: Record<string, string> = {}
     if (paths.length) {
@@ -197,6 +361,7 @@ export function MentorPage() {
         text: m.content,
         images: (m.images ?? []).map((p: string) => signed[p]).filter(Boolean),
         actions: (m.actions as MentorAction[]) ?? [],
+        diag: (m.diagnostico as Diag | null) ?? null,
         at: new Date(m.created_at).getTime(),
       })),
     )
@@ -230,11 +395,12 @@ export function MentorPage() {
     setImgs((x) => [...x, ...out].slice(0, 4))
   }
 
-  async function send(q = text) {
+  async function send(q = text, override?: string[]) {
     const msg = q.trim()
-    if ((!msg && !imgs.length) || busy) return
+    const sentImgs = override ?? imgs
+    const custo = sentImgs.length ? CREDITS_PER_MENTOR_IMAGES : CREDITS_PER_MENTOR
+    if ((!msg && !sentImgs.length) || busy) return
     if (credits < custo) return toast.show('Você não tem créditos suficientes pra falar com o Mentor.')
-    const sentImgs = imgs
     setMsgs((m) => [...m, { id: `u${Date.now()}`, role: 'user', text: msg, images: sentImgs, actions: [], at: Date.now() }])
     setText('')
     setImgs([])
@@ -244,7 +410,7 @@ export function MentorPage() {
       addCredits(-custo, 'Mentor')
       await new Promise((r) => window.setTimeout(r, 1400))
       const r = demoReply(msg, nome, sentImgs.length > 0)
-      setMsgs((m) => [...m, { id: `a${Date.now()}`, role: 'assistant', text: r.text, images: [], actions: r.actions, at: Date.now() }])
+      setMsgs((m) => [...m, { id: `a${Date.now()}`, role: 'assistant', text: r.text, images: [], actions: r.actions, diag: r.diag ?? null, at: Date.now() }])
       setBusy(false)
       return
     }
@@ -276,10 +442,27 @@ export function MentorPage() {
       return
     }
     setThreadId(data.thread_id)
-    setMsgs((m) => [...m, { id: data.mensagem.id ?? `a${Date.now()}`, role: 'assistant', text: data.mensagem.texto, images: [], actions: data.mensagem.acoes ?? [], at: Date.now() }])
+    setMsgs((m) => [...m, { id: data.mensagem.id ?? `a${Date.now()}`, role: 'assistant', text: data.mensagem.texto, images: [], actions: data.mensagem.acoes ?? [], diag: data.mensagem.diagnostico ?? null, at: Date.now() }])
     reload()
     loadThreads()
   }
+
+  function sendInstagram(at: string, prints: string[]) {
+    setIgOpen(false)
+    const arroba = at.replace(/^@+/, '').trim()
+    if (arroba && arroba !== (business.socials.instagram ?? '').replace(/^@+/, '')) saveBusiness({ socials: { ...business.socials, instagram: arroba } })
+    send(`Analisa meu Instagram${arroba ? ` @${arroba}` : ''}. Mandei ${prints.length} print${prints.length > 1 ? 's' : ''}: ${['o perfil', 'o feed', 'um post'].slice(0, prints.length).join(', ')}.`, prints)
+  }
+
+  // enquanto analisa os prints, mostra o que está olhando
+  const LENDO = ['Lendo a sua bio…', 'Olhando o feed…', 'Vendo os vídeos e as curtidas…', 'Montando o seu raio-x…']
+  const analisando = busy && !!msgs.at(-1)?.images.length
+  useEffect(() => {
+    if (!analisando) return setLendo(0)
+    const id = window.setInterval(() => setLendo((n) => Math.min(LENDO.length - 1, n + 1)), 2600)
+    return () => window.clearInterval(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analisando])
 
   const threadList: ReactNode = (
     <div className="flex flex-col gap-1">
@@ -322,11 +505,21 @@ export function MentorPage() {
                 <ModuleIcon id="mentor" size="lg" />
                 <div className="flex flex-col gap-1.5">
                   <h2 className="m-0 font-display text-[24px] font-extrabold">Oi! Me conta o que tá travando{business.name ? ` no ${business.name}` : ''}.</h2>
-                  <p className="m-0 text-[14.5px] text-muted">Venda parada, preço, o que postar, como anunciar. Pode mandar prints do seu Instagram pelo clipe que eu analiso.</p>
+                  <p className="m-0 text-[14.5px] text-muted">Venda parada, preço, o que postar, como anunciar. Eu conheço o seu negócio e te digo o próximo passo.</p>
                 </div>
+                <button type="button" onClick={() => setIgOpen(true)} className="press group flex w-full cursor-pointer items-center gap-3.5 rounded-[20px] border border-[#d6297655] bg-gradient-to-r from-[#d629761a] via-[#4f5bd512] to-transparent p-3.5 text-left hover:border-[#d62976aa]">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white">
+                    <Camera size={24} />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-[15.5px] font-bold text-ink">Comece pelo seu Instagram</span>
+                    <span className="text-[13px] text-muted">Manda 3 prints e o Mentor te dá uma nota e diz o que está faltando pra vender.</span>
+                  </span>
+                  <ArrowRight size={18} className="shrink-0 text-muted transition-transform group-hover:translate-x-1" />
+                </button>
                 <div className="grid w-full gap-2 sm:grid-cols-2">
                   {SUGESTOES.map((s) => (
-                    <button key={s} type="button" onClick={() => (s.includes('prints') ? (setText(s), file.current?.click()) : send(s))} className="press min-h-12 cursor-pointer rounded-2xl border border-line-strong bg-surface px-4 py-3 text-left text-[14px] font-medium text-soft hover:border-[#a78bfa80] hover:text-ink">
+                    <button key={s} type="button" onClick={() => send(s)} className="press min-h-12 cursor-pointer rounded-2xl border border-line-strong bg-surface px-4 py-3 text-left text-[14px] font-medium text-soft hover:border-[#a78bfa80] hover:text-ink">
                       {s}
                     </button>
                   ))}
@@ -335,13 +528,13 @@ export function MentorPage() {
             )}
             {loadingThread && <span className="m-auto h-8 w-8 animate-spin rounded-full border-[3px] border-[#a78bfa] border-t-transparent" aria-label="Carregando" />}
             {msgs.map((m) => (
-              <Bubble key={m.id} m={m} />
+              <Bubble key={m.id} m={m} onInstagram={() => setIgOpen(true)} />
             ))}
             {busy && (
               <div className="flex items-center gap-3 text-[#c4b5fd]">
                 <ModuleIcon id="mentor" size="sm" />
                 <span className="flex items-center gap-1.5 text-[14px]">
-                  <Sparkles size={15} className="animate-pulse" /> {imgs.length || msgs.at(-1)?.images.length ? 'Analisando os prints…' : 'Pensando…'}
+                  <MentorIcon size={16} className="animate-pulse" /> {analisando ? LENDO[lendo] : 'Pensando…'}
                 </span>
               </div>
             )}
@@ -394,6 +587,8 @@ export function MentorPage() {
           </div>
         </section>
       </div>
+
+      {igOpen && <InstagramSheet arroba={(business.socials.instagram ?? '').replace(/^@+/, '')} onClose={() => setIgOpen(false)} onSend={sendInstagram} />}
 
       {listOpen && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Conversas">

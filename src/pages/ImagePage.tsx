@@ -4,6 +4,7 @@ import { Download, ImagePlus, RotateCcw, Sparkles, X } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Button, cx } from '../components/ui'
+import { Arte, FOTO_ANTES, ImageShowcase, type FormatoArte } from '../components/BeforeAfter'
 import { useBusiness } from '../lib/business'
 import { CREDITS_PER_IMAGE } from '../lib/pricing'
 import { shrinkImage, timeAgo, useStore } from '../lib/store'
@@ -205,13 +206,13 @@ export function ImagePage() {
               <img src={result} alt="Imagem gerada" className="pop absolute inset-0 h-full w-full object-cover" />
             ) : (
               !busy && (
-                <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center">
-                  <Sparkles size={26} className="text-sky" />
-                  <span className="text-[15px] font-semibold">Sua imagem aparece aqui</span>
-                  <span className="text-[13px] text-muted">
-                    {f.label} · {f.ratio}
+                <>
+                  <Arte formato={formato as FormatoArte} />
+                  <img src={FOTO_ANTES} alt="" className="ba-after-rev absolute inset-0 h-full w-full object-cover" style={{ objectPosition: '50% 55%' }} />
+                  <span className="absolute inset-x-3 bottom-3 rounded-xl bg-black/70 px-3 py-2 text-center text-[12.5px] font-semibold text-white backdrop-blur">
+                    Exemplo: a foto do celular virando {f.label.toLowerCase()} ({f.ratio})
                   </span>
-                </span>
+                </>
               )
             )}
           </div>
@@ -227,6 +228,16 @@ export function ImagePage() {
           )}
         </section>
       </div>
+
+      {historico.length === 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <h2 className="m-0 font-display text-[20px] font-bold">Antes e depois</h2>
+            <p className="m-0 text-[14px] text-muted">Uma foto tirada no celular, em cima da mesa, virando peça pronta pra vender.</p>
+          </div>
+          <ImageShowcase />
+        </section>
+      )}
 
       {historico.length > 0 && (
         <section className="flex flex-col gap-3">

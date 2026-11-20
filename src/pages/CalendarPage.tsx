@@ -1,6 +1,6 @@
 // Calendário: o Mentor planeja o mês e cada post sai direto do dia.
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Check, ChevronLeft, ChevronRight, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Button, cx, useToast } from '../components/ui'
@@ -9,6 +9,7 @@ import { useBusiness } from '../lib/business'
 import { CREDITS_PER_PLAN } from '../lib/pricing'
 import { useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
+import { MentorIcon } from '../components/MentorIcon'
 
 type Kind = 'video' | 'post' | 'story' | 'copy'
 type Post = { id: string; day: string; kind: Kind; channel: string; title: string; idea: string; done: boolean }
@@ -167,7 +168,7 @@ export function CalendarPage() {
 
       <section className="rise flex flex-col gap-4 rounded-[24px] border border-[#a78bfa40] bg-gradient-to-br from-[#1c1930] via-surface to-surface p-5 sm:p-6">
         <div className="flex items-center gap-2 text-[15px] font-bold">
-          <Sparkles size={17} className="text-[#c4b5fd]" /> Mentor, planeja meu mês
+          <MentorIcon size={18} className="text-[#c4b5fd]" /> Mentor, planeja meu mês
         </div>
         <div className="grid gap-3 sm:grid-cols-[auto_1fr_auto] sm:items-end">
           <div className="flex flex-col gap-1.5">

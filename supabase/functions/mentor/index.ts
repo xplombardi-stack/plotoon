@@ -5,7 +5,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const MODEL = "claude-sonnet-5-5";
-const TIPOS = ["video", "copy", "imagem", "calendario", "whatsapp", "anuncios"];
+const TIPOS = ["video", "copy", "imagem", "calendario", "whatsapp", "anuncios", "instagram"];
+const STATUS = ["bom", "melhorar", "falta", "nao_vi"];
 const TONS: Record<string, string> = {
   amigavel: "amigável e próximo",
   divertido: "divertido e cheio de energia",
@@ -48,9 +49,10 @@ O negócio de quem está falando com você:
 Como responder:
 - Respostas curtas e escaneáveis (até ~180 palavras), com listas quando ajudar. Plano completo só quando pedirem ou fizer sentido.
 - Se faltar informação importante pra uma boa resposta (cidade, preço, ticket, canal), faça 1 ou 2 perguntas antes.
-- Você não consegue abrir links nem entrar no Instagram de ninguém. Se a pessoa quiser análise do perfil, peça prints (bio, feed e um post), que ela anexa pelo clipe. Quando vierem prints, analise de verdade: bio, chamada pra ação, fotos, frequência de vídeo, prova social, preço visível.
+- Instagram: você não consegue abrir links nem entrar no Instagram de ninguém, então analisa pelos prints. ${redes.includes("instagram") ? "" : "Você ainda não sabe o @ do Instagram dessa pessoa. "}Quando a pessoa pedir ajuda pra vender, divulgar ou crescer e você ainda não viu o Instagram dela nessa conversa, peça uma vez o @ e 3 prints (1. o perfil com a bio e os destaques, 2. o feed rolando, 3. um post ou Reels com as curtidas aparecendo) e inclua a ação "instagram" (titulo "Analisar meu Instagram"), que abre um passo a passo pra mandar os prints.
+- Quando vierem prints do Instagram, analise de verdade e preencha "diagnostico": nota de 0 a 10 e de 6 a 9 itens (foto de perfil, nome e bio, link e chamada pra ação, destaques, visual do feed, vídeos/Reels, prova social, frequência de posts, oferta e preço visíveis). Cada item com status bom, melhorar, falta ou nao_vi (quando o print não mostra) e uma dica prática de 1 frase. No texto, diga as 3 coisas mais urgentes e o primeiro passo. Só julgue o que aparece nos prints.
 - Sempre termine com o próximo passo claro.
-- Quando sugerir algo que o Plotoon faz, inclua uma ação (até 3): video (historinha em vídeo), copy (legenda, gancho, anúncio ou mensagem de venda), imagem (foto de produto, post, banner, capa), calendario (planejar posts), whatsapp (atendimento), anuncios (análise de campanhas). No detalhe da ação, escreva o pedido já pronto pra ferramenta (ex.: a ideia do vídeo em uma frase, ou o tema da legenda).
+- Quando sugerir algo que o Plotoon faz, inclua uma ação (até 3): video (vídeo curto; no formato diga "produto" pra vídeo mostrando o produto com texto animado e música, rápido e barato, ou "historinha" pra historinha com o boneco 3D da pessoa, que prende e viraliza), copy (legenda, gancho, anúncio ou mensagem de venda), imagem (foto de produto, post, banner, capa), calendario (planejar posts), whatsapp (atendimento), anuncios (análise de campanhas). No detalhe da ação, escreva o pedido já pronto pra ferramenta (ex.: a ideia do vídeo em uma frase, ou o tema da legenda).
 - Nada de promessas de resultado garantido, conteúdo adulto, apostas ou cassino.`;
 }
 
@@ -70,10 +72,31 @@ const TOOL = {
             tipo: { type: "string", enum: TIPOS },
             titulo: { type: "string", description: "Rótulo curto da ação, até 7 palavras." },
             detalhe: { type: "string", description: "O pedido pronto pra ferramenta." },
-            formato: { type: "string", description: "Só pra copy: legenda, gancho, anuncio ou venda. Só pra imagem: produto, post, banner ou capa." },
+            formato: { type: "string", description: "Pra video: produto ou historinha. Pra copy: legenda, gancho, anuncio ou venda. Pra imagem: produto, post, banner ou capa." },
           },
           required: ["tipo", "titulo", "detalhe"],
         },
+      },
+      diagnostico: {
+        type: "object",
+        description: "Só quando analisar prints do Instagram.",
+        properties: {
+          nota: { type: "number", description: "De 0 a 10." },
+          itens: {
+            type: "array",
+            maxItems: 10,
+            items: {
+              type: "object",
+              properties: {
+                area: { type: "string", description: "Ex.: Nome e bio" },
+                status: { type: "string", enum: STATUS },
+                dica: { type: "string", description: "Dica prática, 1 frase." },
+              },
+              required: ["area", "status", "dica"],
+            },
+          },
+        },
+        required: ["nota", "itens"],
       },
     },
     required: ["texto"],
@@ -172,7 +195,7 @@ Deno.serve(async (req) => {
     if (!res.ok) throw new Error(`anthropic_${res.status}: ${(await res.text()).slice(0, 300)}`);
     const data = await res.json();
     const blocks = (data.content ?? []) as Array<Record<string, unknown>>;
-    const tool = blocks.find((b) => b.type === "tool_use")?.input as { texto?: string; acoes?: Array<Record<string, string>> } | undefined;
+    const tool = blocks.find((b) => b.type === "tool_use")?.input as { texto?: string; acoes?: Array<Record<string, string>>; diagnostico?: { nota?: number; itens?: Array<Record<string, string>> } } | undefined;
     const texto = String(tool?.texto ?? blocks.filter((b) => b.type === "text").map((b) => b.text).join("\n") ?? "").trim();
     if (!texto) throw new Error("sem_resposta");
     const acoes = (tool?.acoes ?? [])
@@ -180,14 +203,25 @@ Deno.serve(async (req) => {
       .slice(0, 3)
       .map((a) => ({ tipo: a.tipo, titulo: String(a.titulo ?? "").slice(0, 80), detalhe: String(a.detalhe ?? "").slice(0, 600), formato: a.formato ? String(a.formato).slice(0, 20) : undefined }));
 
+    const dg = tool?.diagnostico;
+    const diagnostico =
+      dg && Array.isArray(dg.itens) && dg.itens.length
+        ? {
+            nota: Math.max(0, Math.min(10, Math.round(Number(dg.nota) * 10) / 10 || 0)),
+            itens: dg.itens
+              .filter((i) => i && i.area)
+              .slice(0, 10)
+              .map((i) => ({ area: String(i.area).slice(0, 40), status: STATUS.includes(i.status) ? i.status : "nao_vi", dica: String(i.dica ?? "").slice(0, 200) })),
+          }
+        : null;
     const { data: msg } = await admin
       .from("mentor_messages")
-      .insert({ thread_id: threadId, user_id: user.id, role: "assistant", content: texto, actions: acoes })
+      .insert({ thread_id: threadId, user_id: user.id, role: "assistant", content: texto, actions: acoes, diagnostico })
       .select("id, created_at")
       .single();
     await admin.from("mentor_threads").update({ updated_at: new Date().toISOString() }).eq("id", threadId);
     const { data: perfil } = await admin.from("profiles").select("credits").eq("id", user.id).single();
-    return json({ thread_id: threadId, mensagem: { id: msg?.id, texto, acoes, criada: msg?.created_at }, creditos: perfil?.credits ?? null });
+    return json({ thread_id: threadId, mensagem: { id: msg?.id, texto, acoes, diagnostico, criada: msg?.created_at }, creditos: perfil?.credits ?? null });
   } catch (e) {
     console.error(e);
     await admin.rpc("refund_credits", { p_user: user.id, p_amount: custo, p_reason: "Mentor (devolvido)" });

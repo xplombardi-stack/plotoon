@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { ArrowRight, Coins, Plus, Sparkles } from 'lucide-react'
+import { ArrowRight, Coins, Plus } from 'lucide-react'
 import { AppShell, useDisplayName } from '../components/AppShell'
 import { EntryCard, EntryPreview, useLibraryEntries, type Entry } from '../components/Library'
 import { ModuleDemo } from '../components/FeatureDemos'
 import { ModuleIcon, SoonPill } from '../components/Module'
 import { StoryReel } from '../components/StoryReel'
-import { Button, SectionTitle, TextLink, cx, go } from '../components/ui'
+import { Button, SectionTitle, TextLink, cx } from '../components/ui'
 import { tipOfTheDay, useBusiness } from '../lib/business'
 import { CREATE_MODULES, MODULES, type ModuleId } from '../lib/modules'
 import { formatCredits, partCost } from '../lib/pricing'
 import { useStore } from '../lib/store'
+import { MentorIcon } from '../components/MentorIcon'
+import { runAction } from '../lib/actions'
 
 const MORE: ModuleId[] = ['whatsapp', 'calendario', 'anuncios']
 
@@ -23,13 +25,7 @@ export function Home() {
   const first = name.split(' ')[0]
 
   function makeTip() {
-    try {
-      sessionStorage.setItem('plotoon:ideia', tip.idea)
-      sessionStorage.removeItem('plotoon:rascunho')
-    } catch {
-      /* sem armazenamento */
-    }
-    go('nova-historinha')
+    runAction({ tipo: 'video', titulo: 'Ideia do dia', detalhe: tip.idea })
   }
 
   return (
@@ -103,7 +99,7 @@ export function Home() {
               Gerar esse vídeo <ArrowRight size={18} />
             </Button>
             <a href="#mentor" className="press inline-flex min-h-13 items-center gap-2 rounded-xl border border-line-strong px-5 text-[15px] font-semibold text-ink no-underline hover:border-[#a78bfa80]">
-              <Sparkles size={17} className="text-[#c4b5fd]" aria-hidden /> Falar com o Mentor
+              <MentorIcon size={18} className="text-[#c4b5fd]" /> Falar com o Mentor
             </a>
           </div>
         </div>

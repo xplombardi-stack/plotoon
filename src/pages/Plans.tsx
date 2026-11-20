@@ -4,7 +4,7 @@ import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { ClipArt, clips } from '../components/Showcase'
 import { Badge, Button, Card, SectionTitle, cx, useToast } from '../components/ui'
-import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_MENTOR_IMAGES, CREDITS_PER_PLAN, CREDITS_PER_APP, formatCredits, partCost } from '../lib/pricing'
+import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_MENTOR_IMAGES, CREDITS_PER_PLAN, CREDITS_PER_APP, CREDITS_PER_PRODUCT_VIDEO, formatCredits, partCost } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
 
 const planNames: Record<string, string> = { nenhum: 'Sem plano', start: 'Start', estudio: 'Estúdio', pro: 'Pro' }
@@ -42,6 +42,7 @@ export function Plans() {
             <li className="flex justify-between gap-3"><span>3 opções de copy</span><strong>{CREDITS_PER_COPY}</strong></li>
             <li className="flex justify-between gap-3"><span>Calendário do mês</span><strong>{CREDITS_PER_PLAN}</strong></li>
             <li className="flex justify-between gap-3"><span>Criar ou ajustar um app</span><strong>{CREDITS_PER_APP}</strong></li>
+            <li className="flex justify-between gap-3"><span>Vídeo do produto (30 a 40s)</span><strong>{CREDITS_PER_PRODUCT_VIDEO}</strong></li>
           </ul>
         </Card>
       </div>

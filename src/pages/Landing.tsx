@@ -1,19 +1,20 @@
 import type { ReactNode } from 'react'
 import { ArrowRight, Check, ChevronDown, FolderOpen, Play, Sparkles, Store } from 'lucide-react'
 import { plans } from '../data/mock'
-import { DemoAnuncios, DemoApps, DemoCalendario, DemoChaos, DemoCopy, DemoCortes, DemoHub, DemoImagem, DemoLogo, DemoMentor, DemoWhatsApp } from '../components/FeatureDemos'
+import { DemoAnuncios, DemoApps, DemoCalendario, DemoChaos, DemoCopy, DemoCortes, DemoHub, DemoImagem, DemoLogo, DemoMentor, DemoVideo, DemoWhatsApp } from '../components/FeatureDemos'
 import { ModuleIcon, SoonPill } from '../components/Module'
-import { StepIdea } from '../components/StepDemos'
+import { ImageShowcase } from '../components/BeforeAfter'
 import { StoryReel } from '../components/StoryReel'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
 import { MODULES, type ModuleId } from '../lib/modules'
-import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_PLAN, CREDITS_PER_APP, MAX_PARTS, partCost } from '../lib/pricing'
+import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_PLAN, CREDITS_PER_APP, CREDITS_PER_PRODUCT_VIDEO, partCost } from '../lib/pricing'
+import { MentorIcon } from '../components/MentorIcon'
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-type Feature = { id: string; module: ModuleId; name?: string; title: string; text: string; bullets: string[]; demo: ReactNode; soon?: boolean; highlight?: boolean }
+type Feature = { id: string; module: ModuleId; name?: string; title: string; text: string; bullets: string[]; demo: ReactNode; extra?: ReactNode; soon?: boolean; highlight?: boolean }
 
 const FEATURES: Feature[] = [
   {
@@ -29,10 +30,10 @@ const FEATURES: Feature[] = [
     id: 'video',
     module: 'estudio-video',
     highlight: true,
-    title: 'Vídeos que prendem, sem saber editar',
-    text: 'Conte a ideia em uma frase. O Diretor escreve a história em partes, você vê o custo antes, e o app junta tudo num vídeo vertical pronto pra postar.',
-    bullets: ['Historinhas com o seu boneco 3D, com o mesmo rosto em todas as cenas', `Até ${MAX_PARTS} partes de 10 ou 15 segundos num vídeo só, com chamada pra ação no final`, 'Também: vídeo com IA, criativo de anúncio e avatar falando'],
-    demo: <StepIdea className="aspect-[4/3] w-full overflow-hidden rounded-[24px] border border-line-strong" />,
+    title: 'Vídeos que vendem, sem saber editar',
+    text: 'Peça o vídeo do jeito que você falaria. Escolha o estilo: o vídeo do seu produto, com texto animado e música, pronto em 1 minuto, ou uma historinha com o seu boneco 3D, que prende do começo ao fim.',
+    bullets: ['Vídeo do produto: suas fotos viram um vídeo de 30 a 40 segundos com gancho, oferta e chamada', 'Historinha com o seu boneco 3D, com o mesmo rosto em todas as cenas', 'Você vê o custo antes e ajusta os textos sem gastar crédito'],
+    demo: <DemoVideo />,
   },
   {
     id: 'apps',
@@ -47,8 +48,9 @@ const FEATURES: Feature[] = [
     module: 'estudio-imagem',
     title: 'Foto de estúdio a partir da foto do celular',
     text: 'Mande a foto do produto do jeito que estiver. A IA limpa o fundo, monta a cena e arruma a luz, já no tamanho de cada rede.',
-    bullets: ['Foto de produto, post, banner e capa', 'Com as cores da sua marca', 'Sem fotógrafo e sem app de design'],
+    bullets: ['Foto de produto, post, story, banner e capa', 'Com as cores da sua marca', 'Sem fotógrafo e sem app de design'],
     demo: <DemoImagem className="mx-auto w-full max-w-[460px]" />,
+    extra: <ImageShowcase />,
   },
   {
     id: 'logo',
@@ -137,6 +139,7 @@ function FeatureRow({ f, flip }: { f: Feature; flip: boolean }) {
         <span aria-hidden className="pointer-events-none absolute -inset-8 rounded-full bg-[radial-gradient(closest-side,#ff8a3d22,transparent)] blur-2xl" />
         <div className="relative">{f.demo}</div>
       </div>
+      {f.extra && <div className="lg:order-3 lg:col-span-2">{f.extra}</div>}
     </article>
   )
 }
@@ -217,7 +220,7 @@ export function Landing() {
           <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-16 sm:px-8 sm:py-20">
             <div className="flex flex-col items-center gap-3 text-center">
               <Badge tone="violet" className="self-center">
-                <Sparkles size={13} aria-hidden /> O coração do Plotoon
+                <MentorIcon size={14} /> O coração do Plotoon
               </Badge>
               <h2 className="text-balance m-0 max-w-[760px] font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[44px]">
                 Um Mentor que te diz o que fazer. Um estúdio que faz.
@@ -251,7 +254,7 @@ export function Landing() {
                       <DemoMentor className="h-full min-h-[520px] flex-1" />
                     ) : (
                       <div className="flex flex-col gap-4">
-                        <StepIdea className="aspect-[4/3.9] w-full overflow-hidden rounded-[24px] border border-line-strong sm:aspect-[4/3]" />
+                        <DemoVideo />
                         <div className="-mx-5 overflow-hidden sm:-mx-7">
                           <StoryReel size="sm" />
                         </div>
@@ -374,6 +377,7 @@ export function Landing() {
                 ['3 opções de copy', CREDITS_PER_COPY],
                 ['Calendário do mês', CREDITS_PER_PLAN],
                 ['Criar ou ajustar um app', CREDITS_PER_APP],
+                ['Vídeo do produto (30 a 40s)', CREDITS_PER_PRODUCT_VIDEO],
               ].map(([k, v]) => (
                 <div key={String(k)} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5">
                   <span className="text-[15px] font-semibold">{k}</span>

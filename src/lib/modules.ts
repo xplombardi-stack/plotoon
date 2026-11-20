@@ -1,6 +1,7 @@
 // Mapa dos módulos do Estúdio: usado no menu, no cabeçalho de cada tela e nos atalhos.
-import type { LucideIcon } from 'lucide-react'
-import { AppWindow, BookOpen, CalendarDays, Clapperboard, Coins, FolderOpen, House, Image, MessageCircle, PenLine, Scissors, Sparkles, Store, TrendingUp } from 'lucide-react'
+import type { ComponentType } from 'react'
+import { AppWindow, BookOpen, CalendarDays, Clapperboard, Coins, FolderOpen, House, Image, MessageCircle, PenLine, Scissors, Store, TrendingUp } from 'lucide-react'
+import { MentorIcon } from '../components/MentorIcon'
 import type { Route } from './router'
 
 export type ModuleId =
@@ -24,7 +25,7 @@ export type ModuleInfo = {
   name: string
   short?: string // nome curto pro menu do celular
   phrase: string
-  icon: LucideIcon
+  icon: ComponentType<{ size?: number | string; strokeWidth?: number | string; className?: string }>
   color: string // cor do ícone (gradiente)
   ready: boolean // a função principal já está ligada?
   match?: Route[] // outras telas que acendem este item no menu
@@ -32,12 +33,12 @@ export type ModuleInfo = {
 
 export const MODULES: Record<ModuleId, ModuleInfo> = {
   inicio: { id: 'inicio', name: 'Início', phrase: 'Seu painel: créditos, atalhos e o que você criou por último.', icon: House, color: 'from-[#ff8a3d] to-[#ff5da2]', ready: true },
-  mentor: { id: 'mentor', name: 'Mentor', phrase: 'Converse sobre vendas, ideias e estratégia. Ele conhece o seu negócio.', icon: Sparkles, color: 'from-[#a78bfa] to-[#5b8cff]', ready: true },
+  mentor: { id: 'mentor', name: 'Mentor', phrase: 'Converse sobre vendas, ideias e estratégia. Ele conhece o seu negócio.', icon: MentorIcon, color: 'from-[#a78bfa] to-[#5b8cff]', ready: true },
   'estudio-video': {
     id: 'estudio-video',
     name: 'Estúdio de Vídeo',
     short: 'Vídeo',
-    phrase: 'Historinhas com boneco 3D, vídeos com IA, criativos e avatar falando.',
+    phrase: 'Vídeo do seu produto, historinhas com boneco 3D, criativos e avatar.',
     icon: Clapperboard,
     color: 'from-[#ff8a3d] to-[#ffb547]',
     ready: true,

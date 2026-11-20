@@ -2,7 +2,7 @@
 import { go } from './router'
 import type { ModuleId } from './modules'
 
-export type MentorAction = { tipo: 'video' | 'copy' | 'imagem' | 'calendario' | 'whatsapp' | 'anuncios'; titulo: string; detalhe: string; formato?: string }
+export type MentorAction = { tipo: 'video' | 'copy' | 'imagem' | 'calendario' | 'whatsapp' | 'anuncios' | 'instagram'; titulo: string; detalhe: string; formato?: string }
 
 export const ACTION_MODULE: Record<MentorAction['tipo'], ModuleId> = {
   video: 'estudio-video',
@@ -11,6 +11,7 @@ export const ACTION_MODULE: Record<MentorAction['tipo'], ModuleId> = {
   calendario: 'calendario',
   whatsapp: 'whatsapp',
   anuncios: 'anuncios',
+  instagram: 'mentor',
 }
 
 export const ACTION_BUTTON: Record<MentorAction['tipo'], string> = {
@@ -20,6 +21,7 @@ export const ACTION_BUTTON: Record<MentorAction['tipo'], string> = {
   calendario: 'Planejar',
   whatsapp: 'Abrir',
   anuncios: 'Abrir',
+  instagram: 'Mandar prints',
 }
 
 function stash(key: string, value: string) {
@@ -35,13 +37,9 @@ const COPY_TIPOS = ['legenda', 'gancho', 'anuncio', 'venda']
 export function runAction(a: MentorAction) {
   switch (a.tipo) {
     case 'video':
-      stash('plotoon:ideia', a.detalhe)
-      try {
-        sessionStorage.removeItem('plotoon:rascunho')
-      } catch {
-        /* sem armazenamento */
-      }
-      return go('nova-historinha')
+      // abre a escolha de estilo (vídeo do produto ou historinha), explicando cada um
+      stash('plotoon:video-pedido', JSON.stringify({ ideia: a.detalhe, titulo: a.titulo, formato: a.formato }))
+      return go('estudio-video')
     case 'copy':
       stash('plotoon:copy', JSON.stringify({ tipo: COPY_TIPOS.includes(String(a.formato)) ? a.formato : 'legenda', tema: a.detalhe }))
       return go('copy')
@@ -51,6 +49,8 @@ export function runAction(a: MentorAction) {
     case 'calendario':
       stash('plotoon:calendario', a.detalhe)
       return go('calendario')
+    case 'instagram':
+      return go('mentor')
     default:
       return go(a.tipo)
   }
