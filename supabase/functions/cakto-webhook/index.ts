@@ -58,7 +58,8 @@ Deno.serve(async (req) => {
       // qual oferta foi comprada
       const { data: ofertas } = await db.from("offers").select("id, tipo, nome, creditos, slug, cakto_id").not("cakto_id", "is", null);
       const ts = textos(d);
-      const oferta = (ofertas ?? []).find((o) => ts.has(String(o.cakto_id)));
+      // o link pode vir com o checkout junto (ex.: ga9ufx9_1351254); o aviso traz só a oferta (ga9ufx9)
+      const oferta = (ofertas ?? []).find((o) => ts.has(String(o.cakto_id)) || ts.has(String(o.cakto_id).split("_")[0]));
       if (!oferta) return ok(); // oferta não cadastrada no painel: fica guardado pra processar depois
       if (!pedido) return ok();
       const uid = await acharUsuario(db, email);
