@@ -317,15 +317,17 @@ function AppGlyph({ k }: { k: number }) {
           <path d="M20 33h18M20 37h18M20 41h12" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round" />
         </svg>
       )
-    case 3: // abas de chat de IA: várias abas + balão
+    case 3: // vários chats de IA: janelas empilhadas + balão com brilho de IA
       return (
         <svg {...common}>
-          <rect width="56" height="56" rx="14" fill="#0f766e" />
-          <path d="M8 14h10l2-4h8l2 4h18v6H8z" fill="#5eead4" opacity="0.5" />
-          <path d="M10 20h36a4 4 0 0 1 4 4v14a4 4 0 0 1-4 4H22l-8 6v-6h-4a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z" fill="#fff" />
-          <path d="M18 29h20M18 34h14" stroke="#14b8a6" strokeWidth="2.5" strokeLinecap="round" />
-          <circle cx="45" cy="13" r="8" fill="#ef4444" />
-          <text x="45" y="16" textAnchor="middle" fontFamily="Arial" fontWeight="700" fontSize="8.5" fill="#fff">30</text>
+          <rect width="56" height="56" rx="14" fill="#18181b" />
+          <rect x="14" y="8" width="30" height="20" rx="5" fill="#3f3f46" />
+          <rect x="10" y="13" width="32" height="22" rx="5" fill="#52525b" />
+          <path d="M9 19h34a4 4 0 0 1 4 4v15a4 4 0 0 1-4 4H21l-8 6v-6H9a4 4 0 0 1-4-4V23a4 4 0 0 1 4-4z" fill="#fafafa" />
+          <path d="M26 24l2.2 5.3L33.5 31.5l-5.3 2.2L26 39l-2.2-5.3-5.3-2.2 5.3-2.2z" fill="#a78bfa" />
+          <path d="M37 25l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" fill="#f472b6" />
+          <circle cx="46" cy="11" r="8" fill="#ef4444" />
+          <text x="46" y="14" textAnchor="middle" fontFamily="Arial" fontWeight="700" fontSize="8.5" fill="#fff">30</text>
         </svg>
       )
     case 4: // planilha: grade verde
@@ -379,7 +381,7 @@ function AppGlyph({ k }: { k: number }) {
   }
 }
 
-const APPS = ['App de editar vídeo', 'App de arte', 'Editor de texto', '30 abas de chat de IA', 'Planilha de posts', 'Gerenciador de anúncios', 'Atender no WhatsApp na mão', 'Site de criar logo']
+const APPS = ['App de editar vídeo', 'App de arte', 'Editor de texto', 'Vários chats de IA', 'Planilha de posts', 'Gerenciador de anúncios', 'Atender no WhatsApp na mão', 'Site de criar logo']
 
 export function DemoChaos({ className }: { className?: string }) {
   const TOTAL = 10500

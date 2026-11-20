@@ -13,12 +13,13 @@ function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-type Feature = { id: string; module: ModuleId; name?: string; title: string; text: string; bullets: string[]; demo: ReactNode; soon?: boolean }
+type Feature = { id: string; module: ModuleId; name?: string; title: string; text: string; bullets: string[]; demo: ReactNode; soon?: boolean; highlight?: boolean }
 
 const FEATURES: Feature[] = [
   {
     id: 'mentor',
     module: 'mentor',
+    highlight: true,
     title: 'Um mentor de vendas que conhece o seu negócio',
     text: 'Conte o que está travando: venda parada, preço, o que postar. Ele pede o seu Instagram, analisa o perfil e entrega um plano feito pro seu negócio, com o botão pra fazer cada passo.',
     bullets: ['Analisa o seu Instagram e mostra o que está travando as vendas', 'Ajuda com preço, oferta, ideia de post e estratégia', 'Cada sugestão vira um botão: gerar o vídeo, a imagem, o texto ou agendar'],
@@ -27,6 +28,7 @@ const FEATURES: Feature[] = [
   {
     id: 'video',
     module: 'estudio-video',
+    highlight: true,
     title: 'Vídeos que prendem, sem saber editar',
     text: 'Conte a ideia em uma frase. O Diretor escreve a história em partes, você vê o custo antes, e o app junta tudo num vídeo vertical pronto pra postar.',
     bullets: ['Historinhas com o seu boneco 3D, com o mesmo rosto em todas as cenas', `Até ${MAX_PARTS} partes de 10 ou 15 segundos num vídeo só, com chamada pra ação no final`, 'Também: vídeo com IA, criativo de anúncio e avatar falando'],
@@ -175,7 +177,7 @@ export function Landing() {
                 Tudo que o seu negócio precisa pra <span className="text-accent text-glow">vender</span>, num lugar só.
               </h1>
               <p className="rise rise-2 m-0 max-w-[540px] text-[17px] leading-relaxed text-muted sm:text-[19px]">
-                Crie vídeos, imagens, logo e textos. Atenda no WhatsApp, planeje o mês e analise seus anúncios. Com um Mentor de IA que conhece o seu negócio.
+                Um <strong className="font-semibold text-ink">Mentor de IA</strong> que conhece o seu negócio te diz o que fazer. O estúdio faz: <strong className="font-semibold text-ink">vídeos</strong>, imagens, logo e textos. E ainda atende no WhatsApp, planeja o mês e analisa seus anúncios.
               </p>
               <div className="rise rise-3 flex flex-wrap gap-3">
                 <LinkButton to="criar-conta" size="lg" className="pulse">
@@ -191,12 +193,64 @@ export function Landing() {
           </div>
         </section>
 
+        {/* DESTAQUES: MENTOR E VÍDEO */}
+        <section className="relative border-t border-line">
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-16 sm:px-8 sm:py-20">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <Badge tone="violet" className="self-center">
+                <Sparkles size={13} aria-hidden /> O coração do Plotoon
+              </Badge>
+              <h2 className="text-balance m-0 max-w-[760px] font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[44px]">
+                Um Mentor que te diz o que fazer. Um estúdio que faz.
+              </h2>
+              <p className="m-0 max-w-[620px] text-[16px] text-muted sm:text-[17px]">Você conta o que está travando, o Mentor monta o plano e, com um toque, o Estúdio de Vídeo transforma a ideia em vídeo pronto pra postar.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              {FEATURES.filter((f) => f.highlight).map((f) => (
+                <article key={f.id} id={f.id} className="scroll-mt-24 neon-border flex min-w-0 flex-col gap-5 rounded-[28px] bg-[#111319] p-5 sm:p-7">
+                  <span className="flex items-center gap-3">
+                    <ModuleIcon id={f.module} size="lg" />
+                    <span className="flex flex-col">
+                      <span className="text-[12px] font-bold uppercase tracking-[0.12em] text-accent-text">Destaque</span>
+                      <span className="font-display text-[20px] font-bold">{MODULES[f.module].name}</span>
+                    </span>
+                  </span>
+                  <h3 className="text-balance m-0 font-display text-[26px] font-extrabold leading-[1.1] tracking-[-0.025em] sm:text-[30px]">{f.title}</h3>
+                  <p className="m-0 text-[15.5px] leading-relaxed text-muted">{f.text}</p>
+                  <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                    {f.bullets.map((b) => (
+                      <li key={b} className="flex items-start gap-3 text-[14.5px] text-soft">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                          <Check size={13} strokeWidth={3} aria-hidden />
+                        </span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-1 flex-col">
+                    {f.module === 'mentor' ? (
+                      <DemoMentor className="h-full min-h-[520px] flex-1" />
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <StepIdea className="aspect-[4/3.9] w-full overflow-hidden rounded-[24px] border border-line-strong sm:aspect-[4/3]" />
+                        <div className="-mx-5 overflow-hidden sm:-mx-7">
+                          <StoryReel size="sm" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* 5 APPS VIRAM 1 */}
         <section className="border-y border-line bg-side">
           <div className="mx-auto flex max-w-[1000px] flex-col items-center gap-8 px-5 py-16 text-center sm:px-8 sm:py-20">
             <div className="flex flex-col gap-3">
               <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Chega de pular de app em app</h2>
-              <p className="m-0 text-[16px] text-muted sm:text-[17px]">Um pra vídeo, outro pra arte, outro pra texto, um monte de abas de chat e uma planilha pra organizar. Aqui é tudo junto e conversa entre si.</p>
+              <p className="m-0 text-[16px] text-muted sm:text-[17px]">Um app pra vídeo, outro pra arte, outro pra texto, vários chats de IA abertos e uma planilha pra organizar. Aqui é tudo junto e um conversa com o outro.</p>
             </div>
             <DemoChaos />
           </div>
@@ -213,7 +267,8 @@ export function Landing() {
               {FEATURES.map((f, i) => {
                 const m = MODULES[f.module]
                 return (
-                  <button key={f.id} type="button" onClick={() => scrollTo(f.id)} className={cx('rise lift flex cursor-pointer flex-col items-start gap-3 rounded-[20px] border border-line bg-surface p-4 text-left', `rise-${(i % 4) + 1}`)}>
+                  <button key={f.id} type="button" onClick={() => scrollTo(f.id)} className={cx('rise lift relative flex cursor-pointer flex-col items-start gap-3 rounded-[20px] p-4 text-left', f.highlight ? 'neon-border bg-[#16110d]' : 'border border-line bg-surface', `rise-${(i % 4) + 1}`)}>
+                    {f.highlight && <span className="absolute right-3 top-3 rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold text-accent-ink">Destaque</span>}
                     <ModuleIcon id={f.module} />
                     <span className="flex flex-col gap-0.5">
                       <span className="text-[15px] font-bold text-ink">{f.name ?? m.short ?? m.name}</span>
@@ -236,7 +291,7 @@ export function Landing() {
         {/* CADA FUNÇÃO EM AÇÃO */}
         <section>
           <div className="mx-auto flex max-w-[1200px] flex-col gap-24 px-5 py-16 sm:px-8 sm:py-20 lg:gap-32">
-            {FEATURES.map((f, i) => (
+            {FEATURES.filter((f) => !f.highlight).map((f, i) => (
               <FeatureRow key={f.id} f={f} flip={i % 2 === 1} />
             ))}
           </div>
