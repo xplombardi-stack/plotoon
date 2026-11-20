@@ -2,6 +2,7 @@ import type { ChangeEvent } from 'react'
 import { useState } from 'react'
 import { Check, Coins, ImagePlus, Lock, Plus, RefreshCw, Star } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
+import { ModuleHeader } from '../components/Module'
 import { Toon, type ToonLook } from '../components/art'
 import { ClipArt, clips } from '../components/Showcase'
 import estiloCinema from '../assets/estilos/estilo-cinema.webp'
@@ -9,7 +10,7 @@ import estiloFofinho from '../assets/estilos/estilo-fofinho.webp'
 import estiloRealista from '../assets/estilos/estilo-realista.webp'
 
 const styleThumb: Record<StyleId, string> = { cinema: estiloCinema, fofinho: estiloFofinho, realista: estiloRealista }
-import { Badge, Button, Card, LinkButton, PageHeader, cx, go, useToast } from '../components/ui'
+import { Badge, Button, Card, LinkButton, cx, go, useToast } from '../components/ui'
 import { CREDITS_PER_CHARACTER, formatCredits } from '../lib/pricing'
 import { photoThumb, styleList, timeAgo, useStore, type BonecoResult, type StyleId } from '../lib/store'
 
@@ -23,9 +24,10 @@ export function Cast() {
   const { characters } = useStore()
   return (
     <AppShell active="elenco">
-      <PageHeader
+      <ModuleHeader
+        id="meu-negocio"
         title="Elenco"
-        subtitle="Seus personagens com o rosto travado."
+        phrase="Seus personagens 3D com o rosto travado, usados em todos os vídeos."
         actions={
           <LinkButton to="novo-personagem" size="lg">
             <Plus size={18} /> Novo personagem
@@ -144,14 +146,15 @@ export function NewCharacter() {
     } catch {
       /* sem armazenamento */
     }
-    go(back === 'nova-historinha' ? 'nova-historinha' : 'elenco')
+    go(back === 'nova-historinha' || back === 'comecar' || back === 'meu-negocio' ? back : 'elenco')
   }
 
   return (
     <AppShell active="novo-personagem">
-      <PageHeader
+      <ModuleHeader
+        id="meu-negocio"
         title="Criar personagem"
-        subtitle={`Cada boneco gerado custa ${CREDITS_PER_CHARACTER} créditos · você tem ${formatCredits(credits)}`}
+        phrase={`Cada boneco gerado custa ${CREDITS_PER_CHARACTER} créditos · você tem ${formatCredits(credits)}`}
         actions={
 <span className="hidden lg:block">
           <Button size="lg" disabled={!look || !name.trim() || saving} onClick={save} className={look && name.trim() ? 'pulse' : undefined}>

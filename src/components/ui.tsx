@@ -188,7 +188,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ show }}>
       {children}
-      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-[96px] z-50 lg:bottom-6 flex justify-center px-4">
         {msg && (
           <div className="rise pointer-events-auto flex items-center gap-2.5 rounded-xl border border-line-strong bg-surface-2 px-4 py-3 text-[14px] font-medium shadow-2xl shadow-black/50">
             <CheckDot />

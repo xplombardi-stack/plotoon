@@ -1,8 +1,9 @@
 import { Check, Coins } from 'lucide-react'
 import { creditPacks, plans } from '../data/mock'
 import { AppShell } from '../components/AppShell'
+import { ModuleHeader } from '../components/Module'
 import { ClipArt, clips } from '../components/Showcase'
-import { Badge, Button, Card, PageHeader, SectionTitle, cx, useToast } from '../components/ui'
+import { Badge, Button, Card, SectionTitle, cx, useToast } from '../components/ui'
 import { CREDITS_PER_CHARACTER, formatCredits, partCost } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
 
@@ -14,7 +15,7 @@ export function Plans() {
 
   return (
     <AppShell active="planos">
-      <PageHeader title="Planos e créditos" />
+      <ModuleHeader id="planos" />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_1fr_1.1fr]">
         <Card className="rise flex flex-col gap-3 p-6">

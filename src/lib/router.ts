@@ -14,6 +14,17 @@ export const routes = [
   'aulas',
   'planos',
   'conta',
+  'comecar',
+  'meu-negocio',
+  'mentor',
+  'estudio-video',
+  'estudio-imagem',
+  'cortes',
+  'copy',
+  'whatsapp',
+  'calendario',
+  'anuncios',
+  'biblioteca',
 ] as const
 
 export type Route = (typeof routes)[number]

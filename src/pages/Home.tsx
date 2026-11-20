@@ -1,32 +1,31 @@
-import type { FormEvent } from 'react'
 import { useState } from 'react'
-import { ArrowRight, Check, Plus } from 'lucide-react'
-import { ideas } from '../data/mock'
+import { ArrowRight, Coins, Plus, Sparkles } from 'lucide-react'
 import { AppShell, useDisplayName } from '../components/AppShell'
-import { Scene } from '../components/art'
-import { Badge, Button, SectionTitle, TextLink, cx, go } from '../components/ui'
-import { useStore } from '../lib/store'
-import { formatCredits } from '../lib/pricing'
+import { EntryCard, EntryPreview, useLibraryEntries, type Entry } from '../components/Library'
 import { LoopVideo } from '../components/LoopVideo'
-import { HeroCreators, clips } from '../components/Showcase'
+import { ModuleIcon, SoonPill, moduleArt } from '../components/Module'
+import { HeroCreators } from '../components/Showcase'
 import { StoryReel } from '../components/StoryReel'
+import { Button, SectionTitle, TextLink, cx, go } from '../components/ui'
+import { tipOfTheDay, useBusiness } from '../lib/business'
+import { CREATE_MODULES, MODULES, type ModuleId } from '../lib/modules'
+import { formatCredits, partCost } from '../lib/pricing'
+import { useStore } from '../lib/store'
 
-const starters: Array<{ to: 'nova-historinha' | 'novo-personagem' | 'planos' | 'videos'; title: string; sub: string; img: string; video: string; pos: string }> = [
-  { to: 'nova-historinha', title: 'Criar historinha', sub: 'Da ideia ao vídeo', img: clips.roteiro.poster, video: clips.roteiro.video, pos: '50% 22%' },
-  { to: 'novo-personagem', title: 'Criar personagem', sub: 'Seu boneco 3D', img: clips.personagem.poster, video: clips.personagem.video, pos: '50% 25%' },
-  { to: 'planos', title: 'Créditos', sub: 'Veja e compre', img: clips.creditos.poster, video: clips.creditos.video, pos: '50% 50%' },
-  { to: 'videos', title: 'Meus vídeos', sub: 'Assista e exporte', img: clips.videos.poster, video: clips.videos.video, pos: '50% 45%' },
-]
+const MORE: ModuleId[] = ['whatsapp', 'calendario', 'anuncios']
 
 export function Home() {
   const name = useDisplayName()
-  const { characters, stories, credits, openStory } = useStore()
-  const [idea, setIdea] = useState('')
+  const { credits } = useStore()
+  const { business } = useBusiness()
+  const entries = useLibraryEntries()
+  const [open, setOpen] = useState<Entry | null>(null)
+  const tip = tipOfTheDay(business)
+  const first = name.split(' ')[0]
 
-  function submit(e: FormEvent) {
-    e.preventDefault()
+  function makeTip() {
     try {
-      sessionStorage.setItem('plotoon:ideia', idea)
+      sessionStorage.setItem('plotoon:ideia', tip.idea)
       sessionStorage.removeItem('plotoon:rascunho')
     } catch {
       /* sem armazenamento */
@@ -34,135 +33,137 @@ export function Home() {
     go('nova-historinha')
   }
 
-  const onboarding = [
-    { done: characters.length > 0, title: 'Crie seu personagem', to: 'novo-personagem' as const },
-    { done: stories.length > 0, title: 'Crie sua primeira historinha', to: 'nova-historinha' as const },
-    { done: stories.some((s) => s.status === 'pronto'), title: 'Exporte e poste', to: 'videos' as const },
-  ]
-  const showOnboarding = onboarding.some((o) => !o.done)
-
   return (
     <AppShell active="inicio">
-      <section className="relative grid items-center gap-6 overflow-hidden rounded-[24px] border border-line bg-surface p-6 sm:p-9 xl:grid-cols-[1.25fr_1fr] xl:gap-8">
-        <div className="aurora"><span /></div>
-        <div className="relative flex flex-col gap-5">
-          <p className="rise m-0 text-[16px] text-muted">Oi{name ? `, ${name.split(' ')[0]}` : ''}!</p>
-          <h1 className="rise rise-1 text-balance m-0 font-display text-[34px] font-extrabold leading-[1.06] tracking-[-0.03em] sm:text-[44px]">
-            O que você vai <span className="text-accent text-glow">criar</span> hoje?
-          </h1>
-          <form onSubmit={submit} className="rise rise-2 flex flex-wrap gap-2.5">
-            <label htmlFor="ideia" className="sr-only">Ideia da historinha</label>
-            <input
-              id="ideia"
-              value={idea}
-              onChange={(e) => setIdea(e.target.value)}
-              placeholder="Conte a ideia da sua história"
-              className="min-h-14 min-w-0 flex-[1_1_280px] rounded-[16px] border border-line-strong bg-bg/80 px-4.5 text-[16px] text-ink outline-none transition-shadow focus:border-accent focus:shadow-[0_0_0_4px_#ff8a3d22]"
-            />
-            <Button type="submit" size="lg" className="min-h-14 rounded-[16px] px-7 text-[16px]">
-              Criar <ArrowRight size={18} />
-            </Button>
-          </form>
-          <div className="rise rise-3 flex flex-wrap gap-2">
-            {ideas.slice(0, 3).map((i) => (
-              <button key={i} type="button" onClick={() => setIdea(i)} className="press min-h-10 cursor-pointer rounded-full border border-line-strong bg-bg/50 px-3.5 text-[14px] text-soft hover:border-accent-line hover:text-ink">
-                {i}
-              </button>
-            ))}
+      {/* topo: saudação + saldo */}
+      <section className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
+        <div className="relative grid items-center gap-5 overflow-hidden rounded-[24px] border border-line bg-surface p-5 sm:p-7 md:grid-cols-[1.2fr_1fr]">
+          <div className="aurora"><span /></div>
+          <div className="relative flex flex-col gap-3">
+            <div className="rise flex items-center gap-2.5">
+              {business.logo && <img src={business.logo} alt="" className="h-9 w-9 rounded-xl bg-white object-contain p-0.5" />}
+              <span className="text-[15px] text-muted">
+                Oi{first ? `, ${first}` : ''}!{business.name ? ` · ${business.name}` : ''}
+              </span>
+            </div>
+            <h1 className="rise rise-1 text-balance m-0 font-display text-[32px] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-[42px]">
+              O que vamos <span className="text-accent text-glow">criar</span> hoje?
+            </h1>
+          </div>
+          <div className="relative hidden md:block">
+            <HeroCreators />
           </div>
         </div>
-        <div className="relative order-first xl:order-none">
-          <HeroCreators />
-        </div>
+
+        <a href="#planos" className="rise rise-1 neon-border lift flex flex-col justify-between gap-4 rounded-[24px] bg-surface p-5 text-ink no-underline sm:p-6">
+          <span className="flex items-center gap-2 text-[14px] font-semibold text-muted">
+            <Coins size={18} className="text-accent" aria-hidden /> Seus créditos
+          </span>
+          <span className="flex items-end gap-2">
+            <span className="font-display text-[48px] font-extrabold leading-none tracking-[-0.03em]">{formatCredits(credits)}</span>
+          </span>
+          <span className="text-[14px] text-muted">Dá pra uns {Math.floor(credits / partCost(10))} vídeos de 10s</span>
+          <span className="inline-flex items-center gap-1.5 self-start rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-accent-ink">
+            Comprar créditos <ArrowRight size={16} aria-hidden />
+          </span>
+        </a>
       </section>
 
-      {showOnboarding && (
-        <section className="rise flex flex-col gap-4">
-          <SectionTitle>Seus primeiros passos</SectionTitle>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {onboarding.map((o, i) => (
-              <a
-                key={o.title}
-                href={`#${o.to}`}
-                className={cx(
-                  'lift flex items-center gap-4 rounded-[18px] border p-4 no-underline',
-                  o.done ? 'border-sky-line bg-sky-soft/40 text-ink' : 'border-line bg-surface text-ink',
+      {/* atalhos pra criar */}
+      <section className="flex flex-col gap-4">
+        <SectionTitle>Criar</SectionTitle>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          {CREATE_MODULES.map((id, i) => {
+            const m = MODULES[id]
+            const art = moduleArt[id]!
+            return (
+              <a key={id} href={`#${id}`} className={cx('group rise lift relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-[22px] border border-line-strong bg-side p-3.5 text-ink no-underline sm:aspect-[5/6] sm:p-4', `rise-${i + 1}`)}>
+                {art.video ? (
+                  <LoopVideo src={art.video} poster={art.poster} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                ) : (
+                  <img src={art.poster} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 )}
-              >
-                <span
-                  className={cx(
-                    'flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-[17px] font-bold',
-                    o.done ? 'bg-sky text-[#06121f]' : 'bg-accent text-accent-ink',
-                  )}
-                >
-                  {o.done ? <Check size={20} strokeWidth={3} /> : i + 1}
+                <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+                {!m.ready && <SoonPill className="absolute right-3 top-3" />}
+                <span className="relative flex items-center gap-2.5">
+                  <ModuleIcon id={id} size="sm" />
+                  <span className="text-[16px] font-bold leading-tight text-white sm:text-[17px]">{m.short ?? m.name}</span>
                 </span>
-                <span className={cx('text-[15px] font-semibold', o.done && 'text-sky-text line-through decoration-2')}>{o.title}</span>
               </a>
-            ))}
+            )
+          })}
+        </div>
+      </section>
+
+      {/* sugestão do dia do Mentor */}
+      <section className="rise relative overflow-hidden rounded-[24px] border border-[#a78bfa40] bg-gradient-to-br from-[#1c1930] via-surface to-surface p-5 sm:p-7">
+        <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#a78bfa33] blur-3xl" />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-3.5">
+            <ModuleIcon id="mentor" />
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#c4b5fd]">Sugestão do dia do Mentor</span>
+              <span className="text-balance font-display text-[20px] font-bold leading-snug sm:text-[22px]">{tip.idea}</span>
+              <span className="text-[14px] text-muted">{tip.why}</span>
+            </div>
           </div>
-        </section>
-      )}
-
-      <section className="flex flex-col gap-4">
-        <SectionTitle>Comece por aqui</SectionTitle>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {starters.map((s, i) => (
-            <a key={s.to} href={`#${s.to}`} className={cx('group rise lift flex flex-col overflow-hidden rounded-[20px] border border-line bg-surface text-ink no-underline', `rise-${i + 1}`)}>
-              <span className="relative block aspect-[5/4] overflow-hidden bg-side">
-                <LoopVideo
-                  src={s.video}
-                  poster={s.img}
-                  style={{ objectPosition: s.pos }}
-                  className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-                />
-                <span className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-surface to-transparent" />
-              </span>
-              <span className="flex flex-col gap-1 p-4">
-                <span className="text-[16px] font-bold">{s.title}</span>
-                <span className="text-[14px] text-muted">{s.to === 'planos' ? `${formatCredits(credits)} disponíveis` : s.sub}</span>
-              </span>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <Button size="lg" onClick={makeTip}>
+              Gerar esse vídeo <ArrowRight size={18} />
+            </Button>
+            <a href="#mentor" className="press inline-flex min-h-13 items-center gap-2 rounded-xl border border-line-strong px-5 text-[15px] font-semibold text-ink no-underline hover:border-[#a78bfa80]">
+              <Sparkles size={17} className="text-[#c4b5fd]" aria-hidden /> Falar com o Mentor
             </a>
-          ))}
+          </div>
         </div>
       </section>
 
+      {/* últimos itens */}
       <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <SectionTitle>Inspire-se</SectionTitle>
-          <p className="m-0 text-[14px] text-muted">Historinhas com boneco 3D, do jeito que você vai criar.</p>
-        </div>
-        <StoryReel />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <SectionTitle action={stories.length > 0 ? <TextLink to="videos" className="text-[14px]">Ver todos</TextLink> : undefined}>Seus vídeos</SectionTitle>
-        {stories.length === 0 ? (
+        <SectionTitle action={entries.length > 0 ? <TextLink to="biblioteca" className="text-[14px]">Ver biblioteca</TextLink> : undefined}>Criados por último</SectionTitle>
+        {entries.length === 0 ? (
           <div className="flex flex-col items-center gap-4 rounded-[22px] border border-dashed border-[#3a4152] px-6 py-10 text-center">
-            <p className="m-0 text-[16px] font-semibold">Seu primeiro vídeo aparece aqui</p>
+            <p className="m-0 text-[16px] font-semibold">O que você criar aparece aqui</p>
             <a href="#nova-historinha" className="shine press inline-flex min-h-12 items-center gap-2 rounded-xl bg-accent px-5 text-[15px] font-bold text-accent-ink no-underline">
               <Plus size={18} /> Criar historinha
             </a>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-            {stories.slice(0, 6).map((s) => {
-              const look = characters.find((c) => c.id === s.characterIds[0])?.look
-              return (
-                <a key={s.id} href="#editor" onClick={() => openStory(s.id)} className="lift flex flex-col gap-2.5 rounded-2xl text-ink no-underline">
-                  <span className="relative block aspect-[9/16] overflow-hidden rounded-2xl border border-line-strong">
-                    <Scene backdrop={s.parts[0]?.backdrop ?? 'noite'} look={look} className="absolute inset-0 h-full w-full" />
-                    <Badge tone={s.status === 'pronto' ? 'sky' : 'accent'} className="absolute left-2.5 top-2.5">
-                      {s.status === 'pronto' ? 'Pronto' : 'Gerando'}
-                    </Badge>
-                  </span>
-                  <span className="text-[14px] font-semibold leading-snug">{s.title}</span>
-                </a>
-              )
-            })}
+            {entries.slice(0, 6).map((e, i) => (
+              <EntryCard key={e.id} e={e} i={i} onPick={setOpen} />
+            ))}
           </div>
         )}
       </section>
+
+      {/* vender, planejar, analisar */}
+      <section className="flex flex-col gap-4">
+        <SectionTitle>Vender e crescer</SectionTitle>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {MORE.map((id, i) => {
+            const m = MODULES[id]
+            return (
+              <a key={id} href={`#${id}`} className={cx('rise lift flex items-center gap-3.5 rounded-[20px] border border-line bg-surface p-4 text-ink no-underline', `rise-${i + 1}`)}>
+                <ModuleIcon id={id} />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="flex items-center gap-2 text-[15px] font-bold">
+                    {m.name} {!m.ready && <SoonPill />}
+                  </span>
+                  <span className="line-clamp-2 text-[13px] text-muted">{m.phrase}</span>
+                </span>
+              </a>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <SectionTitle>Inspire-se</SectionTitle>
+        <StoryReel />
+      </section>
+
+      {open && <EntryPreview e={open} onClose={() => setOpen(null)} />}
     </AppShell>
   )
 }

@@ -7,26 +7,41 @@ import { Login, Signup } from './pages/Auth'
 import { Home } from './pages/Home'
 import { NewStory } from './pages/NewStory'
 import { Editor } from './pages/Editor'
-import { Videos } from './pages/Videos'
 import { Cast, NewCharacter } from './pages/Cast'
 import { Lessons } from './pages/Lessons'
 import { Plans } from './pages/Plans'
 import { Account } from './pages/Account'
 import { Cursor } from './components/Cursor'
+import { MyBusiness, Onboarding } from './pages/Business'
+import { Library } from './pages/Library'
+import { VideoStudio } from './pages/VideoStudio'
+import { Ads, Calendar, Clips, CopyStudio, ImageStudio, Mentor, WhatsApp } from './pages/Soon'
+import { useBusiness } from './lib/business'
 
 const publicRoutes: Route[] = ['site', 'entrar', 'criar-conta']
+// telas que dá pra abrir antes de terminar o cadastro do negócio
+const beforeSetup: Route[] = ['comecar', 'novo-personagem', 'conta', 'planos']
 
 function Screen() {
   const route = useRoute()
   const { ready, session } = useAuth()
   const loggedIn = DEMO || !!session
   const isPublic = publicRoutes.includes(route)
+  const { business, loaded: bizLoaded } = useBusiness()
+  const needsSetup = loggedIn && bizLoaded && !business.completed
 
   useEffect(() => {
     if (!ready || DEMO) return
     if (!loggedIn && !isPublic) go('entrar')
     if (loggedIn && (route === 'entrar' || route === 'criar-conta')) go('inicio')
   }, [ready, loggedIn, isPublic, route])
+
+  // primeiro acesso: cadastro do negócio antes de tudo
+  useEffect(() => {
+    if (!ready || isPublic) return
+    if (needsSetup && !beforeSetup.includes(route)) go('comecar')
+    if (loggedIn && bizLoaded && business.completed && route === 'comecar') go('inicio')
+  }, [ready, isPublic, needsSetup, route, loggedIn, bizLoaded, business.completed])
 
   if (!ready) {
     return (
@@ -55,7 +70,28 @@ function Screen() {
     case 'editor':
       return <Editor />
     case 'videos':
-      return <Videos />
+    case 'estudio-video':
+      return <VideoStudio />
+    case 'comecar':
+      return <Onboarding />
+    case 'meu-negocio':
+      return <MyBusiness />
+    case 'biblioteca':
+      return <Library />
+    case 'mentor':
+      return <Mentor />
+    case 'estudio-imagem':
+      return <ImageStudio />
+    case 'cortes':
+      return <Clips />
+    case 'copy':
+      return <CopyStudio />
+    case 'whatsapp':
+      return <WhatsApp />
+    case 'calendario':
+      return <Calendar />
+    case 'anuncios':
+      return <Ads />
     case 'elenco':
       return <Cast />
     case 'novo-personagem':

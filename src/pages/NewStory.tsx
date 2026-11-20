@@ -561,7 +561,7 @@ export function NewStory() {
       )}
 
       {/* Barra de baixo: custo e botões */}
-      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-line-strong bg-surface-2/90 p-3 pl-5 shadow-2xl shadow-black/50 backdrop-blur">
+      <div className="sticky bottom-[92px] z-20 lg:bottom-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-line-strong bg-surface-2/90 p-3 pl-5 shadow-2xl shadow-black/50 backdrop-blur">
         <div className="flex items-center gap-4 text-[14px]">
           <span className="flex items-center gap-2 font-semibold">
             <Coins size={18} className="text-accent" aria-hidden />

@@ -1,13 +1,14 @@
 import { Play } from 'lucide-react'
 import { modules } from '../data/mock'
 import { AppShell } from '../components/AppShell'
+import { ModuleHeader } from '../components/Module'
 import { ClipArt, clips } from '../components/Showcase'
-import { Badge, PageHeader, SectionTitle, Shot } from '../components/ui'
+import { Badge, SectionTitle, Shot } from '../components/ui'
 
 export function Lessons() {
   return (
     <AppShell active="aulas">
-      <PageHeader title="Aulas" subtitle="Do primeiro boneco ao vídeo que viraliza." />
+      <ModuleHeader id="aulas" />
 
       <section className="relative grid items-center gap-6 overflow-hidden rounded-[22px] border border-line bg-surface p-5 sm:p-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="aurora"><span /></div>

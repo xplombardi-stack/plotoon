@@ -4,6 +4,7 @@ import './index.css'
 import App from './App'
 import { AuthProvider } from './lib/auth'
 import { StoreProvider } from './lib/store'
+import { BusinessProvider } from './lib/business'
 import { ToastProvider } from './components/ui'
 import { applySettings } from './lib/pricing'
 import { supabase } from './lib/supabase'
@@ -36,9 +37,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <StoreProvider>
-        <ToastProvider>
-          <App />
-        </ToastProvider>
+        <BusinessProvider>
+          <ToastProvider>
+            <App />
+          </ToastProvider>
+        </BusinessProvider>
       </StoreProvider>
     </AuthProvider>
   </StrictMode>,
