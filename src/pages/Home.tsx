@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { ArrowRight, Coins, Plus, Sparkles } from 'lucide-react'
 import { AppShell, useDisplayName } from '../components/AppShell'
 import { EntryCard, EntryPreview, useLibraryEntries, type Entry } from '../components/Library'
-import { LoopVideo } from '../components/LoopVideo'
-import { ModuleIcon, SoonPill, moduleArt } from '../components/Module'
-import { HeroCreators } from '../components/Showcase'
+import { ModuleDemo } from '../components/FeatureDemos'
+import { ModuleIcon, SoonPill } from '../components/Module'
 import { StoryReel } from '../components/StoryReel'
 import { Button, SectionTitle, TextLink, cx, go } from '../components/ui'
 import { tipOfTheDay, useBusiness } from '../lib/business'
@@ -37,7 +36,7 @@ export function Home() {
     <AppShell active="inicio">
       {/* topo: saudação + saldo */}
       <section className="grid gap-4 lg:grid-cols-[1.7fr_1fr]">
-        <div className="relative grid items-center gap-5 overflow-hidden rounded-[24px] border border-line bg-surface p-5 sm:p-7 md:grid-cols-[1.2fr_1fr]">
+        <div className="relative flex flex-col justify-center gap-5 overflow-hidden rounded-[24px] border border-line bg-surface p-5 sm:p-7">
           <div className="aurora"><span /></div>
           <div className="relative flex flex-col gap-3">
             <div className="rise flex items-center gap-2.5">
@@ -49,9 +48,6 @@ export function Home() {
             <h1 className="rise rise-1 text-balance m-0 font-display text-[32px] font-extrabold leading-[1.05] tracking-[-0.03em] sm:text-[42px]">
               O que vamos <span className="text-accent text-glow">criar</span> hoje?
             </h1>
-          </div>
-          <div className="relative hidden md:block">
-            <HeroCreators />
           </div>
         </div>
 
@@ -75,15 +71,10 @@ export function Home() {
         <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {CREATE_MODULES.map((id, i) => {
             const m = MODULES[id]
-            const art = moduleArt[id]!
             return (
               <a key={id} href={`#${id}`} className={cx('group rise lift relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-[22px] border border-line-strong bg-side p-3.5 text-ink no-underline sm:aspect-[5/6] sm:p-4', `rise-${i + 1}`)}>
-                {art.video ? (
-                  <LoopVideo src={art.video} poster={art.poster} className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                ) : (
-                  <img src={art.poster} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                )}
-                <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" />
+                <ModuleDemo id={id} base={400} className="absolute inset-0 p-2 transition-transform duration-700 group-hover:scale-[1.03]" />
+                <span className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/95 to-transparent" />
                 {!m.ready && <SoonPill className="absolute right-3 top-3" />}
                 <span className="relative flex items-center gap-2.5">
                   <ModuleIcon id={id} size="sm" />

@@ -2,25 +2,7 @@
 import type { ReactNode } from 'react'
 import { Info } from 'lucide-react'
 import { MODULES, type ModuleId } from '../lib/modules'
-import { stories } from './StoryReel'
-import { clips, type Clip } from './Showcase'
 import { cx } from './ui'
-import estiloRealista from '../assets/estilos/estilo-realista.webp'
-import estiloCinema from '../assets/estilos/estilo-cinema.webp'
-
-// Vídeo curto (ou imagem) que representa cada módulo nos cards
-export const moduleArt: Partial<Record<ModuleId, Clip>> = {
-  'estudio-video': { video: stories[0].video, poster: stories[0].poster },
-  'estudio-imagem': { video: '', poster: estiloRealista },
-  cortes: { video: stories[4].video, poster: stories[4].poster },
-  copy: clips.roteiro,
-  mentor: clips.planejando,
-  whatsapp: clips.notificacao,
-  calendario: clips.planejando,
-  anuncios: clips.trabalhando,
-  biblioteca: clips.videos,
-  'meu-negocio': { video: '', poster: estiloCinema },
-}
 
 export function ModuleIcon({ id, size = 'md', className }: { id: ModuleId; size?: 'sm' | 'md' | 'lg'; className?: string }) {
   const m = MODULES[id]

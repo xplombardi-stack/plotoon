@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { EntryCard, EntryPreview, useLibraryEntries, type Entry } from '../components/Library'
-import { ModuleHeader, moduleArt } from '../components/Module'
-import { ClipArt } from '../components/Showcase'
+import { ModuleDemo } from '../components/FeatureDemos'
+import { ModuleHeader } from '../components/Module'
 import { LinkButton, cx } from '../components/ui'
 import type { LibraryKind } from '../lib/business'
 
@@ -64,7 +64,7 @@ export function Library() {
 
       {entries.length === 0 ? (
         <div className="rise flex flex-col items-center gap-5 rounded-[22px] border border-dashed border-[#3a4152] px-6 py-14 text-center">
-          <ClipArt clip={moduleArt.biblioteca!} className="aspect-[4/3] w-full max-w-[320px] rounded-2xl" />
+          <ModuleDemo id="biblioteca" base={360} className="aspect-[4/3.6] w-full max-w-[320px]" />
           <h2 className="m-0 font-display text-[24px] font-extrabold">Sua biblioteca está vazia</h2>
           <p className="m-0 max-w-[420px] text-[15px] text-muted">Tudo que você criar nos estúdios fica guardado aqui, pronto pra baixar ou usar de novo.</p>
           <LinkButton to="estudio-video" size="lg">

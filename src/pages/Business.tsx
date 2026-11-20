@@ -3,10 +3,7 @@ import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, AtSign, Check, Globe, ImagePlus, Lock, Music2, Phone, Play, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
-import { LoopVideo } from '../components/LoopVideo'
 import { ModuleHeader } from '../components/Module'
-import { stories as reelStories } from '../components/StoryReel'
-import { clips } from '../components/Showcase'
 import { Toon } from '../components/art'
 import { Button, Logo, cx, go, useToast } from '../components/ui'
 import { BRAND_COLORS, LOGO_STYLES, NICHES, TONES, useBusiness, type Business, type LogoStyle, type Socials } from '../lib/business'
@@ -327,19 +324,91 @@ function CastStrip({ from }: { from: 'comecar' | 'meu-negocio' }) {
   )
 }
 
+/* ---------- Prévia da marca, montando enquanto a pessoa preenche ---------- */
+
+const TONE_SAMPLE: Record<string, string> = {
+  amigavel: 'Chegou novidade fresquinha pra você 💛 Vem ver!',
+  divertido: 'Alerta de crush: essa aqui vai te conquistar 😂🔥',
+  profissional: 'Novidade disponível. Qualidade e entrega rápida.',
+  luxo: 'Exclusividade em cada detalhe. Conheça.',
+  urgente: 'Últimas unidades! Só hoje com 10% off 👉 Chama agora',
+}
+
+function BrandPreview({ b, focus, compact }: { b: Business; focus: string; compact?: boolean }) {
+  const c1 = b.colors[0] ?? '#ff8a3d'
+  const c2 = b.colors[1] ?? b.colors[0] ?? '#5b8cff'
+  const ring = (k: string) => (focus === k ? 'shadow-[0_0_0_2px_#ff8a3d,0_0_24px_#ff8a3d66] rounded-xl' : '')
+  const produto = b.sells.split(/[,.]/)[0]?.trim()
+  const caption = TONE_SAMPLE[b.tone] ?? 'O texto dos posts vai sair no tom que você escolher.'
+  const insta = b.socials.instagram?.replace(/^@?/, '@')
+  const avatar = b.logo ? (
+    <img src={b.logo} alt="" className="h-full w-full bg-white object-contain p-1" />
+  ) : (
+    <span className="flex h-full w-full items-center justify-center text-[18px] font-bold text-white" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
+      {(b.name.trim()[0] ?? '?').toUpperCase()}
+    </span>
+  )
+  if (compact)
+    return (
+      <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3">
+        <span className={cx('h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-white/10', ring('marca'))}>{avatar}</span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className={cx('truncate text-[15px] font-bold', ring('nome'), !b.name && 'text-subtle')}>{b.name || 'Seu negócio'}</span>
+          <span className={cx('truncate text-[12.5px] text-muted', ring('nicho'))}>{b.niche || 'Seu nicho'}</span>
+        </span>
+        <span className="flex gap-1">
+          {(b.colors.length ? b.colors : ['#2a2f3b', '#2a2f3b']).map((c, k) => (
+            <span key={k} className="h-3.5 w-3.5 rounded-full border border-white/20" style={{ background: c }} />
+          ))}
+        </span>
+      </div>
+    )
+  return (
+    <div className="flex w-full max-w-[400px] flex-col gap-4 rounded-[26px] border border-white/10 bg-[#0d1017]/90 p-5 shadow-[0_30px_80px_-30px_#000] backdrop-blur">
+      <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-[#c4b5fd]">
+        <Sparkles size={14} aria-hidden /> Seu estúdio aprendendo sobre você
+      </span>
+      <div className="flex items-center gap-3.5">
+        <span className={cx('h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white/15 transition-all', ring('marca'))}>{avatar}</span>
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className={cx('truncate px-1 font-display text-[19px] font-bold transition-all', ring('nome'), !b.name && 'text-subtle')}>{b.name || 'Seu negócio'}</span>
+          <span className={cx('self-start rounded-full bg-white/5 px-2.5 py-0.5 text-[12px] text-muted transition-all', ring('nicho'))}>{b.niche || 'Seu nicho'}</span>
+          <span className={cx('px-1 text-[12px] text-subtle', ring('redes'))}>{insta || '@seuperfil'}</span>
+        </span>
+      </div>
+      <div className={cx('relative aspect-square overflow-hidden rounded-2xl transition-all', ring('vende'))} style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
+        <span className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/15" />
+        <span className="absolute -bottom-12 -left-8 h-36 w-36 rounded-full bg-black/10" />
+        <span className="absolute inset-x-5 top-5 flex items-center gap-2">
+          <span className="h-8 w-8 overflow-hidden rounded-full border border-white/40">{avatar}</span>
+          <span className="truncate text-[13px] font-bold text-white">{b.name || 'Seu negócio'}</span>
+        </span>
+        <span className="absolute inset-x-5 bottom-6 font-display text-[24px] font-extrabold leading-tight text-white [text-shadow:0_2px_12px_#0005]">{produto || 'O que você vende aparece aqui'}</span>
+      </div>
+      <p className={cx('m-0 rounded-xl px-1 text-[14px] leading-relaxed text-soft transition-all', ring('tom'))}>{caption}</p>
+      <p className={cx('m-0 rounded-xl px-1 text-[12.5px] text-muted transition-all', ring('publico'))}>
+        <strong className="text-soft">Pra quem:</strong> {b.audience || 'seu cliente ideal'}
+      </p>
+      <span className={cx('flex items-center gap-2 rounded-xl px-1 text-[12.5px] text-muted transition-all', ring('elenco'))}>
+        <Lock size={13} className="text-sky" aria-hidden /> Elenco 3D pros vídeos
+      </span>
+    </div>
+  )
+}
+
 /* ---------- Cadastro em passos ---------- */
 
-type StepDef = { key: string; title: string; sub: string; art: { video: string; poster: string }; ok: (b: Business) => boolean }
+type StepDef = { key: string; title: string; sub: string; ok: (b: Business) => boolean }
 
 const STEPS: StepDef[] = [
-  { key: 'nome', title: 'Como se chama o seu negócio?', sub: 'É assim que ele vai aparecer nos posts e vídeos.', art: clips.notificacao, ok: (b) => b.name.trim().length > 1 },
-  { key: 'nicho', title: 'Qual é o seu nicho?', sub: 'Assim as ideias já chegam certas pra você.', art: clips.trabalhando, ok: (b) => b.niche.trim().length > 1 },
-  { key: 'vende', title: 'O que você vende?', sub: 'Produtos, serviços, preço médio. O que vier na cabeça.', art: reelStories[1], ok: (b) => b.sells.trim().length > 2 },
-  { key: 'publico', title: 'Pra quem você vende?', sub: 'Quem é o seu cliente ideal: idade, cidade, o que ele quer.', art: reelStories[4], ok: (b) => b.audience.trim().length > 2 },
-  { key: 'tom', title: 'Como a sua marca fala?', sub: 'Todo texto e roteiro vai sair nesse tom.', art: clips.roteiro, ok: (b) => !!b.tone },
-  { key: 'marca', title: 'Logo e cores', sub: 'Pra deixar tudo com a cara da sua marca.', art: clips.creditos, ok: () => true },
-  { key: 'redes', title: 'Onde você posta?', sub: 'Suas redes. Pode deixar em branco o que não usa.', art: clips.videos, ok: () => true },
-  { key: 'elenco', title: 'Seu elenco', sub: 'Personagens 3D com o seu rosto ou da sua equipe, pros vídeos.', art: clips.personagem, ok: () => true },
+  { key: 'nome', title: 'Como se chama o seu negócio?', sub: 'É assim que ele vai aparecer nos posts e vídeos.', ok: (b) => b.name.trim().length > 1 },
+  { key: 'nicho', title: 'Qual é o seu nicho?', sub: 'Assim as ideias já chegam certas pra você.', ok: (b) => b.niche.trim().length > 1 },
+  { key: 'vende', title: 'O que você vende?', sub: 'Produtos, serviços, preço médio. O que vier na cabeça.', ok: (b) => b.sells.trim().length > 2 },
+  { key: 'publico', title: 'Pra quem você vende?', sub: 'Quem é o seu cliente ideal: idade, cidade, o que ele quer.', ok: (b) => b.audience.trim().length > 2 },
+  { key: 'tom', title: 'Como a sua marca fala?', sub: 'Todo texto e roteiro vai sair nesse tom.', ok: (b) => !!b.tone },
+  { key: 'marca', title: 'Logo e cores', sub: 'Pra deixar tudo com a cara da sua marca.', ok: () => true },
+  { key: 'redes', title: 'Onde você posta?', sub: 'Suas redes. Pode deixar em branco o que não usa.', ok: () => true },
+  { key: 'elenco', title: 'Seu elenco', sub: 'Personagens 3D com o seu rosto ou da sua equipe, pros vídeos.', ok: () => true },
 ]
 
 const STEP_KEY = 'plotoon:comecar:passo'
@@ -415,10 +484,9 @@ export function Onboarding() {
         <div role="progressbar" aria-label="Progresso do cadastro" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1} className="sr-only" />
 
         <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col justify-center gap-7 py-8">
-          {/* imagem do passo, só no celular */}
-          <div key={`art-${s.key}`} className="pop relative mx-auto aspect-[16/9] w-full max-w-[420px] overflow-hidden rounded-[22px] border border-line-strong lg:hidden">
-            <LoopVideo src={s.art.video} poster={s.art.poster} eager className="absolute inset-0 h-full w-full object-cover" />
-            <span className="absolute inset-0 bg-gradient-to-t from-bg/70 to-transparent" />
+          {/* prévia da marca, só no celular */}
+          <div className="lg:hidden">
+            <BrandPreview b={draft} focus={s.key} compact />
           </div>
 
           <div key={s.key} className="rise flex flex-col gap-2">
@@ -465,33 +533,12 @@ export function Onboarding() {
         </div>
       </div>
 
-      {/* imagem grande do passo, no computador */}
-      <aside aria-hidden className="relative hidden overflow-hidden border-l border-line lg:block">
-        <div key={`big-${s.key}`} className="pop absolute inset-0">
-          <LoopVideo src={s.art.video} poster={s.art.poster} eager className="h-full w-full object-cover" />
+      {/* prévia grande da marca, no computador */}
+      <aside aria-hidden className="relative hidden items-center justify-center overflow-hidden border-l border-line bg-side p-10 lg:flex">
+        <div className="aurora"><span /></div>
+        <div className="relative w-full max-w-[400px]">
+          <BrandPreview b={draft} focus={s.key} />
         </div>
-        <span className="absolute inset-0 bg-gradient-to-r from-bg via-bg/10 to-transparent" />
-        <span className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-bg/90 to-transparent" />
-        {draft.name && (
-          <div className="rise absolute bottom-10 left-10 right-10 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/45 p-3.5 backdrop-blur-md">
-            {draft.logo ? (
-              <img src={draft.logo} alt="" className="h-12 w-12 rounded-xl bg-white object-contain p-1" />
-            ) : (
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl text-[20px] font-bold text-white" style={{ background: draft.colors[0] ?? '#ff8a3d' }}>
-                {draft.name.charAt(0).toUpperCase()}
-              </span>
-            )}
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate font-display text-[18px] font-bold text-white">{draft.name}</span>
-              <span className="truncate text-[13px] text-white/70">{draft.niche || 'Seu estúdio de marketing'}</span>
-            </span>
-            <span className="ml-auto flex gap-1">
-              {draft.colors.map((c) => (
-                <span key={c} className="h-4 w-4 rounded-full border border-white/30" style={{ background: c }} />
-              ))}
-            </span>
-          </div>
-        )}
       </aside>
     </div>
   )

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { ArrowRight, Check, ChevronDown, ChevronLeft, Clapperboard, Coins, Download, LoaderCircle, Music, Pencil, Play, Plus, RefreshCw, Wand } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { Scene } from '../components/art'
-import { ClipArt, clips } from '../components/Showcase'
+import { StepEditor } from '../components/StepDemos'
 import { Button, LinkButton, cx, useToast } from '../components/ui'
 import type { Part } from '../lib/director'
 import { partCost } from '../lib/pricing'
@@ -32,7 +32,7 @@ function EmptyEditor() {
   return (
     <AppShell active="editor">
       <div className="rise flex flex-col items-center gap-5 rounded-[22px] border border-dashed border-[#3a4152] px-6 py-14 text-center">
-        <ClipArt clip={clips.roteiro} pos="50% 25%" className="aspect-[4/3] w-full max-w-[320px] rounded-2xl" />
+        <StepEditor className="aspect-[4/3] w-full max-w-[320px] overflow-hidden rounded-2xl border border-line-strong" />
         <h1 className="m-0 font-display text-[26px] font-extrabold">Nenhuma historinha aberta</h1>
         <p className="m-0 max-w-[420px] text-[15px] text-muted">Crie a sua primeira e ela aparece aqui pra você ajustar e exportar.</p>
         <LinkButton to="nova-historinha" size="lg">

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { MailCheck } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
-import { StoryColumns, StoryReel } from '../components/StoryReel'
+import { DemoHub } from '../components/FeatureDemos'
 import { DEMO } from '../lib/supabase'
 import { Button, CheckDot, Logo, TextLink, go } from '../components/ui'
 
@@ -77,8 +77,10 @@ function Layout({ children }: { children: ReactNode }) {
           <div className="rise flex w-full max-w-[392px] flex-col gap-6">{children}</div>
         </div>
         <div className="-mx-6 mb-6 flex flex-col gap-3 sm:-mx-12 lg:hidden">
-          <p className="m-0 px-6 text-[14px] font-semibold text-muted sm:px-12">Feito no Plotoon</p>
-          <StoryReel size="sm" />
+          <p className="m-0 px-6 text-[14px] font-semibold text-muted sm:px-12">Tudo isso num lugar só</p>
+          <div className="px-6 sm:px-12">
+            <DemoHub className="aspect-[4/5] w-full" />
+          </div>
         </div>
         <div className="flex flex-wrap gap-5 text-[13px] text-subtle">
           <span>© Plotoon</span>
@@ -88,8 +90,9 @@ function Layout({ children }: { children: ReactNode }) {
       </section>
 
       <section aria-hidden className="relative hidden min-h-screen min-w-0 flex-[1.1_1_520px] overflow-hidden border-l border-line bg-side lg:block">
-        <StoryColumns className="absolute inset-x-8 inset-y-0 h-full [&>div]:h-full" />
-        <div className="absolute inset-0 bg-gradient-to-t from-side from-25% via-side/85 via-45% to-transparent to-75%" />
+        <div className="absolute inset-x-10 top-10 bottom-[260px]">
+          <DemoHub className="h-full w-full" />
+        </div>
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-6 p-12">
           <h2 className="text-balance m-0 max-w-[480px] font-display text-[36px] font-extrabold leading-[1.1] tracking-[-0.03em]">
             Seu estúdio de marketing com IA, num lugar só.

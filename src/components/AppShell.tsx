@@ -7,8 +7,8 @@ import { useStore } from '../lib/store'
 import { useBusiness } from '../lib/business'
 import { formatCredits } from '../lib/pricing'
 import { CREATE_MODULES, MODULES, NAV_GROUPS, moduleFor, type ModuleId } from '../lib/modules'
-import { LoopVideo } from './LoopVideo'
-import { ModuleIcon, SoonPill, moduleArt } from './Module'
+import { ModuleDemo } from './FeatureDemos'
+import { ModuleIcon, SoonPill } from './Module'
 import { Logo, cx } from './ui'
 
 export function useDisplayName() {
@@ -125,16 +125,10 @@ function CreateGrid({ onPick }: { onPick?: () => void }) {
     <div className="grid grid-cols-2 gap-3">
       {CREATE_MODULES.map((id, i) => {
         const m = MODULES[id]
-        const art = moduleArt[id]
         return (
           <a key={id} href={`#${id}`} onClick={onPick} className={cx('pop group relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-[20px] border border-line-strong bg-surface p-3 text-ink no-underline')} style={{ animationDelay: `${i * 60}ms` }}>
-            {art &&
-              (art.video ? (
-                <LoopVideo src={art.video} poster={art.poster} className="absolute inset-0 h-full w-full object-cover" />
-              ) : (
-                <img src={art.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              ))}
-            <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+            <ModuleDemo id={id} base={400} className="absolute inset-0 bg-[#0d1017] p-1.5" />
+            <span className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/90 to-transparent" />
             <span className="relative flex items-center gap-2">
               <ModuleIcon id={id} size="sm" />
               <span className="text-[15px] font-bold leading-tight text-white">{m.short ?? m.name}</span>

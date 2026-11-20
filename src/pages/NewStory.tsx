@@ -5,6 +5,7 @@ import { ideas } from '../data/mock'
 import { AppShell } from '../components/AppShell'
 import { Scene, Toon } from '../components/art'
 import { ClipArt, clips } from '../components/Showcase'
+import { StepIdea } from '../components/StepDemos'
 import { Badge, Button, LinkButton, cx, go, useToast } from '../components/ui'
 import { CTA_PRONTAS, buildPrompt, tones, writeScript, type Part, type Tone } from '../lib/director'
 import { pedirRoteiro, type ModoDiretor } from '../lib/diretorApi'
@@ -190,7 +191,7 @@ export function NewStory() {
       </div>
 
       {step === 0 && (
-        <Panel title="Qual é a história?" hint="Conta em uma frase. O Diretor escreve o resto." art={<ClipArt clip={clips.roteiro} pos="50% 25%" className="aspect-[4/3] w-full max-w-[380px] rounded-[18px]" />}>
+        <Panel title="Qual é a história?" hint="Conta em uma frase. O Diretor escreve o resto." art={<StepIdea className="aspect-[4/3] w-full max-w-[380px] overflow-hidden rounded-[18px] border border-line-strong" />}>
           <label htmlFor="ideia-txt" className="sr-only">Sua ideia</label>
           <textarea
             id="ideia-txt"

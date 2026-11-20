@@ -1,10 +1,9 @@
 // Demonstrações animadas de cada função, usadas na página inicial (só ilustração).
 import type { ReactNode } from 'react'
-import { BadgeCheck, CalendarDays, Check, CheckCheck, Copy, Flame, LoaderCircle, MousePointer2, Pause, Rocket, Send, Sparkles, TrendingUp, Wand2 } from 'lucide-react'
-import { LoopVideo } from './LoopVideo'
-import { ModuleIcon, moduleArt } from './Module'
-import { stories as reel } from './StoryReel'
-import { on, typed, useLoop } from './StepDemos'
+import { useEffect, useRef, useState } from 'react'
+import { BadgeCheck, BarChart3, CalendarDays, Check, CheckCheck, Copy, FileText, Film, Flame, LoaderCircle, MessageCircle, MessagesSquare, MousePointer2, Palette, Pause, PenTool, Rocket, Send, Sparkles, Table2, TrendingUp, Wand2 } from 'lucide-react'
+import { ModuleIcon } from './Module'
+import { StepIdea, on, typed, useLoop } from './StepDemos'
 import { cx } from './ui'
 import { MODULES, type ModuleId } from '../lib/modules'
 
@@ -28,147 +27,423 @@ function Typing() {
   )
 }
 
-/* ---------- Topo: tudo num lugar só ---------- */
+/* ---------- Encaixa uma demo em qualquer espaço (diminui mantendo a proporção) ---------- */
 
-const HUB: ModuleId[] = ['mentor', 'estudio-video', 'estudio-imagem', 'cortes', 'copy', 'whatsapp', 'calendario', 'anuncios']
-
-export function DemoHub({ className }: { className?: string }) {
-  const STEP = 2600
-  const { ref, t } = useLoop(STEP * HUB.length, 0)
-  const i = Math.floor(t / STEP) % HUB.length
+export function Fit({ base = 460, children, className, align = 'center' }: { base?: number; children: ReactNode; className?: string; align?: 'center' | 'top' }) {
+  const outer = useRef<HTMLDivElement>(null)
+  const inner = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState({ s: 1, x: 0, y: 0 })
+  useEffect(() => {
+    const o = outer.current
+    const i = inner.current
+    if (!o || !i) return
+    const measure = () => {
+      const w = o.clientWidth
+      const h = o.clientHeight
+      const ih = i.offsetHeight || 1
+      const s = Math.min(w / base, h / ih)
+      setBox({ s, x: (w - base * s) / 2, y: align === 'top' ? 0 : Math.max(0, (h - ih * s) / 2) })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(o)
+    ro.observe(i)
+    return () => ro.disconnect()
+  }, [base, align])
   return (
-    <Frame innerRef={ref} className={cx('flex flex-col', className)}>
-      <div className="flex items-center gap-1.5 border-b border-line px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
-        <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        <span className="ml-3 rounded-md bg-surface px-3 py-1 text-[11px] text-subtle">plotoon.app</span>
-      </div>
-      <div className="flex min-h-0 flex-1">
-        <div className="flex w-[50px] shrink-0 flex-col items-center justify-center gap-1 border-r border-line bg-side py-2 sm:w-[60px]">
-          {HUB.map((id, k) => (
-            <span key={id} className={cx('rounded-[12px] p-0.5 transition-all duration-500', k === i ? 'scale-110 bg-[#ff8a3d26] shadow-[0_0_0_1px_#ff8a3d66]' : 'opacity-50')}>
-              <ModuleIcon id={id} size="sm" />
-            </span>
-          ))}
+    <div aria-hidden className={cx('overflow-hidden', className)}>
+      <div ref={outer} className="relative h-full w-full overflow-hidden">
+        <div ref={inner} className="absolute left-0 top-0 origin-top-left" style={{ width: base, transform: `translate(${box.x}px, ${box.y}px) scale(${box.s})` }}>
+          {children}
         </div>
-        <div className="relative min-w-0 flex-1">
-          {HUB.map((id, k) => {
-            const art = moduleArt[id]!
-            const show = k === i
-            return (
-              <div key={id} className={cx('absolute inset-0 transition-opacity duration-700', show ? 'opacity-100' : 'opacity-0')}>
-                {art.video ? <LoopVideo src={art.video} poster={art.poster} className="absolute inset-0 h-full w-full object-cover" /> : <img src={art.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-                <span className="absolute inset-0 bg-gradient-to-t from-[#0d1017] via-[#0d1017]/40 to-transparent" />
-                <div className={cx('absolute inset-x-4 bottom-4 flex flex-col gap-1 transition-all duration-700 sm:inset-x-6 sm:bottom-6', show ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0')}>
-                  <span className="font-display text-[22px] font-extrabold text-white sm:text-[28px]">{MODULES[id].name}</span>
-                  <span className="max-w-[420px] text-[13px] text-white/75 sm:text-[15px]">{MODULES[id].phrase}</span>
-                </div>
-              </div>
-            )
-          })}
-          <div className="absolute inset-x-0 top-0 flex gap-1 p-3">
-            {HUB.map((id, k) => (
-              <span key={id} className="h-1 flex-1 overflow-hidden rounded-full bg-white/15">
-                <span className="block h-full bg-white" style={{ width: k < i ? '100%' : k === i ? `${((t % STEP) / STEP) * 100}%` : '0%' }} />
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </Frame>
-  )
-}
-
-/* ---------- 5 apps viram 1 ---------- */
-
-const APPS = ['App de vídeo', 'App de design', 'Editor de texto', '30 abas de chat com IA', 'Planilha de posts', 'Gerenciador de anúncios', 'WhatsApp no braço', 'Criador de logo']
-
-export function DemoChaos({ className }: { className?: string }) {
-  const TOTAL = 9000
-  const { ref, t } = useLoop(TOTAL, 7000)
-  const struck = Math.floor(Math.max(0, t - 600) / 500)
-  const merged = on(t, 600 + APPS.length * 500)
-  return (
-    <div ref={ref} aria-hidden className={cx('flex flex-col items-center gap-6', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
-      <div className="flex max-w-[620px] flex-wrap justify-center gap-2.5">
-        {APPS.map((a, k) => (
-          <span
-            key={a}
-            className={cx(
-              'rounded-full border px-4 py-2 text-[14px] font-semibold transition-all duration-500',
-              k < struck ? 'scale-95 border-line text-subtle line-through decoration-[#ef4444] decoration-2 opacity-50' : 'border-line-strong bg-surface text-soft',
-            )}
-          >
-            {a}
-          </span>
-        ))}
-      </div>
-      <div className={cx('flex items-center gap-3 rounded-2xl border border-accent-line bg-[#ff8a3d14] px-5 py-3.5 transition-all duration-700 [transition-timing-function:var(--ease-spring)]', merged ? 'scale-100 opacity-100' : 'scale-75 opacity-0')}>
-        <BadgeCheck size={22} className="text-accent" />
-        <span className="text-[16px] font-bold">Tudo isso dentro do Plotoon</span>
       </div>
     </div>
   )
 }
 
-/* ---------- Mentor ---------- */
+/* ---------- Mentor: conversas de verdade, uma atrás da outra ---------- */
 
-const PERGUNTA = 'Minhas vendas caíram essa semana. O que eu posto?'
-const RESPOSTA = 'Faz uma historinha com virada: a cliente que duvidou e virou fã. Termina chamando pro WhatsApp. Já deixei pronto:'
+type Msg =
+  | { at: number; who: 'user' | 'mentor'; text: string }
+  | { at: number; who: 'mentor'; kind: 'insta' }
+  | { at: number; who: 'mentor'; kind: 'plan'; title: string; items: Array<{ t: string; btn: string; done: string }>; click: number; clickAt: number }
 
-export function DemoMentor({ className }: { className?: string }) {
-  const TOTAL = 12000
-  const { ref, t } = useLoop(TOTAL, 9000)
-  const q = typed(PERGUNTA, t, 300, 34)
-  const thinking = t > 2000 && t < 3000
-  const a = typed(RESPOSTA, t, 3000, 52)
-  const card = on(t, 5400)
-  const cursorIn = on(t, 6600)
-  const clicked = on(t, 7500)
+type Story = { len: number; msgs: Msg[] }
+
+const STORIES: Story[] = [
+  {
+    len: 17500,
+    msgs: [
+      { at: 2000, who: 'user', text: 'Tô perdida. Vendo bolo de pote e não vende. O que eu faço?' },
+      { at: 3300, who: 'mentor', text: 'Bora resolver! Me passa o @ do seu Instagram que eu analiso.' },
+      { at: 6000, who: 'user', text: '@doce.da.bia' },
+      { at: 6400, who: 'mentor', kind: 'insta' },
+      { at: 10600, who: 'mentor', text: 'O bolo é bom, o problema é a vitrine. Seu plano da semana:' },
+      {
+        at: 12300,
+        who: 'mentor',
+        kind: 'plan',
+        title: 'Plano da semana',
+        items: [
+          { t: 'Bio nova com chamada pro WhatsApp', btn: 'Criar', done: 'Pronta' },
+          { t: 'Foto do bolo com cara de vitrine', btn: 'Gerar', done: 'Abrindo o Estúdio de Imagem' },
+          { t: 'Vídeo: do forno até o pote', btn: 'Gerar', done: 'Pronto' },
+        ],
+        click: 1,
+        clickAt: 15000,
+      },
+    ],
+  },
+  {
+    len: 12500,
+    msgs: [
+      { at: 1900, who: 'user', text: 'Minhas vendas caíram essa semana. O que eu posto?' },
+      { at: 3200, who: 'mentor', text: 'Faz uma historinha com virada: a cliente que duvidou e virou fã. Termina chamando pro WhatsApp.' },
+      {
+        at: 6400,
+        who: 'mentor',
+        kind: 'plan',
+        title: 'Ideia de vídeo',
+        items: [{ t: 'A cliente que duvidou e virou fã', btn: 'Gerar vídeo', done: 'Abrindo o Estúdio de Vídeo com o roteiro pronto' }],
+        click: 0,
+        clickAt: 9000,
+      },
+    ],
+  },
+  {
+    len: 15500,
+    msgs: [
+      { at: 1900, who: 'user', text: 'Abri uma barbearia. Quanto eu cobro no corte?' },
+      { at: 3200, who: 'mentor', text: 'Me diz o bairro e se você faz barba também.' },
+      { at: 5600, who: 'user', text: 'Centro de Campinas. Faço sim' },
+      { at: 6900, who: 'mentor', text: 'Na sua região o corte sai de R$ 35 a R$ 50. Cobra R$ 45 e cria o combo corte + barba por R$ 65: é ali que está o lucro.' },
+      {
+        at: 10600,
+        who: 'mentor',
+        kind: 'plan',
+        title: 'Próximo passo',
+        items: [
+          { t: 'Post com a tabela de preços', btn: 'Gerar', done: 'Abrindo o Estúdio de Imagem' },
+          { t: 'Mensagem pros clientes antigos', btn: 'Escrever', done: 'Pronta' },
+        ],
+        click: 0,
+        clickAt: 13000,
+      },
+    ],
+  },
+]
+
+const INPUT_LEAD = 1500 // a pessoa digita antes de enviar
+
+function InstaScan({ t }: { t: number }) {
+  const scan = Math.min(1, t / 2400)
+  const found = ['Bio sem chamada pra ação', 'Fotos escuras: o bolo não brilha', 'Nenhum vídeo nos últimos 30 dias']
   return (
-    <Frame innerRef={ref} className={cx('flex flex-col gap-3 p-4 sm:p-5', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
-      <div className="flex items-center gap-2 border-b border-line pb-3">
-        <ModuleIcon id="mentor" size="sm" />
-        <span className="text-[14px] font-bold">Mentor</span>
-        <span className="ml-auto text-[11px] text-subtle">conhece o Ateliê da Ju</span>
+    <div className="pop flex flex-col gap-3 rounded-[16px] border border-[#a78bfa55] bg-[#a78bfa10] p-3.5">
+      <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#c4b5fd]">
+        {scan < 1 ? <LoaderCircle size={13} className="animate-spin" /> : <Check size={13} />} {scan < 1 ? 'Analisando o perfil…' : 'Análise pronta'}
+      </span>
+      <div className="flex gap-3">
+        <div className="relative w-[118px] shrink-0 overflow-hidden rounded-xl border border-line bg-[#0b0d12] p-2">
+          <div className="flex items-center gap-1.5">
+            <span className="h-6 w-6 rounded-full bg-gradient-to-br from-[#f9a8d4] to-[#fcd34d]" />
+            <span className="flex flex-col leading-none">
+              <span className="text-[9px] font-bold">doce.da.bia</span>
+              <span className="text-[8px] text-muted">312 seguidores</span>
+            </span>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-0.5">
+            {['#4a3b33', '#3d3530', '#57463c', '#3a322e', '#4d4038', '#40362f'].map((c, k) => (
+              <span key={k} className="aspect-square rounded-[2px]" style={{ background: c }} />
+            ))}
+          </div>
+          <span className="absolute inset-x-0 h-6 bg-gradient-to-b from-transparent via-[#a78bfa66] to-transparent" style={{ top: `${scan * 100 - 10}%`, opacity: scan < 1 ? 1 : 0 }} />
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          {found.map((f, k) => (
+            <span key={f} className={cx('flex items-start gap-1.5 text-[12px] leading-snug text-soft transition-all duration-500', t > 1800 + k * 550 ? 'translate-x-0 opacity-100' : 'translate-x-2 opacity-0')}>
+              <span className="mt-[3px] h-2 w-2 shrink-0 rounded-full bg-[#f87171]" />
+              {f}
+            </span>
+          ))}
+        </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col justify-end gap-3">
-        {q && <p className="m-0 max-w-[85%] self-end rounded-[16px] rounded-br-md bg-accent px-3.5 py-2.5 text-[13.5px] font-medium text-accent-ink">{q}</p>}
-        {thinking && (
-          <span className="flex items-center gap-2 text-[#c4b5fd]">
-            <Sparkles size={15} /> <Typing />
-          </span>
-        )}
-        {a && <p className={cx('m-0 max-w-[92%] rounded-[16px] rounded-tl-md border border-line bg-surface px-3.5 py-2.5 text-[13.5px] leading-relaxed text-soft', a.length < RESPOSTA.length && 'caret')}>{a}</p>}
-        {card && (
-          <div className={cx('pop flex flex-col gap-2.5 rounded-[16px] border p-3.5 transition-colors', clicked ? 'border-sky-line bg-sky-soft/40' : 'border-accent-line bg-[#ff8a3d10]')}>
-            <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-accent-text">Ideia de vídeo</span>
-            <span className="text-[14px] font-semibold">A cliente que duvidou e virou fã</span>
-            {clicked ? (
-              <span className="flex items-center gap-2 text-[13px] font-semibold text-sky-text">
-                <Check size={16} /> Abrindo o Estúdio de Vídeo com o roteiro pronto
-              </span>
+    </div>
+  )
+}
+
+function PlanCard({ m, t }: { m: Extract<Msg, { kind: 'plan' }>; t: number }) {
+  const cursorIn = t >= m.clickAt - 1000
+  const clicked = t >= m.clickAt
+  return (
+    <div className="pop flex flex-col gap-2 rounded-[16px] border border-accent-line bg-[#ff8a3d10] p-3">
+      <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-accent-text">{m.title}</span>
+      {m.items.map((it, k) => {
+        const done = clicked && k === m.click
+        return (
+          <div key={it.t} className={cx('flex items-center gap-2 rounded-xl px-2.5 py-2 transition-colors', done ? 'bg-sky-soft/50' : 'bg-bg/50')} style={{ animation: `pop .45s var(--ease-spring) ${k * 120}ms both` }}>
+            <span className="min-w-0 flex-1 text-[12.5px] font-semibold leading-snug">{done ? it.done : it.t}</span>
+            {done ? (
+              <Check size={16} className="shrink-0 text-sky-text" />
             ) : (
-              <span className="flex gap-2">
-                <span className="relative inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-[12.5px] font-bold text-accent-ink">
-                  Gerar esse vídeo
-                  <MousePointer2
-                    size={22}
-                    className="absolute text-white drop-shadow-[0_2px_4px_#000] transition-all duration-700"
-                    style={{ left: cursorIn ? '70%' : '160%', top: cursorIn ? '55%' : '160%' }}
-                    fill="#111"
-                  />
-                </span>
-                <span className="rounded-lg border border-line-strong px-3 py-2 text-[12.5px] font-semibold text-soft">Agendar</span>
+              <span className="relative shrink-0 rounded-lg bg-accent px-2.5 py-1.5 text-[11.5px] font-bold text-accent-ink">
+                {it.btn}
+                {k === m.click && (
+                  <MousePointer2 size={20} className="absolute text-white drop-shadow-[0_2px_4px_#000] transition-all duration-700" style={{ left: cursorIn ? '55%' : '170%', top: cursorIn ? '50%' : '190%' }} fill="#111" />
+                )}
               </span>
             )}
           </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function MentorChat({ story, t }: { story: Story; t: number }) {
+  const shown = story.msgs.filter((m) => t >= m.at)
+  const pendingUser = story.msgs.find((m) => m.who === 'user' && 'text' in m && t < m.at && t >= m.at - INPUT_LEAD) as Extract<Msg, { text: string }> | undefined
+  const thinking = story.msgs.some((m) => m.who === 'mentor' && t < m.at && t >= m.at - 900 && !('kind' in m && m.kind === 'plan'))
+  return (
+    <>
+      <div className="flex min-h-0 flex-1 flex-col justify-end gap-2.5 overflow-hidden">
+        {shown.map((m) => {
+          if ('kind' in m) return m.kind === 'insta' ? <InstaScan key={m.at} t={t - m.at} /> : <PlanCard key={m.at} m={m} t={t} />
+          if (m.who === 'user')
+            return (
+              <p key={m.at} className="pop m-0 max-w-[85%] shrink-0 self-end rounded-[16px] rounded-br-md bg-accent px-3.5 py-2.5 text-[13.5px] font-medium text-accent-ink">
+                {m.text}
+              </p>
+            )
+          const txt = typed(m.text, t, m.at, 55)
+          return (
+            <p key={m.at} className={cx('m-0 max-w-[92%] shrink-0 rounded-[16px] rounded-tl-md border border-line bg-surface px-3.5 py-2.5 text-[13.5px] leading-relaxed text-soft', txt.length < m.text.length && 'caret')}>
+              {txt}
+            </p>
+          )
+        })}
+        {thinking && (
+          <span className="flex shrink-0 items-center gap-2 text-[#c4b5fd]">
+            <Sparkles size={15} /> <Typing />
+          </span>
         )}
+      </div>
+      <div className="flex shrink-0 items-center gap-2 rounded-[14px] border border-line-strong bg-bg/70 p-1.5 pl-3.5">
+        <span className={cx('min-w-0 flex-1 truncate text-[13px]', pendingUser ? 'caret text-ink' : 'text-subtle')}>
+          {pendingUser ? typed(pendingUser.text, t, pendingUser.at - INPUT_LEAD, Math.max(20, (pendingUser.text.length / (INPUT_LEAD - 200)) * 1000)) : 'Pergunte ao Mentor…'}
+        </span>
+        <span className={cx('flex h-9 w-9 items-center justify-center rounded-[10px] bg-accent text-accent-ink transition-transform', pendingUser && t > pendingUser.at - 180 && 'scale-90')}>
+          <Send size={15} />
+        </span>
+      </div>
+    </>
+  )
+}
+
+export function DemoMentor({ className, story }: { className?: string; story?: number }) {
+  const list = story === undefined ? STORIES : [STORIES[story]]
+  const total = list.reduce((a, s) => a + s.len, 0)
+  const { ref, t } = useLoop(total, list[0].len - 1500)
+  let acc = 0
+  let k = 0
+  while (k < list.length - 1 && t >= acc + list[k].len) acc += list[k++].len
+  const local = t - acc
+  const cur = list[k]
+  return (
+    <Frame innerRef={ref} className={cx('flex flex-col gap-3 p-4 sm:p-5', className)}>
+      <div className="flex shrink-0 items-center gap-2 border-b border-line pb-3">
+        <ModuleIcon id="mentor" size="sm" />
+        <span className="text-[14px] font-bold">Mentor</span>
+        {list.length > 1 && (
+          <span className="ml-auto flex gap-1">
+            {list.map((_, i) => (
+              <span key={i} className={cx('h-1.5 rounded-full transition-all', i === k ? 'w-5 bg-[#a78bfa]' : 'w-1.5 bg-line-strong')} />
+            ))}
+          </span>
+        )}
+      </div>
+      <div key={k} className="flex min-h-0 flex-1 flex-col gap-3" style={{ opacity: fadeOut(local, cur.len) }}>
+        <MentorChat story={cur} t={local} />
       </div>
     </Frame>
   )
 }
+
+/* ---------- 5 apps viram 1: ícones de app sendo apagados ---------- */
+
+const APPS: Array<{ name: string; icon: typeof Film; bg: string }> = [
+  { name: 'Vídeo', icon: Film, bg: 'from-[#111827] to-[#374151]' },
+  { name: 'Design', icon: Palette, bg: 'from-[#7c3aed] to-[#22d3ee]' },
+  { name: 'Texto', icon: FileText, bg: 'from-[#2563eb] to-[#60a5fa]' },
+  { name: '30 abas de chat', icon: MessagesSquare, bg: 'from-[#0f766e] to-[#34d399]' },
+  { name: 'Planilha', icon: Table2, bg: 'from-[#15803d] to-[#4ade80]' },
+  { name: 'Anúncios', icon: BarChart3, bg: 'from-[#1d4ed8] to-[#a78bfa]' },
+  { name: 'WhatsApp no braço', icon: MessageCircle, bg: 'from-[#16a34a] to-[#86efac]' },
+  { name: 'Criador de logo', icon: PenTool, bg: 'from-[#db2777] to-[#fb923c]' },
+]
+
+export function DemoChaos({ className }: { className?: string }) {
+  const TOTAL = 10500
+  const { ref, t } = useLoop(TOTAL, 8500)
+  const step = 520
+  const gone = (k: number) => t > 900 + k * step + 380
+  const erasing = (k: number) => t > 900 + k * step && !gone(k)
+  const merged = on(t, 900 + APPS.length * step + 300)
+  return (
+    <div ref={ref} aria-hidden className={cx('flex flex-col items-center gap-7', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
+      <div className="grid grid-cols-4 gap-4 sm:grid-cols-8 sm:gap-5">
+        {APPS.map((a, k) => (
+          <div key={a.name} className={cx('flex w-[72px] flex-col items-center gap-2 transition-all duration-500', gone(k) && 'translate-y-6 scale-50 opacity-0 blur-sm')}>
+            <span className={cx('relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-[16px] bg-gradient-to-br text-white shadow-lg', a.bg)}>
+              <a.icon size={26} strokeWidth={2} />
+              {erasing(k) && <span className="eraser absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-white/90 to-transparent" />}
+            </span>
+            <span className="text-center text-[11.5px] font-semibold leading-tight text-muted">{a.name}</span>
+          </div>
+        ))}
+      </div>
+      <div className={cx('flex flex-col items-center gap-3 rounded-[22px] border border-accent-line bg-[#ff8a3d14] px-6 py-4 transition-all duration-700 [transition-timing-function:var(--ease-spring)]', merged ? 'scale-100 opacity-100' : 'scale-75 opacity-0')}>
+        <span className="flex items-center gap-2 text-[16px] font-bold">
+          <BadgeCheck size={20} className="text-accent" /> Tudo isso dentro do Plotoon
+        </span>
+        <span className="flex gap-1.5">
+          {HUB.map((id, k) => (
+            <span key={id} style={{ animation: merged ? `pop .45s var(--ease-spring) ${k * 70}ms both` : undefined }}>
+              <ModuleIcon id={id} size="sm" />
+            </span>
+          ))}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- Topo: o app mostrando cada função acontecendo ---------- */
+
+const HUB: ModuleId[] = ['mentor', 'estudio-video', 'estudio-imagem', 'cortes', 'copy', 'whatsapp', 'calendario', 'anuncios']
+const HUB_MS: Record<string, number> = { mentor: 17500, 'estudio-video': 12500, 'estudio-imagem': 9500, cortes: 11000, copy: 6500, whatsapp: 13500, calendario: 10500, anuncios: 10000 }
+
+// A demo de cada módulo, do tamanho que precisar
+export function ModuleDemo({ id, className, base }: { id: ModuleId; className?: string; base?: number }) {
+  const demo =
+    id === 'mentor' ? (
+      <DemoMentor story={0} className="h-[430px]" />
+    ) : id === 'estudio-video' ? (
+      <StepIdea className="aspect-[4/3.3] w-full overflow-hidden rounded-[24px] border border-line-strong" />
+    ) : id === 'estudio-imagem' ? (
+      <DemoImagem className="w-full" />
+    ) : id === 'cortes' ? (
+      <DemoCortes className="w-full" />
+    ) : id === 'copy' ? (
+      <DemoCopy className="w-full" />
+    ) : id === 'whatsapp' ? (
+      <DemoWhatsApp className="py-2" />
+    ) : id === 'calendario' ? (
+      <DemoCalendario className="w-full" />
+    ) : id === 'anuncios' ? (
+      <DemoAnuncios className="w-full" />
+    ) : id === 'biblioteca' ? (
+      <DemoBiblioteca className="w-full" />
+    ) : (
+      <DemoLogo className="w-full" />
+    )
+  return (
+    <Fit base={base ?? 460} className={className}>
+      {demo}
+    </Fit>
+  )
+}
+
+export function DemoHub({ className }: { className?: string }) {
+  const [i, setI] = useState(0)
+  const [started, setStarted] = useState(0)
+  const [now, setNow] = useState(0)
+  const id = HUB[i]
+  const dur = HUB_MS[id]
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const begin = performance.now()
+    setStarted(begin)
+    const tick = window.setInterval(() => setNow(performance.now()), 100)
+    const next = window.setTimeout(() => setI((x) => (x + 1) % HUB.length), dur)
+    return () => {
+      window.clearInterval(tick)
+      window.clearTimeout(next)
+    }
+  }, [i, dur])
+  const progress = started ? Math.min(1, (now - started) / dur) : 0
+  return (
+    <div className={cx('relative flex flex-col overflow-hidden rounded-[24px] border border-line-strong bg-[#0d1017] shadow-[0_30px_80px_-30px_#000]', className)}>
+      <div className="flex shrink-0 items-center gap-1.5 border-b border-line px-4 py-3">
+        <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+        <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+        <span className="ml-3 truncate rounded-md bg-surface px-3 py-1 text-[11px] text-subtle">plotoon · {MODULES[id].name}</span>
+      </div>
+      <div className="flex min-h-0 flex-1">
+        <div className="flex w-[50px] shrink-0 flex-col items-center justify-center gap-1 border-r border-line bg-side py-2 sm:w-[60px]">
+          {HUB.map((m, k) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setI(k)}
+              aria-label={`Ver ${MODULES[m].name}`}
+              aria-pressed={k === i}
+              className={cx('relative cursor-pointer rounded-[12px] p-0.5 transition-all duration-500', k === i ? 'scale-110 bg-[#ff8a3d26] shadow-[0_0_0_1px_#ff8a3d66]' : 'opacity-50 hover:opacity-90')}
+            >
+              <ModuleIcon id={m} size="sm" />
+              {k === i && (
+                <svg viewBox="0 0 36 36" className="pointer-events-none absolute inset-0 h-full w-full -rotate-90">
+                  <circle cx="18" cy="18" r="17" fill="none" stroke="#ff8a3d" strokeWidth="1.5" strokeDasharray={`${progress * 107} 107`} />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="relative flex min-w-0 flex-1 flex-col">
+          <div key={`t-${id}`} className="rise flex shrink-0 flex-col gap-0.5 px-4 pb-1 pt-3 sm:px-5">
+            <span className="font-display text-[18px] font-extrabold leading-tight sm:text-[21px]">{MODULES[id].name}</span>
+            <span className="truncate text-[12.5px] text-muted sm:text-[13px]">{MODULES[id].phrase}</span>
+          </div>
+          <div key={id} className="pop min-h-0 flex-1 p-3 sm:p-4">
+            <ModuleDemo id={id} className="h-full w-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ---------- Biblioteca: tudo chegando no mesmo lugar ---------- */
+
+export function DemoBiblioteca({ className }: { className?: string }) {
+  const TOTAL = 8000
+  const { ref, t } = useLoop(TOTAL, 6000)
+  const items: Array<{ k: string; tone: string; icon: typeof Film }> = [
+    { k: 'Vídeo', tone: 'from-[#ff8a3d] to-[#ff5da2]', icon: Film },
+    { k: 'Logo', tone: 'from-[#a78bfa] to-[#5b8cff]', icon: PenTool },
+    { k: 'Imagem', tone: 'from-[#38bdf8] to-[#5b8cff]', icon: Palette },
+    { k: 'Copy', tone: 'from-[#facc15] to-[#ff8a3d]', icon: FileText },
+    { k: 'Corte', tone: 'from-[#f472b6] to-[#ff5d5d]', icon: Film },
+    { k: 'Personagem', tone: 'from-[#34d399] to-[#10b981]', icon: Sparkles },
+  ]
+  return (
+    <Frame innerRef={ref} className={cx('flex flex-col gap-3 p-4', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
+      <span className="flex items-center gap-2 text-[14px] font-bold">
+        <ModuleIcon id="biblioteca" size="sm" /> Biblioteca
+      </span>
+      <div className="grid grid-cols-3 gap-2.5">
+        {items.map((it, k) => (
+          <span key={it.k} className={cx('relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-xl bg-gradient-to-br p-2 transition-all duration-500 [transition-timing-function:var(--ease-spring)]', it.tone, on(t, 300 + k * 450) ? 'scale-100 opacity-100' : 'scale-75 opacity-0')}>
+            <it.icon size={26} className="absolute inset-0 m-auto text-white/80" />
+            <span className="relative rounded-md bg-black/45 px-1.5 py-0.5 text-[10.5px] font-bold text-white">{it.k}</span>
+          </span>
+        ))}
+      </div>
+    </Frame>
+  )
+}
+
 
 /* ---------- WhatsApp ---------- */
 
@@ -349,12 +624,54 @@ export function DemoCopy({ className }: { className?: string }) {
   )
 }
 
-/* ---------- Cortes ---------- */
+/* ---------- Cortes: uma live de podcast virando vídeos verticais ---------- */
+
+// Cenário de podcast desenhado; "foco" escolhe o enquadramento (vídeo inteiro ou um corte vertical)
+function Podcast({ t, focus = 'full' }: { t: number; focus?: 'full' | 'esq' | 'dir' | 'meio' }) {
+  const vb = focus === 'full' ? '0 0 320 180' : focus === 'esq' ? '20 0 101 180' : focus === 'dir' ? '196 0 101 180' : '110 0 101 180'
+  const talkL = Math.sin(t / 140) > 0
+  const talkR = Math.sin(t / 170 + 2) > 0.3
+  const bars = Array.from({ length: 18 }, (_, k) => 4 + Math.abs(Math.sin(t / 120 + k)) * 14)
+  return (
+    <svg viewBox={vb} preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+      <defs>
+        <linearGradient id="pc-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#1b1530" />
+          <stop offset="1" stopColor="#0d1324" />
+        </linearGradient>
+      </defs>
+      <rect width="320" height="180" fill="url(#pc-bg)" />
+      <rect x="120" y="22" width="80" height="22" rx="6" fill="#ff5da2" opacity="0.9" />
+      <text x="160" y="37" textAnchor="middle" fontFamily="Arial" fontWeight="700" fontSize="10" fill="#fff">
+        PODCAST
+      </text>
+      {bars.map((h, k) => (
+        <rect key={k} x={124 + k * 4.2} y={78 - h / 2} width="2.4" height={h} rx="1.2" fill="#a78bfa" opacity="0.8" />
+      ))}
+      <rect x="0" y="140" width="320" height="40" fill="#2a2140" />
+      {/* pessoa da esquerda */}
+      <circle cx="70" cy="78" r="20" fill="#e8b48f" />
+      <path d="M50 70 Q70 46 90 70 L90 64 Q70 52 50 64 Z" fill="#2b1d14" />
+      <ellipse cx="70" cy="90" rx="6" ry={talkL ? 3.5 : 1.2} fill="#7a2e3a" />
+      <rect x="44" y="100" width="52" height="46" rx="16" fill="#ff8a3d" />
+      <rect x="92" y="96" width="5" height="34" rx="2.5" fill="#222" />
+      <circle cx="94" cy="94" r="6" fill="#444" />
+      {/* pessoa da direita */}
+      <circle cx="250" cy="78" r="20" fill="#9a6a4f" />
+      <path d="M229 76 Q230 50 250 54 Q272 50 271 76 Q266 58 250 60 Q234 58 229 76 Z" fill="#111" />
+      <ellipse cx="250" cy="90" rx="6" ry={talkR ? 3.5 : 1.2} fill="#5a2230" />
+      <rect x="224" y="100" width="52" height="46" rx="16" fill="#5b8cff" />
+      <rect x="223" y="96" width="5" height="34" rx="2.5" fill="#222" />
+      <circle cx="226" cy="94" r="6" fill="#444" />
+      <rect x="130" y="128" width="60" height="16" rx="3" fill="#3a2e55" />
+    </svg>
+  )
+}
 
 const CORTES = [
-  { n: 6, cap: 'O ERRO QUE TODO MUNDO COMETE' },
-  { n: 10, cap: 'NINGUÉM TE CONTA ISSO' },
-  { n: 2, cap: 'FAZ ISSO HOJE' },
+  { focus: 'esq' as const, cap: 'O ERRO QUE TODO MUNDO COMETE' },
+  { focus: 'dir' as const, cap: 'NINGUÉM TE CONTA ISSO' },
+  { focus: 'meio' as const, cap: 'FAZ ISSO HOJE' },
 ]
 
 export function DemoCortes({ className }: { className?: string }) {
@@ -362,26 +679,32 @@ export function DemoCortes({ className }: { className?: string }) {
   const { ref, t } = useLoop(TOTAL, 9000)
   const head = Math.min(100, (t / 3600) * 100)
   const marks = [22, 51, 78].filter((m) => head >= m)
+  const secs = Math.floor(t / 1000) + 2531
   return (
     <Frame innerRef={ref} className={cx('flex flex-col gap-3 p-4 sm:p-5', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
-      <div className="relative aspect-[16/7] overflow-hidden rounded-xl">
-        <LoopVideo src={reel[0].video} poster={reel[0].poster} className="absolute inset-0 h-full w-full object-cover" />
-        <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-white">1:12:40</span>
-        <span className="absolute left-2 top-2 rounded bg-black/70 px-2 py-0.5 text-[11px] font-semibold text-white">Live de 1 hora</span>
+      <div className="relative aspect-[16/8] overflow-hidden rounded-xl">
+        <Podcast t={t} />
+        <span className="absolute left-2 top-2 flex items-center gap-1 rounded bg-[#ef4444] px-1.5 py-0.5 text-[10.5px] font-bold text-white">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" /> AO VIVO
+        </span>
+        <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+          {Math.floor(secs / 3600)}:{String(Math.floor((secs % 3600) / 60)).padStart(2, '0')}:{String(secs % 60).padStart(2, '0')} / 1:12:40
+        </span>
       </div>
       <div className="relative h-8 overflow-hidden rounded-lg bg-[repeating-linear-gradient(90deg,#1d2230_0_10px,#232937_10px_20px)]">
         {marks.map((m) => (
           <span key={m} className="pop absolute inset-y-0 rounded bg-accent/70 shadow-[0_0_12px_#ff8a3d]" style={{ left: `${m - 6}%`, width: '9%' }} />
         ))}
         <span className="absolute inset-y-0 w-0.5 bg-white shadow-[0_0_8px_#fff]" style={{ left: `${head}%` }} />
+        {head < 100 && <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10.5px] font-semibold text-muted">IA procurando os melhores trechos…</span>}
       </div>
       <div className="grid grid-cols-3 gap-2.5">
         {CORTES.map((c, k) => {
           const show = on(t, 4000 + k * 600)
           return (
-            <span key={c.cap} className={cx('relative aspect-[3/4] overflow-hidden rounded-xl border border-line-strong transition-all duration-500 [transition-timing-function:var(--ease-spring)]', show ? 'scale-100 opacity-100' : 'scale-75 opacity-0')}>
-              <LoopVideo src={reel[c.n].video} poster={reel[c.n].poster} className="absolute inset-0 h-full w-full object-cover" />
-              <span className="absolute inset-x-1.5 bottom-[18%] rounded bg-black/75 px-1 py-0.5 text-center text-[9.5px] font-extrabold leading-tight text-white sm:text-[10.5px]">{c.cap}</span>
+            <span key={c.cap} className={cx('relative aspect-[9/14] overflow-hidden rounded-xl border border-line-strong transition-all duration-500 [transition-timing-function:var(--ease-spring)]', show ? 'scale-100 opacity-100' : 'scale-75 opacity-0')}>
+              <Podcast t={t} focus={c.focus} />
+              <span className="absolute inset-x-1.5 bottom-[16%] rounded bg-black/75 px-1 py-0.5 text-center text-[9.5px] font-extrabold leading-tight text-white sm:text-[10.5px]">{c.cap}</span>
               <span className="absolute left-1.5 top-1.5 rounded bg-accent px-1.5 text-[9.5px] font-bold text-accent-ink">9:16</span>
             </span>
           )
@@ -390,6 +713,7 @@ export function DemoCortes({ className }: { className?: string }) {
     </Frame>
   )
 }
+
 
 /* ---------- Imagem (antes e depois) ---------- */
 

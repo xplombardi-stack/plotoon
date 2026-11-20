@@ -285,3 +285,7 @@ html.custom-cursor * {
 /* cursor piscando nas demos de texto */
 @keyframes caret { 50% { opacity: 0; } }
 .caret::after { content: ''; display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: -0.15em; background: currentColor; animation: caret 1s steps(1) infinite; }
+
+/* borracha passando no ícone */
+@keyframes eraser { from { left: -40%; } to { left: 110%; } }
+.eraser { animation: eraser 0.38s linear both; }

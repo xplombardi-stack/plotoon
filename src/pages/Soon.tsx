@@ -1,9 +1,10 @@
 // Módulos com a tela pronta e a API ainda não ligada: conteúdo de exemplo e um aviso discreto.
 import type { ReactNode } from 'react'
-import { AlertTriangle, ArrowRight, CalendarPlus, Clapperboard, Copy, ImagePlus, Link2, MessageCircle, Pause, QrCode, Rocket, Send, ShieldCheck, Sparkles, TrendingUp, Upload, Wand2 } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CalendarPlus, Clapperboard, Copy, ImagePlus, Link2, MessageCircle, Pause, QrCode, Rocket, ShieldCheck, Sparkles, TrendingUp, Upload, Wand2 } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { LoopVideo } from '../components/LoopVideo'
 import { ModuleHeader, SoonNotice } from '../components/Module'
+import { DemoMentor, ModuleDemo } from '../components/FeatureDemos'
 import { stories as reel } from '../components/StoryReel'
 import { Button, cx, go } from '../components/ui'
 import { tipOfTheDay, useBusiness } from '../lib/business'
@@ -16,11 +17,17 @@ import cardCreditos from '../assets/inicio/card-creditos.webp'
 const box = 'rounded-[24px] border border-line bg-surface p-5 sm:p-6'
 const fieldCls = 'min-h-12 w-full rounded-[14px] border border-line-strong bg-bg/70 px-4 text-[15px] text-ink outline-none placeholder:text-subtle'
 
-function Frame({ id, phase, children }: { id: ModuleId; phase: number; children: ReactNode }) {
+function Frame({ id, phase, children, demo = true }: { id: ModuleId; phase: number; children: ReactNode; demo?: boolean }) {
   return (
     <AppShell active={id}>
       <ModuleHeader id={id} />
       <SoonNotice className="rise rise-1">Ainda não está ativo. Chega na fase {phase}. O que você vê aqui é um exemplo de como vai funcionar.</SoonNotice>
+      {demo && (
+        <section className="rise rise-2 flex flex-col gap-3">
+          <h2 className="m-0 font-display text-[19px] font-bold">Veja como funciona</h2>
+          <ModuleDemo id={id} className="h-[420px] w-full max-w-[560px] sm:h-[460px]" />
+        </section>
+      )}
       {children}
     </AppShell>
   )
@@ -45,40 +52,26 @@ export function Mentor() {
     go('nova-historinha')
   }
   return (
-    <Frame id="mentor" phase={2}>
-      <div className={cx(box, 'rise flex flex-col gap-4')}>
-        <div className="flex justify-end">
-          <p className="m-0 max-w-[80%] rounded-[18px] rounded-br-md bg-accent px-4 py-3 text-[15px] font-medium text-accent-ink">Minhas vendas caíram essa semana. O que eu posto pra movimentar?</p>
-        </div>
-        <div className="flex gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#a78bfa] to-[#5b8cff] text-white">
-            <Sparkles size={17} aria-hidden />
+    <Frame id="mentor" phase={2} demo={false}>
+      <div className="grid items-start gap-5 lg:grid-cols-[1.15fr_1fr]">
+        <DemoMentor className="rise h-[520px]" />
+        <div className={cx(box, 'rise rise-1 flex flex-col gap-4')}>
+          <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-[#c4b5fd]">
+            <Sparkles size={15} aria-hidden /> Sugestão de hoje pra {b.nome}
           </span>
-          <div className="flex max-w-[88%] flex-col gap-3">
-            <p className="m-0 rounded-[18px] rounded-tl-md border border-line bg-bg/60 px-4 py-3 text-[15px] leading-relaxed text-soft">
-              Pra {b.nome}, eu faria 3 coisas hoje: uma historinha com virada mostrando o cliente antes e depois, uma legenda com escassez e um lembrete no WhatsApp pra quem perguntou preço e sumiu. Começa pela historinha:
-            </p>
-            <div className="pop flex flex-col gap-3 rounded-[18px] border border-accent-line bg-[#ff8a3d10] p-4">
-              <span className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.08em] text-accent-text">
-                <Clapperboard size={15} aria-hidden /> Ideia de vídeo
-              </span>
-              <span className="text-[15px] font-semibold text-ink">{tip.idea}</span>
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={make}>
-                  Gerar esse vídeo <ArrowRight size={16} />
-                </Button>
-                <Button variant="soft" disabled>
-                  <CalendarPlus size={16} /> Agendar no calendário
-                </Button>
-              </div>
-            </div>
+          <span className="text-balance font-display text-[20px] font-bold leading-snug">{tip.idea}</span>
+          <span className="text-[14px] text-muted">{tip.why}</span>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={make}>
+              <Clapperboard size={16} /> Gerar esse vídeo <ArrowRight size={16} />
+            </Button>
+            <Button variant="soft" disabled>
+              <CalendarPlus size={16} /> Agendar
+            </Button>
           </div>
-        </div>
-        <div className="mt-2 flex items-center gap-2 rounded-[16px] border border-line-strong bg-bg/70 p-1.5 pl-4 opacity-70">
-          <span className="flex-1 text-[15px] text-subtle">Pergunte ao Mentor…</span>
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-accent-ink">
-            <Send size={18} aria-hidden />
-          </span>
+          <p className="m-0 border-t border-line pt-4 text-[13.5px] leading-relaxed text-muted">
+            Quando o Mentor estiver ativo, você conversa com ele aqui: ele pede o seu Instagram, analisa o perfil e monta o plano com um botão pra cada passo.
+          </p>
         </div>
       </div>
     </Frame>

@@ -20,9 +20,9 @@ const FEATURES: Feature[] = [
     id: 'mentor',
     module: 'mentor',
     title: 'Um mentor de vendas que conhece o seu negócio',
-    text: 'Pergunte o que postar, como vender mais ou o que fazer com uma semana fraca. Ele responde pensando no seu nicho, no seu público e no seu jeito de falar.',
-    bullets: ['Ideias de post, oferta e estratégia na hora', 'Cada sugestão vira um botão: gerar o vídeo, a legenda ou agendar', 'Sem precisar explicar seu negócio toda vez'],
-    demo: <DemoMentor className="h-[440px]" />,
+    text: 'Conte o que está travando: venda parada, preço, o que postar. Ele pede o seu Instagram, analisa o perfil e entrega um plano feito pro seu negócio, com o botão pra fazer cada passo.',
+    bullets: ['Analisa o seu Instagram e mostra o que está travando as vendas', 'Ajuda com preço, oferta, ideia de post e estratégia', 'Cada sugestão vira um botão: gerar o vídeo, a imagem, o texto ou agendar'],
+    demo: <DemoMentor className="h-[500px]" />,
   },
   {
     id: 'video',
@@ -187,7 +187,7 @@ export function Landing() {
               </div>
               <p className="rise rise-4 m-0 text-[14px] text-subtle">Troque 5 apps e 30 abas por um só.</p>
             </div>
-            <DemoHub className="rise rise-2 aspect-[4/3.4] w-full sm:aspect-[4/3]" />
+            <DemoHub className="rise rise-2 aspect-[4/5] w-full sm:aspect-[4/3.6]" />
           </div>
         </section>
 
