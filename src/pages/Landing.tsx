@@ -193,6 +193,17 @@ export function Landing() {
           </div>
         </section>
 
+        {/* 5 APPS VIRAM 1 */}
+        <section className="border-y border-line bg-side">
+          <div className="mx-auto flex max-w-[1000px] flex-col items-center gap-8 px-5 py-16 text-center sm:px-8 sm:py-20">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Chega de pular de app em app</h2>
+              <p className="m-0 text-[16px] text-muted sm:text-[17px]">Um app pra vídeo, outro pra arte, outro pra texto, vários chats de IA abertos e uma planilha pra organizar. Aqui é tudo junto e um conversa com o outro.</p>
+            </div>
+            <DemoChaos />
+          </div>
+        </section>
+
         {/* DESTAQUES: MENTOR E VÍDEO */}
         <section className="relative border-t border-line">
           <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-16 sm:px-8 sm:py-20">
@@ -242,17 +253,6 @@ export function Landing() {
                 </article>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* 5 APPS VIRAM 1 */}
-        <section className="border-y border-line bg-side">
-          <div className="mx-auto flex max-w-[1000px] flex-col items-center gap-8 px-5 py-16 text-center sm:px-8 sm:py-20">
-            <div className="flex flex-col gap-3">
-              <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Chega de pular de app em app</h2>
-              <p className="m-0 text-[16px] text-muted sm:text-[17px]">Um app pra vídeo, outro pra arte, outro pra texto, vários chats de IA abertos e uma planilha pra organizar. Aqui é tudo junto e um conversa com o outro.</p>
-            </div>
-            <DemoChaos />
           </div>
         </section>
 
