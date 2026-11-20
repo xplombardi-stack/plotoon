@@ -77,7 +77,7 @@ function Layout({ children }: { children: ReactNode }) {
           <div className="rise flex w-full max-w-[392px] flex-col gap-6">{children}</div>
         </div>
         <div className="-mx-6 mb-6 flex flex-col gap-3 sm:-mx-12 lg:hidden">
-          <p className="m-0 px-6 text-[14px] font-semibold text-muted sm:px-12">Historinhas que dá pra criar aqui</p>
+          <p className="m-0 px-6 text-[14px] font-semibold text-muted sm:px-12">Feito no Plotoon</p>
           <StoryReel size="sm" />
         </div>
         <div className="flex flex-wrap gap-5 text-[13px] text-subtle">
@@ -92,10 +92,10 @@ function Layout({ children }: { children: ReactNode }) {
         <div className="absolute inset-0 bg-gradient-to-t from-side from-25% via-side/85 via-45% to-transparent to-75%" />
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-6 p-12">
           <h2 className="text-balance m-0 max-w-[480px] font-display text-[36px] font-extrabold leading-[1.1] tracking-[-0.03em]">
-            Do roteiro ao vídeo pronto, com o seu boneco 3D.
+            Seu estúdio de marketing com IA, num lugar só.
           </h2>
           <div className="flex flex-col gap-3">
-            {['Mesmo rosto em todas as partes', 'Um Diretor com IA que escreve por você', 'Você vê o custo antes de gerar'].map((t) => (
+            {['Vídeo, imagem, logo, copy e cortes', 'Mentor de vendas e atendente no WhatsApp', 'Você vê o custo antes de gerar'].map((t) => (
               <span key={t} className="flex items-center gap-3 text-[15px] text-soft">
                 <CheckDot /> {t}
               </span>

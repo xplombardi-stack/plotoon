@@ -274,3 +274,14 @@ html.custom-cursor * {
   .reel-track, .reel-col { animation: none; }
   .reel { overflow-x: auto; }
 }
+
+/* ---------- Carregando (brilho passando) ---------- */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.shimmer { background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.28), transparent); animation: shimmer 1.4s linear infinite; }
+
+/* cursor piscando nas demos de texto */
+@keyframes caret { 50% { opacity: 0; } }
+.caret::after { content: ''; display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: -0.15em; background: currentColor; animation: caret 1s steps(1) infinite; }

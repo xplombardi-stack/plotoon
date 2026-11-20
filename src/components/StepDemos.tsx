@@ -9,7 +9,7 @@ import ligacaoMp4 from '../assets/historias/ligacao-festa.mp4'
 import ligacaoPoster from '../assets/historias/ligacao-festa.webp'
 
 // relógio que roda em loop só quando o bloco está na tela
-function useLoop(totalMs: number, still: number) {
+export function useLoop(totalMs: number, still: number) {
   const ref = useRef<HTMLDivElement>(null)
   const [t, setT] = useState(still) // começa num quadro completo (é o que fica pra quem pede menos movimento)
   useEffect(() => {
@@ -35,8 +35,8 @@ function useLoop(totalMs: number, still: number) {
   return { ref, t }
 }
 
-const typed = (text: string, t: number, start: number, cps: number) => text.slice(0, Math.max(0, Math.floor(((t - start) / 1000) * cps)))
-const on = (t: number, a: number) => t >= a
+export const typed = (text: string, t: number, start: number, cps: number) => text.slice(0, Math.max(0, Math.floor(((t - start) / 1000) * cps)))
+export const on = (t: number, a: number) => t >= a
 
 /* ---------- Passo 2: escreve a ideia, Enter, prompt e história ---------- */
 

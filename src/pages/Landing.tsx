@@ -1,40 +1,139 @@
-import { ArrowRight, Check, ChevronDown, Clapperboard, Coins, Layers, Lock, Play } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { ArrowRight, Check, ChevronDown, FolderOpen, Play, Sparkles, Store } from 'lucide-react'
 import { plans } from '../data/mock'
-import { LoopVideo } from '../components/LoopVideo'
-import { clips, type Clip } from '../components/Showcase'
-import { StoryColumns, StoryReel } from '../components/StoryReel'
-import { StepEditor, StepIdea } from '../components/StepDemos'
+import { DemoAnuncios, DemoCalendario, DemoChaos, DemoCopy, DemoCortes, DemoHub, DemoImagem, DemoLogo, DemoMentor, DemoWhatsApp } from '../components/FeatureDemos'
+import { ModuleIcon, SoonPill } from '../components/Module'
+import { StepIdea } from '../components/StepDemos'
+import { StoryReel } from '../components/StoryReel'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
-import { MAX_PARTS, partCost } from '../lib/pricing'
+import { MODULES, type ModuleId } from '../lib/modules'
+import { CREDITS_PER_CHARACTER, CREDITS_PER_LOGO, MAX_PARTS, partCost } from '../lib/pricing'
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-const steps: Array<{ n: number; title: string; text: string; clip: Clip; pos: string; demo?: 'ideia' | 'editor' }> = [
-  { n: 1, title: 'Crie seu boneco', text: 'Mande uma foto. Sai você em 3D, com o mesmo rosto em todas as cenas.', clip: clips.personagem, pos: '50% 30%' },
-  { n: 2, title: 'Conte a ideia', text: 'Uma frase basta. O Diretor escreve a história em partes.', clip: clips.roteiro, pos: '50% 25%', demo: 'ideia' },
-  { n: 3, title: 'Poste o vídeo', text: 'As partes são geradas e montadas. Sai pronto em 9:16.', clip: clips.videos, pos: '50% 45%', demo: 'editor' },
-]
+type Feature = { id: string; module: ModuleId; name?: string; title: string; text: string; bullets: string[]; demo: ReactNode; soon?: boolean }
 
-const features = [
-  { icon: Lock, title: 'Rosto travado', text: 'Seu personagem não muda de cara entre as partes.' },
-  { icon: Clapperboard, title: 'Diretor com IA', text: 'Escreve a história e o prompt de cada parte pra você.' },
-  { icon: Layers, title: 'Vídeo em partes', text: `Até ${MAX_PARTS} partes de 10 ou 15 segundos, juntadas num vídeo só.` },
-  { icon: Coins, title: 'Custo antes de gerar', text: 'Você vê os créditos antes de apertar o botão.' },
+const FEATURES: Feature[] = [
+  {
+    id: 'mentor',
+    module: 'mentor',
+    title: 'Um mentor de vendas que conhece o seu negócio',
+    text: 'Pergunte o que postar, como vender mais ou o que fazer com uma semana fraca. Ele responde pensando no seu nicho, no seu público e no seu jeito de falar.',
+    bullets: ['Ideias de post, oferta e estratégia na hora', 'Cada sugestão vira um botão: gerar o vídeo, a legenda ou agendar', 'Sem precisar explicar seu negócio toda vez'],
+    demo: <DemoMentor className="h-[440px]" />,
+  },
+  {
+    id: 'video',
+    module: 'estudio-video',
+    title: 'Vídeos que prendem, sem saber editar',
+    text: 'Conte a ideia em uma frase. O Diretor escreve a história em partes, você vê o custo antes, e o app junta tudo num vídeo vertical pronto pra postar.',
+    bullets: ['Historinhas com o seu boneco 3D, com o mesmo rosto em todas as cenas', `Até ${MAX_PARTS} partes de 10 ou 15 segundos num vídeo só, com chamada pra ação no final`, 'Também: vídeo com IA, criativo de anúncio e avatar falando'],
+    demo: <StepIdea className="aspect-[4/3] w-full overflow-hidden rounded-[24px] border border-line-strong" />,
+  },
+  {
+    id: 'imagem',
+    module: 'estudio-imagem',
+    title: 'Foto de estúdio a partir da foto do celular',
+    text: 'Mande a foto do produto do jeito que estiver. A IA limpa o fundo, monta a cena e arruma a luz, já no tamanho de cada rede.',
+    bullets: ['Foto de produto, post, banner e capa', 'Com as cores da sua marca', 'Sem fotógrafo e sem app de design'],
+    demo: <DemoImagem className="mx-auto w-full max-w-[460px]" />,
+  },
+  {
+    id: 'logo',
+    module: 'meu-negocio',
+    name: 'Logo com IA',
+    title: 'Não tem logo? Crie a sua em segundos',
+    text: 'Digite o nome, escolha o estilo e as cores. A IA desenha opções e você fica com a que mais gostar. A logo já entra em tudo que você criar.',
+    bullets: ['Moderna, minimalista, elegante, divertida ou com mascote', 'Gere quantas quiser até achar a certa', 'Fica guardada na sua Biblioteca, pronta pra baixar'],
+    demo: <DemoLogo className="mx-auto w-full max-w-[460px]" />,
+  },
+  {
+    id: 'copy',
+    module: 'copy',
+    title: 'Textos que vendem, no tom da sua marca',
+    text: 'Legenda, gancho, texto de anúncio e mensagem de venda. Você diz sobre o que é, ele escreve pensando em quem compra de você.',
+    bullets: ['3 opções por vez pra você escolher', 'Sempre no tom que você definiu', 'Copia com um toque'],
+    demo: <DemoCopy className="mx-auto w-full max-w-[460px]" />,
+  },
+  {
+    id: 'cortes',
+    module: 'cortes',
+    title: 'Uma live vira 10 vídeos curtos',
+    text: 'Suba um vídeo longo ou cole o link do YouTube. A IA acha os melhores momentos e entrega cortes verticais com legenda, prontos pra Reels, TikTok e Shorts.',
+    bullets: ['Encontra os trechos que mais prendem', 'Corta em 9:16 e coloca legenda', 'Dá pra usar de novo no Estúdio de Vídeo'],
+    demo: <DemoCortes className="mx-auto w-full max-w-[460px]" />,
+  },
+  {
+    id: 'whatsapp',
+    module: 'whatsapp',
+    title: 'Um atendente que responde na hora, 24 horas',
+    text: 'Conecte o seu WhatsApp e a IA responde preço, estoque e dúvidas do seu jeito. Ela separa quem quer comprar pra você não perder venda.',
+    bullets: ['Responde no tom da sua marca, a qualquer hora', 'Marca os clientes quentes, prontos pra comprar', 'Conecta por QR code ou pela API oficial da Meta'],
+    demo: <DemoWhatsApp className="py-4" />,
+  },
+  {
+    id: 'calendario',
+    module: 'calendario',
+    title: 'O mês planejado em um clique',
+    text: 'O Mentor monta o calendário de posts do mês pra você. Em cada dia, um botão gera o conteúdo na hora.',
+    bullets: ['Vídeo, post e texto distribuídos no mês', 'Datas importantes do seu nicho', 'Gerar direto do dia'],
+    demo: <DemoCalendario className="mx-auto w-full max-w-[460px]" />,
+  },
+  {
+    id: 'anuncios',
+    module: 'anuncios',
+    title: 'Saiba o que pausar, escalar ou trocar',
+    text: 'Conecte o Meta Ads e receba um raio-x das campanhas em português claro: onde está o dinheiro bom e onde está o desperdício.',
+    bullets: ['Veredito por campanha', 'Quanto você economiza com cada ajuste', 'Troque o criativo ruim direto no Estúdio'],
+    demo: <DemoAnuncios className="mx-auto w-full max-w-[460px]" />,
+  },
 ]
 
 const faq = [
-  { q: 'Preciso saber editar vídeo?', a: 'Não. Você conta a ideia e o Diretor faz o resto: história, partes, legenda e música.' },
-  { q: 'Preciso assinar outra ferramenta?', a: 'Não. Tudo é gerado aqui dentro do Plotoon.' },
-  { q: 'O que é um crédito?', a: `É o que você usa pra gerar. Uma parte de 10 segundos gasta ${partCost(10)} créditos e uma de 15 segundos gasta ${partCost(15)}. Você vê o total antes de gerar.` },
-  { q: 'Só dá pra fazer vídeo de 10 segundos?', a: `Não. A historinha é feita em partes: você escolhe quantas (até ${MAX_PARTS}) e se cada uma tem 10 ou 15 segundos. No final, o Plotoon junta todas num vídeo só, pronto pra postar.` },
-  { q: 'Funciona no celular?', a: 'Sim. É só abrir pelo navegador do celular.' },
+  { q: 'O que é o Plotoon?', a: 'Um estúdio de marketing com IA pra pequenos negócios. Em vez de usar um app de vídeo, um de design, um de texto, várias abas de chat e planilhas, você cria, vende e planeja tudo aqui, com um Mentor que conhece o seu negócio.' },
+  { q: 'Preciso saber editar ou mexer com design?', a: 'Não. Você conta o que quer e a IA faz: o vídeo, a imagem, a logo ou o texto. Você só escolhe e posta.' },
+  { q: 'Preciso assinar outras ferramentas?', a: 'Não. Tudo é gerado aqui dentro do Plotoon e usa os mesmos créditos.' },
+  { q: 'Como funcionam os créditos?', a: `Cada coisa que você gera gasta créditos, e você vê o valor antes de apertar o botão. Uma parte de vídeo de 10 segundos gasta ${partCost(10)} créditos, um boneco 3D gasta ${CREDITS_PER_CHARACTER} e uma logo gasta ${CREDITS_PER_LOGO}.` },
+  { q: 'Tudo já está funcionando?', a: 'As historinhas em vídeo, o boneco 3D, a logo com IA, o perfil do negócio e a Biblioteca já estão no ar. As funções marcadas como "Em breve" estão sendo ligadas uma a uma, e você usa todas com a mesma conta.' },
+  { q: 'Funciona no celular?', a: 'Sim. É só abrir pelo navegador do celular. Foi feito pensando no celular primeiro.' },
 ]
+
+function FeatureRow({ f, flip }: { f: Feature; flip: boolean }) {
+  const m = MODULES[f.module]
+  return (
+    <article id={f.id} className="scroll-mt-24 grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
+      <div className={cx('flex flex-col gap-5', flip && 'lg:order-2')}>
+        <span className="flex items-center gap-3">
+          <ModuleIcon id={f.module} />
+          <span className="text-[13px] font-bold uppercase tracking-[0.12em] text-accent-text">{f.name ?? m.name}</span>
+          {f.soon ?? !m.ready ? <SoonPill /> : null}
+        </span>
+        <h3 className="text-balance m-0 font-display text-[28px] font-extrabold leading-[1.1] tracking-[-0.025em] sm:text-[36px]">{f.title}</h3>
+        <p className="m-0 text-[16px] leading-relaxed text-muted sm:text-[17px]">{f.text}</p>
+        <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+          {f.bullets.map((b) => (
+            <li key={b} className="flex items-start gap-3 text-[15px] text-soft">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                <Check size={13} strokeWidth={3} aria-hidden />
+              </span>
+              {b}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className={cx('relative', flip && 'lg:order-1')}>
+        <span aria-hidden className="pointer-events-none absolute -inset-8 rounded-full bg-[radial-gradient(closest-side,#ff8a3d22,transparent)] blur-2xl" />
+        <div className="relative">{f.demo}</div>
+      </div>
+    </article>
+  )
+}
 
 export function Landing() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-clip">
       <header className="sticky top-0 z-30 border-b border-line/70 bg-bg/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-5 sm:px-8">
           <a href="#site" className="press no-underline" aria-label="Plotoon">
@@ -42,8 +141,8 @@ export function Landing() {
           </a>
           <nav aria-label="Seções" className="hidden items-center gap-1 md:flex">
             {[
-              ['como-funciona', 'Como funciona'],
-              ['exemplos', 'Exemplos'],
+              ['funcoes', 'Funções'],
+              ['mentor', 'Mentor'],
               ['precos', 'Planos'],
               ['duvidas', 'Dúvidas'],
             ].map(([id, label]) => (
@@ -53,107 +152,176 @@ export function Landing() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <LinkButton to="entrar" variant="ghost" size="sm" className="hidden sm:inline-flex">Entrar</LinkButton>
-            <LinkButton to="criar-conta" size="sm">Começar agora</LinkButton>
+            <LinkButton to="entrar" variant="ghost" size="sm" className="hidden sm:inline-flex">
+              Entrar
+            </LinkButton>
+            <LinkButton to="criar-conta" size="sm" className="whitespace-nowrap">
+              Começar agora
+            </LinkButton>
           </div>
         </div>
       </header>
 
       <main>
-        {/* HERO */}
+        {/* TOPO */}
         <section className="relative overflow-hidden">
           <div className="aurora"><span /></div>
-          <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-5 pb-16 pt-14 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pb-10 lg:pt-6">
+          <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-5 pb-16 pt-12 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:pb-20 lg:pt-16">
             <div className="flex flex-col gap-6">
-              <Badge tone="accent" className="rise self-start !bg-accent-soft !text-accent-text shadow-[0_0_0_1px_#ff8a3d55]">Animação 3D com IA</Badge>
-              <h1 className="rise rise-1 text-balance m-0 font-display text-[42px] font-extrabold leading-[1.03] tracking-[-0.04em] sm:text-[60px]">
-                Vire um <span className="text-accent text-glow">boneco 3D</span> e conte histórias que prendem.
+              <Badge tone="accent" className="rise self-start !bg-accent-soft !text-accent-text shadow-[0_0_0_1px_#ff8a3d55]">
+                <Sparkles size={13} aria-hidden /> Estúdio de marketing com IA
+              </Badge>
+              <h1 className="rise rise-1 text-balance m-0 font-display text-[40px] font-extrabold leading-[1.03] tracking-[-0.04em] sm:text-[58px]">
+                Tudo que o seu negócio precisa pra <span className="text-accent text-glow">vender</span>, num lugar só.
               </h1>
-              <p className="rise rise-2 m-0 max-w-[520px] text-[17px] leading-relaxed text-muted sm:text-[19px]">Do roteiro ao vídeo pronto pra postar. Sem saber editar.</p>
+              <p className="rise rise-2 m-0 max-w-[540px] text-[17px] leading-relaxed text-muted sm:text-[19px]">
+                Crie vídeos, imagens, logo e textos. Atenda no WhatsApp, planeje o mês e analise seus anúncios. Com um Mentor de IA que conhece o seu negócio.
+              </p>
               <div className="rise rise-3 flex flex-wrap gap-3">
                 <LinkButton to="criar-conta" size="lg" className="pulse">
-                  Começar agora <ArrowRight size={18} />
+                  Criar minha conta <ArrowRight size={18} />
                 </LinkButton>
-                <button
-                  type="button"
-                  onClick={() => scrollTo('exemplos')}
-                  className="press inline-flex min-h-13 cursor-pointer items-center gap-2 rounded-xl border border-line-strong bg-bg/40 px-6 text-[15px] font-semibold text-ink backdrop-blur hover:border-accent-line"
-                >
-                  <Play size={16} fill="currentColor" /> Ver exemplos
+                <button type="button" onClick={() => scrollTo('funcoes')} className="press inline-flex min-h-13 cursor-pointer items-center gap-2 rounded-xl border border-line-strong bg-bg/40 px-6 text-[15px] font-semibold text-ink backdrop-blur hover:border-accent-line">
+                  <Play size={16} fill="currentColor" /> Ver como funciona
                 </button>
               </div>
+              <p className="rise rise-4 m-0 text-[14px] text-subtle">Troque 5 apps e 30 abas por um só.</p>
             </div>
+            <DemoHub className="rise rise-2 aspect-[4/3.4] w-full sm:aspect-[4/3]" />
+          </div>
+        </section>
 
-            <div className="relative hidden h-[640px] lg:block">
-              <StoryColumns className="absolute inset-0 h-full [&>div]:h-full" />
+        {/* 5 APPS VIRAM 1 */}
+        <section className="border-y border-line bg-side">
+          <div className="mx-auto flex max-w-[1000px] flex-col items-center gap-8 px-5 py-16 text-center sm:px-8 sm:py-20">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Chega de pular de app em app</h2>
+              <p className="m-0 text-[16px] text-muted sm:text-[17px]">Um pra vídeo, outro pra arte, outro pra texto, um monte de abas de chat e uma planilha pra organizar. Aqui é tudo junto e conversa entre si.</p>
             </div>
-            <div className="-mx-5 sm:-mx-8 lg:hidden">
-              <StoryReel size="sm" />
+            <DemoChaos />
+          </div>
+        </section>
+
+        {/* FUNÇÕES */}
+        <section id="funcoes" className="scroll-mt-20">
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-5 pb-6 pt-16 sm:px-8 sm:pt-20">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">O que tem dentro</h2>
+              <p className="m-0 text-[16px] text-muted">Toque numa função pra ver ela funcionando.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {FEATURES.map((f, i) => {
+                const m = MODULES[f.module]
+                return (
+                  <button key={f.id} type="button" onClick={() => scrollTo(f.id)} className={cx('rise lift flex cursor-pointer flex-col items-start gap-3 rounded-[20px] border border-line bg-surface p-4 text-left', `rise-${(i % 4) + 1}`)}>
+                    <ModuleIcon id={f.module} />
+                    <span className="flex flex-col gap-0.5">
+                      <span className="text-[15px] font-bold text-ink">{f.name ?? m.short ?? m.name}</span>
+                      <span className="line-clamp-2 text-[12.5px] text-muted">{f.title}</span>
+                    </span>
+                  </button>
+                )
+              })}
+              <button type="button" onClick={() => scrollTo('base')} className="rise lift flex cursor-pointer flex-col items-start gap-3 rounded-[20px] border border-line bg-surface p-4 text-left">
+                <ModuleIcon id="biblioteca" />
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-[15px] font-bold text-ink">Biblioteca</span>
+                  <span className="line-clamp-2 text-[12.5px] text-muted">Tudo que você criou, guardado num lugar só</span>
+                </span>
+              </button>
             </div>
           </div>
         </section>
 
-        {/* COMO FUNCIONA */}
-        <section id="como-funciona" className="scroll-mt-20 border-t border-line bg-side">
-          <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-20 sm:px-8">
-            <h2 className="text-balance m-0 text-center font-display text-[34px] font-extrabold tracking-[-0.03em] sm:text-[44px]">Em 3 passos</h2>
-            <div className="grid gap-5 md:grid-cols-3">
-              {steps.map((s) => (
-                <article key={s.n} className="lift flex flex-col overflow-hidden rounded-[22px] border border-line bg-surface">
-                  <div className="aspect-[4/3] overflow-hidden bg-side">
-                    {s.demo === 'ideia' ? (
-                      <StepIdea className="h-full w-full" />
-                    ) : s.demo === 'editor' ? (
-                      <StepEditor className="h-full w-full" />
-                    ) : (
-                      <LoopVideo src={s.clip.video} poster={s.clip.poster} style={{ objectPosition: s.pos }} className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2 p-5">
-                    <span className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent font-display text-[16px] font-bold text-accent-ink shadow-[0_0_16px_#ff8a3d88]">{s.n}</span>
-                      <h3 className="m-0 text-[19px] font-bold">{s.title}</h3>
+        {/* CADA FUNÇÃO EM AÇÃO */}
+        <section>
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-24 px-5 py-16 sm:px-8 sm:py-20 lg:gap-32">
+            {FEATURES.map((f, i) => (
+              <FeatureRow key={f.id} f={f} flip={i % 2 === 1} />
+            ))}
+          </div>
+        </section>
+
+        {/* BASE: MEU NEGÓCIO + BIBLIOTECA */}
+        <section id="base" className="scroll-mt-20 border-y border-line bg-side">
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-16 sm:px-8 sm:py-20">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Configure uma vez. Tudo sai com a sua cara.</h2>
+              <p className="m-0 max-w-[640px] text-[16px] text-muted">No primeiro acesso você conta sobre o seu negócio. Daí pra frente, todo vídeo, imagem e texto já sai com o seu nome, a sua logo, as suas cores e o seu jeito de falar.</p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="lift flex flex-col gap-4 rounded-[24px] border border-line bg-surface p-6">
+                <span className="flex items-center gap-3">
+                  <ModuleIcon id="meu-negocio" />
+                  <span className="text-[18px] font-bold">Meu Negócio</span>
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {['Nome', 'Nicho', 'O que vende', 'Público', 'Tom de voz', 'Logo', 'Cores', 'Redes sociais', 'Elenco 3D'].map((c, k) => (
+                    <span key={c} className="pop rounded-full border border-line-strong px-3 py-1.5 text-[13px] font-semibold text-soft" style={{ animationDelay: `${k * 60}ms` }}>
+                      <Store size={12} className="mr-1.5 inline text-accent" aria-hidden />
+                      {c}
                     </span>
-                    <p className="m-0 text-[15px] leading-relaxed text-muted">{s.text}</p>
-                  </div>
-                </article>
-              ))}
+                  ))}
+                </div>
+                <p className="m-0 text-[14.5px] text-muted">Leva 2 minutos e dá pra mudar quando quiser.</p>
+              </div>
+              <div className="lift flex flex-col gap-4 rounded-[24px] border border-line bg-surface p-6">
+                <span className="flex items-center gap-3">
+                  <ModuleIcon id="biblioteca" />
+                  <span className="text-[18px] font-bold">Biblioteca</span>
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {['Vídeos', 'Imagens', 'Logos', 'Cortes', 'Textos', 'Personagens'].map((c, k) => (
+                    <span key={c} className="pop rounded-full border border-line-strong px-3 py-1.5 text-[13px] font-semibold text-soft" style={{ animationDelay: `${k * 60}ms` }}>
+                      <FolderOpen size={12} className="mr-1.5 inline text-sky" aria-hidden />
+                      {c}
+                    </span>
+                  ))}
+                </div>
+                <p className="m-0 text-[14.5px] text-muted">Tudo que você gera fica guardado, com filtro, download e o botão "usar de novo".</p>
+              </div>
             </div>
           </div>
         </section>
 
         {/* EXEMPLOS */}
-        <section id="exemplos" className="scroll-mt-20">
-          <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 pb-10 pt-20 sm:px-8">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <h2 className="text-balance m-0 font-display text-[34px] font-extrabold tracking-[-0.03em] sm:text-[44px]">Historinhas que prendem</h2>
-              <p className="m-0 text-[16px] text-muted">Seu boneco 3D vivendo a história, parte por parte, em vídeo vertical.</p>
-            </div>
+        <section>
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-3 px-5 pb-8 pt-16 text-center sm:px-8 sm:pt-20">
+            <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Feito no Plotoon</h2>
+            <p className="m-0 text-[16px] text-muted">Historinhas com boneco 3D, do jeito que você vai criar.</p>
           </div>
-          <StoryReel size="lg" className="pb-20" />
+          <StoryReel size="lg" className="pb-16 sm:pb-20" />
         </section>
 
-        {/* RECURSOS */}
+        {/* CRÉDITOS */}
         <section className="border-y border-line bg-side">
-          <div className="mx-auto grid max-w-[1200px] gap-6 px-5 py-16 sm:grid-cols-2 sm:px-8 lg:grid-cols-4">
-            {features.map((f) => (
-              <div key={f.title} className="group flex flex-col gap-3">
-                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-soft text-accent transition-transform duration-300 [transition-timing-function:var(--ease-spring)] group-hover:-rotate-6 group-hover:scale-110">
-                  <f.icon size={22} aria-hidden />
-                </span>
-                <h3 className="m-0 text-[17px] font-bold">{f.title}</h3>
-                <p className="m-0 text-[15px] leading-relaxed text-muted">{f.text}</p>
-              </div>
-            ))}
+          <div className="mx-auto grid max-w-[1200px] items-center gap-8 px-5 py-16 sm:px-8 lg:grid-cols-2">
+            <div className="flex flex-col gap-3">
+              <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[40px]">Um crédito pra tudo</h2>
+              <p className="m-0 text-[16px] text-muted">Os mesmos créditos servem pra todas as funções, e você sempre vê o custo antes de gerar. Sem surpresa.</p>
+            </div>
+            <div className="grid gap-2.5">
+              {[
+                ['Parte de vídeo de 10 segundos', partCost(10)],
+                ['Parte de vídeo de 15 segundos', partCost(15)],
+                ['Boneco 3D com o seu rosto', CREDITS_PER_CHARACTER],
+                ['Logo com IA', CREDITS_PER_LOGO],
+              ].map(([k, v]) => (
+                <div key={String(k)} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5">
+                  <span className="text-[15px] font-semibold">{k}</span>
+                  <span className="rounded-full bg-accent-soft px-3 py-1 text-[14px] font-bold text-accent-text">{v} créditos</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
         {/* PLANOS */}
         <section id="precos" className="scroll-mt-20">
-          <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-20 sm:px-8">
+          <div className="mx-auto flex max-w-[1200px] flex-col gap-10 px-5 py-16 sm:px-8 sm:py-20">
             <div className="flex flex-col items-center gap-3 text-center">
-              <h2 className="text-balance m-0 font-display text-[34px] font-extrabold tracking-[-0.03em] sm:text-[44px]">Escolha seu plano</h2>
-              <p className="m-0 text-[16px] text-muted">Escolha quantos vídeos você quer fazer por mês.</p>
+              <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Escolha seu plano</h2>
+              <p className="m-0 text-[16px] text-muted">Todas as funções em todos os planos. Muda só a quantidade de créditos.</p>
             </div>
             <div className="grid gap-5 lg:grid-cols-3">
               {plans.map((p) => (
@@ -176,7 +344,7 @@ export function Landing() {
                     ))}
                   </ul>
                   <LinkButton to="criar-conta" variant={p.highlight ? 'primary' : 'secondary'} size="lg" className="mt-auto">
-                    Assinar o {p.name}
+                    Começar com o {p.name}
                   </LinkButton>
                 </article>
               ))}
@@ -186,8 +354,8 @@ export function Landing() {
 
         {/* DÚVIDAS */}
         <section id="duvidas" className="scroll-mt-20 border-t border-line bg-side">
-          <div className="mx-auto flex max-w-[760px] flex-col gap-8 px-5 py-20 sm:px-8">
-            <h2 className="text-balance m-0 text-center font-display text-[34px] font-extrabold tracking-[-0.03em] sm:text-[44px]">Dúvidas</h2>
+          <div className="mx-auto flex max-w-[760px] flex-col gap-8 px-5 py-16 sm:px-8 sm:py-20">
+            <h2 className="text-balance m-0 text-center font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Dúvidas</h2>
             <div className="flex flex-col gap-3">
               {faq.map((item) => (
                 <details key={item.q} className="group rounded-[16px] border border-line bg-surface transition-colors open:border-accent-line">
@@ -205,10 +373,11 @@ export function Landing() {
         {/* CHAMADA FINAL */}
         <section className="relative overflow-hidden">
           <div className="aurora"><span /></div>
-          <div className="relative mx-auto flex max-w-[1200px] flex-col items-center gap-6 px-5 py-24 text-center sm:px-8">
-            <h2 className="text-balance m-0 font-display text-[36px] font-extrabold tracking-[-0.03em] sm:text-[52px]">Seu primeiro vídeo hoje.</h2>
+          <div className="relative mx-auto flex max-w-[1200px] flex-col items-center gap-6 px-5 py-20 text-center sm:px-8 sm:py-24">
+            <h2 className="text-balance m-0 font-display text-[34px] font-extrabold tracking-[-0.03em] sm:text-[52px]">Seu negócio inteiro num lugar só.</h2>
+            <p className="m-0 max-w-[520px] text-[16px] text-muted">Crie a conta, conte sobre o seu negócio e faça o primeiro conteúdo hoje.</p>
             <LinkButton to="criar-conta" size="lg" className="pulse">
-              Começar agora <ArrowRight size={18} />
+              Criar minha conta <ArrowRight size={18} />
             </LinkButton>
           </div>
         </section>
@@ -218,8 +387,12 @@ export function Landing() {
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-5 py-8 text-[14px] text-subtle sm:px-8">
           <Logo size="sm" />
           <div className="flex flex-wrap gap-5">
-            <a href="#site" className="text-subtle no-underline hover:text-ink">Termos de uso</a>
-            <a href="#site" className="text-subtle no-underline hover:text-ink">Privacidade</a>
+            <a href="#site" className="text-subtle no-underline hover:text-ink">
+              Termos de uso
+            </a>
+            <a href="#site" className="text-subtle no-underline hover:text-ink">
+              Privacidade
+            </a>
             <span>© Plotoon</span>
           </div>
         </div>

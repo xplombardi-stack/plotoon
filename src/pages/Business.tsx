@@ -1,7 +1,7 @@
 // Meu Negócio: cadastro em passos no primeiro acesso (#comecar) e edição depois (#meu-negocio).
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, AtSign, Check, Globe, ImagePlus, Lock, Music2, Phone, Play, Plus } from 'lucide-react'
+import { ArrowLeft, ArrowRight, AtSign, Check, Globe, ImagePlus, Lock, Music2, Phone, Play, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { LoopVideo } from '../components/LoopVideo'
 import { ModuleHeader } from '../components/Module'
@@ -9,7 +9,8 @@ import { stories as reelStories } from '../components/StoryReel'
 import { clips } from '../components/Showcase'
 import { Toon } from '../components/art'
 import { Button, Logo, cx, go, useToast } from '../components/ui'
-import { BRAND_COLORS, NICHES, TONES, useBusiness, type Business, type Socials } from '../lib/business'
+import { BRAND_COLORS, LOGO_STYLES, NICHES, TONES, useBusiness, type Business, type LogoStyle, type Socials } from '../lib/business'
+import { CREDITS_PER_LOGO, formatCredits } from '../lib/pricing'
 import { useStore } from '../lib/store'
 
 /* ---------- Campos ---------- */
@@ -89,6 +90,96 @@ function ToneChoice({ value, onChange }: { value: string; onChange: (v: string) 
   )
 }
 
+const LOGO_ERRORS: Record<string, string> = {
+  creditos_insuficientes: 'Você não tem créditos suficientes pra criar a logo.',
+  logo_recusada: 'Não deu pra criar com essa ideia. Tenta mudar a descrição.',
+  nome_vazio: 'Coloque o nome do negócio primeiro.',
+}
+
+// Criar logo com IA (Nano Banana): escolhe o estilo, gera, e usa a que gostar
+function LogoMaker({ business }: { business: Business }) {
+  const { createLogo, applyLogo } = useBusiness()
+  const { credits } = useStore()
+  const toast = useToast()
+  const [open, setOpen] = useState(false)
+  const [style, setStyle] = useState<LogoStyle>('moderna')
+  const [idea, setIdea] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [made, setMade] = useState<Array<{ url: string; path?: string }>>([])
+  const [error, setError] = useState('')
+
+  async function make() {
+    if (busy) return
+    if (business.name.trim().length < 2) return setError(LOGO_ERRORS.nome_vazio)
+    setBusy(true)
+    setError('')
+    const r = await createLogo({ name: business.name.trim(), niche: business.niche, colors: business.colors, style, idea: idea.trim() })
+    setBusy(false)
+    if (r.ok) setMade((m) => [{ url: r.url, path: r.path }, ...m].slice(0, 6))
+    else setError(LOGO_ERRORS[r.error] ?? 'A criação de imagem não respondeu agora. Seus créditos foram devolvidos, tenta de novo daqui a pouco.')
+  }
+
+  async function pick(l: { url: string; path?: string }) {
+    const ok = await applyLogo(l.url, l.path)
+    toast.show(ok ? 'Logo aplicada' : 'Não deu pra salvar agora. Tenta de novo.')
+  }
+
+  if (!open)
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="press group flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl border border-[#a78bfa55] bg-gradient-to-r from-[#a78bfa1f] to-transparent p-3.5 text-left hover:border-[#a78bfa99]">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a78bfa] to-[#5b8cff] text-white">
+          <Sparkles size={19} className="transition-transform group-hover:rotate-12" aria-hidden />
+        </span>
+        <span className="flex flex-col">
+          <span className="text-[15px] font-bold text-ink">{business.logo ? 'Criar outra logo com IA' : 'Não tem logo? Crie com IA'}</span>
+          <span className="text-[13px] text-muted">Em segundos, com o nome e as cores da sua marca · {CREDITS_PER_LOGO} créditos</span>
+        </span>
+      </button>
+    )
+
+  return (
+    <div className="pop flex flex-col gap-4 rounded-2xl border border-[#a78bfa55] bg-[#a78bfa0d] p-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex items-center gap-2 text-[15px] font-bold">
+          <Sparkles size={17} className="text-[#c4b5fd]" aria-hidden /> Criar logo com IA
+        </span>
+        <span className="text-[12.5px] text-muted">Você tem {formatCredits(credits)} créditos</span>
+      </div>
+      <div role="radiogroup" aria-label="Estilo da logo" className="flex flex-wrap gap-2">
+        {LOGO_STYLES.map((st) => (
+          <button key={st.id} type="button" role="radio" aria-checked={style === st.id} onClick={() => setStyle(st.id)} className={cx('press min-h-10 cursor-pointer rounded-full border px-3.5 text-[13.5px] font-semibold', style === st.id ? 'border-[#a78bfa] bg-[#a78bfa26] text-ink' : 'border-line-strong text-soft hover:text-ink')}>
+            {st.label}
+          </button>
+        ))}
+      </div>
+      <input aria-label="Ideia pra logo (opcional)" value={idea} maxLength={240} onChange={(e) => setIdea(e.target.value)} placeholder="Ideia (opcional): ex.: uma agulha formando a letra A" className={inputCls} />
+      <Button size="lg" onClick={make} disabled={busy} className="self-stretch sm:self-start">
+        {busy ? 'Desenhando sua logo…' : made.length ? <>Gerar outra · {CREDITS_PER_LOGO} créditos <RefreshCw size={16} /></> : <>Criar logo · {CREDITS_PER_LOGO} créditos <Sparkles size={16} /></>}
+      </Button>
+      {error && <p role="alert" className="m-0 text-[13.5px] text-[#fca5a5]">{error}</p>}
+      {(busy || made.length > 0) && (
+        <div className="grid grid-cols-3 gap-2.5">
+          {busy && (
+            <span className="relative aspect-square overflow-hidden rounded-xl border border-line-strong bg-white/5">
+              <span className="shimmer absolute inset-0" />
+              <Sparkles size={22} className="absolute inset-0 m-auto animate-pulse text-[#c4b5fd]" aria-hidden />
+            </span>
+          )}
+          {made.map((l) => {
+            const on = business.logo === l.url
+            return (
+              <button key={l.url} type="button" onClick={() => pick(l)} aria-pressed={on} aria-label={on ? 'Logo em uso' : 'Usar essa logo'} className={cx('pop press relative aspect-square cursor-pointer overflow-hidden rounded-xl border-2 bg-white', on ? 'border-accent shadow-[0_0_0_3px_#ff8a3d55]' : 'border-transparent hover:border-[#a78bfa]')}>
+                <img src={l.url} alt="Logo criada com IA" className="h-full w-full object-contain" />
+                <span className={cx('absolute inset-x-1.5 bottom-1.5 rounded-md py-1 text-center text-[11px] font-bold', on ? 'bg-accent text-accent-ink' : 'bg-black/70 text-white')}>{on ? 'Em uso' : 'Usar essa'}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LogoAndColors({ business, onColors }: { business: Business; onColors: (c: string[]) => void }) {
   const { uploadLogo } = useBusiness()
   const toast = useToast()
@@ -137,6 +228,8 @@ function LogoAndColors({ business, onColors }: { business: Business; onColors: (
           <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" tabIndex={-1} onChange={(e) => pick(e.target.files?.[0])} />
         </div>
       </div>
+
+      <LogoMaker business={business} />
 
       <div className="flex flex-col gap-2.5">
         <span className="text-[14px] font-semibold text-soft">Cores da marca (até 4)</span>
@@ -353,19 +446,19 @@ export function Onboarding() {
 
         <div className="sticky bottom-0 -mx-5 flex items-center justify-between gap-3 border-t border-line bg-bg/90 px-5 py-3 backdrop-blur sm:-mx-10 sm:px-10 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:px-0 lg:py-0">
           {step > 0 ? (
-            <Button variant="ghost" size="lg" onClick={() => setStep(step - 1)}>
-              <ArrowLeft size={18} /> Voltar
+            <Button variant="ghost" size="lg" onClick={() => setStep(step - 1)} aria-label="Voltar" className="!px-3 sm:!px-6">
+              <ArrowLeft size={18} /> <span className="hidden sm:inline">Voltar</span>
             </Button>
           ) : (
             <span />
           )}
           <div className="flex items-center gap-2">
             {(s.key === 'marca' || s.key === 'redes' || s.key === 'elenco') && (
-              <Button variant="ghost" size="lg" onClick={next} disabled={saving}>
+              <Button variant="ghost" size="lg" onClick={next} disabled={saving} className="!px-3 sm:!px-6">
                 Pular
               </Button>
             )}
-            <Button size="lg" onClick={next} disabled={!s.ok(draft) || saving} className="min-w-[150px]">
+            <Button size="lg" onClick={next} disabled={!s.ok(draft) || saving} className="min-w-[132px] sm:min-w-[150px]">
               {saving ? 'Salvando...' : last ? 'Concluir' : 'Continuar'} {!saving && (last ? <Check size={18} /> : <ArrowRight size={18} />)}
             </Button>
           </div>

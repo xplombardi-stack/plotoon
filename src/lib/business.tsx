@@ -3,6 +3,8 @@
 import type { ReactNode } from 'react'
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from './auth'
+import { CREDITS_PER_LOGO } from './pricing'
+import { useStore } from './store'
 import { DEMO, supabase } from './supabase'
 
 export type Socials = { instagram?: string; tiktok?: string; youtube?: string; whatsapp?: string; site?: string }
@@ -45,12 +47,43 @@ export const TONES = [
 ]
 export const BRAND_COLORS = ['#ff8a3d', '#ff5da2', '#a78bfa', '#5b8cff', '#38bdf8', '#34d399', '#facc15', '#ef4444', '#111827', '#f5f5f4']
 
+export type LogoStyle = 'moderna' | 'minimalista' | 'divertida' | 'elegante' | 'mascote'
+export const LOGO_STYLES: Array<{ id: LogoStyle; label: string }> = [
+  { id: 'moderna', label: 'Moderna' },
+  { id: 'minimalista', label: 'Minimalista' },
+  { id: 'divertida', label: 'Divertida' },
+  { id: 'elegante', label: 'Elegante' },
+  { id: 'mascote', label: 'Com mascote' },
+]
+export type LogoResult = { ok: true; url: string; path?: string } | { ok: false; error: string }
+
 type Ctx = {
   business: Business
   loaded: boolean
   saveBusiness: (patch: Partial<Business>) => Promise<boolean>
   uploadLogo: (file: File) => Promise<boolean>
+  createLogo: (opts: { name: string; niche: string; colors: string[]; style: LogoStyle; idea: string }) => Promise<LogoResult>
+  applyLogo: (url: string, path?: string) => Promise<boolean>
   library: LibraryItem[]
+}
+
+// Logo de exemplo na prévia (sem gastar com IA): monograma com as cores da marca
+function demoLogo(name: string, colors: string[], style: LogoStyle) {
+  const a = colors[0] ?? '#ff8a3d'
+  const b = colors[1] ?? '#5b8cff'
+  const letter = (name.trim()[0] ?? 'P').toUpperCase()
+  const shape =
+    style === 'minimalista'
+      ? `<circle cx="256" cy="200" r="92" fill="none" stroke="${a}" stroke-width="10"/>`
+      : style === 'elegante'
+        ? `<rect x="168" y="112" width="176" height="176" rx="8" transform="rotate(45 256 200)" fill="none" stroke="${a}" stroke-width="8"/>`
+        : style === 'divertida' || style === 'mascote'
+          ? `<circle cx="256" cy="200" r="100" fill="${a}"/><circle cx="320" cy="140" r="30" fill="${b}"/>`
+          : `<rect x="160" y="104" width="192" height="192" rx="48" fill="url(#g)"/>`
+  const font = style === 'elegante' ? 'Georgia,serif' : 'Arial,Helvetica,sans-serif'
+  const fill = style === 'minimalista' || style === 'elegante' ? a : '#fff'
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="512" height="512" fill="#fff"/>${shape}<text x="256" y="236" text-anchor="middle" font-family="${font}" font-weight="700" font-size="110" fill="${fill}">${letter}</text><text x="256" y="390" text-anchor="middle" font-family="${font}" font-weight="700" font-size="44" fill="#111827">${name.replace(/[<&>]/g, '').slice(0, 22)}</text></svg>`
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
 const KEY = 'plotoon:negocio:v1'
@@ -97,6 +130,7 @@ function blobToDataUrl(b: Blob) {
 
 export function BusinessProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth()
+  const { credits, addCredits, reload: reloadStore } = useStore()
   const userId = session?.user.id ?? null
   const live = !DEMO && !!supabase
   const [business, setBusiness] = useState<Business>(() => (live ? emptyBusiness : readLocal(KEY, emptyBusiness)))
@@ -216,7 +250,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         const { data } = await supabase.storage.from('media').createSignedUrl(path, 60 * 60)
         const prev = business.logoPath
         const ok = await saveBusiness({ logoPath: path, logo: data?.signedUrl })
-        if (ok && prev && prev !== path) await supabase.storage.from('media').remove([prev])
+        if (ok && prev && prev !== path && prev.includes('/negocio/')) await supabase.storage.from('media').remove([prev])
         return ok
       } catch {
         return false
@@ -225,7 +259,60 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     [live, userId, business.logoPath, saveBusiness],
   )
 
-  const value = useMemo(() => ({ business, loaded, saveBusiness, uploadLogo, library }), [business, loaded, saveBusiness, uploadLogo, library])
+  const createLogo = useCallback(
+    async (o: { name: string; niche: string; colors: string[]; style: LogoStyle; idea: string }): Promise<LogoResult> => {
+      if (!live) {
+        if (credits < CREDITS_PER_LOGO) return { ok: false, error: 'creditos_insuficientes' }
+        addCredits(-CREDITS_PER_LOGO, 'Logo com IA')
+        await new Promise((r) => window.setTimeout(r, 2200))
+        const url = demoLogo(o.name, o.colors, o.style)
+        setLibrary((l) => {
+          const next = [{ id: Math.random().toString(36).slice(2), kind: 'imagem' as const, module: 'logo', title: `Logo ${o.name}`, preview: url, file: url, createdAt: Date.now() }, ...l]
+          try {
+            localStorage.setItem(LIB_KEY, JSON.stringify(next.slice(0, 60)))
+          } catch {
+            /* sem armazenamento */
+          }
+          return next
+        })
+        return { ok: true, url }
+      }
+      if (!supabase) return { ok: false, error: 'falha_logo' }
+      const { data, error } = await supabase.functions.invoke('logo', { body: { nome: o.name, nicho: o.niche, cores: o.colors, estilo: o.style, ideia: o.idea } })
+      if (error || !data?.imagem) {
+        let code = 'falha_logo'
+        try {
+          const ctx = (error as { context?: Response } | null)?.context
+          const body = ctx ? await ctx.json() : null
+          if (body?.error) code = String(body.error)
+        } catch {
+          /* sem detalhe */
+        }
+        await reloadStore()
+        return { ok: false, error: code }
+      }
+      await Promise.all([reloadStore(), load()])
+      return { ok: true, url: data.imagem, path: data.imagem_path }
+    },
+    [live, credits, addCredits, reloadStore, load],
+  )
+
+  const applyLogo = useCallback(
+    async (url: string, path?: string) => {
+      if (!live) return saveBusiness({ logo: url })
+      const prev = business.logoPath
+      const ok = await saveBusiness({ logo: url, logoPath: path })
+      // a logo antiga só sai do armazenamento se era uma enviada (as da IA ficam na Biblioteca)
+      if (ok && supabase && prev && prev !== path && prev.includes('/negocio/')) await supabase.storage.from('media').remove([prev])
+      return ok
+    },
+    [live, business.logoPath, saveBusiness],
+  )
+
+  const value = useMemo(
+    () => ({ business, loaded, saveBusiness, uploadLogo, createLogo, applyLogo, library }),
+    [business, loaded, saveBusiness, uploadLogo, createLogo, applyLogo, library],
+  )
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>
 }
 
