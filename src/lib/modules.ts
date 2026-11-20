@@ -49,7 +49,7 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
   cortes: { id: 'cortes', name: 'Cortes', phrase: 'Suba um vídeo longo e receba cortes verticais com legenda.', icon: Scissors, color: 'from-[#f472b6] to-[#ff5d5d]', ready: false },
   copy: { id: 'copy', name: 'Copy', phrase: 'Legenda, gancho, anúncio e mensagem de venda no tom do seu negócio.', icon: PenLine, color: 'from-[#facc15] to-[#ff8a3d]', ready: true },
   apps: { id: 'apps', name: 'Criador de Apps', short: 'Apps', phrase: 'Crie o app ou site do seu negócio conversando com a IA.', icon: AppWindow, color: 'from-[#22d3ee] to-[#a78bfa]', ready: true },
-  whatsapp: { id: 'whatsapp', name: 'Atendente WhatsApp', short: 'WhatsApp', phrase: 'Um atendente com IA respondendo seus clientes e achando quem quer comprar.', icon: MessageCircle, color: 'from-[#34d399] to-[#10b981]', ready: false },
+  whatsapp: { id: 'whatsapp', name: 'Atendente WhatsApp', short: 'WhatsApp', phrase: 'Um atendente com IA respondendo seus clientes e achando quem quer comprar.', icon: MessageCircle, color: 'from-[#34d399] to-[#10b981]', ready: true },
   calendario: { id: 'calendario', name: 'Calendário', phrase: 'O mês planejado pelo Mentor. Cada post sai direto do dia.', icon: CalendarDays, color: 'from-[#5b8cff] to-[#a78bfa]', ready: true },
   anuncios: { id: 'anuncios', name: 'Anúncios', phrase: 'Raio-x das suas campanhas do Meta: o que pausar, escalar ou trocar.', icon: TrendingUp, color: 'from-[#38bdf8] to-[#34d399]', ready: false },
   biblioteca: { id: 'biblioteca', name: 'Biblioteca', phrase: 'Tudo que você gerou, guardado num lugar só.', icon: FolderOpen, color: 'from-[#94a3b8] to-[#64748b]', ready: true },

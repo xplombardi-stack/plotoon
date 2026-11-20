@@ -15,7 +15,8 @@ import { Cursor } from './components/Cursor'
 import { MyBusiness, Onboarding } from './pages/Business'
 import { Library } from './pages/Library'
 import { VideoStudio } from './pages/VideoStudio'
-import { Ads, Clips, WhatsApp } from './pages/Soon'
+import { Ads, Clips } from './pages/Soon'
+import { WhatsAppPage } from './pages/WhatsAppPage'
 import { ImagePage } from './pages/ImagePage'
 import { CalendarPage } from './pages/CalendarPage'
 import { AppsPage, PublicApp } from './pages/AppsPage'
@@ -95,7 +96,7 @@ function Screen() {
     case 'copy':
       return <CopyPage />
     case 'whatsapp':
-      return <WhatsApp />
+      return <WhatsAppPage />
     case 'calendario':
       return <CalendarPage />
     case 'anuncios':
