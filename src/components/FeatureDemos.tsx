@@ -1,7 +1,7 @@
 // Demonstrações animadas de cada função, usadas na página inicial (só ilustração).
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { BadgeCheck, BarChart3, CalendarDays, Check, CheckCheck, Copy, FileText, Film, Flame, LoaderCircle, MessageCircle, MessagesSquare, MousePointer2, Palette, Pause, PenTool, Rocket, Send, Sparkles, Table2, TrendingUp, Wand2 } from 'lucide-react'
+import { BadgeCheck, CalendarDays, Check, CheckCheck, Copy, FileText, Film, Flame, LoaderCircle, MousePointer2, Palette, Pause, PenTool, Rocket, Send, Sparkles, TrendingUp, Wand2 } from 'lucide-react'
 import { ModuleIcon } from './Module'
 import { StepIdea, on, typed, useLoop } from './StepDemos'
 import { cx } from './ui'
@@ -271,16 +271,115 @@ export function DemoMentor({ className, story }: { className?: string; story?: n
 
 /* ---------- 5 apps viram 1: ícones de app sendo apagados ---------- */
 
-const APPS: Array<{ name: string; icon: typeof Film; bg: string }> = [
-  { name: 'Vídeo', icon: Film, bg: 'from-[#111827] to-[#374151]' },
-  { name: 'Design', icon: Palette, bg: 'from-[#7c3aed] to-[#22d3ee]' },
-  { name: 'Texto', icon: FileText, bg: 'from-[#2563eb] to-[#60a5fa]' },
-  { name: '30 abas de chat', icon: MessagesSquare, bg: 'from-[#0f766e] to-[#34d399]' },
-  { name: 'Planilha', icon: Table2, bg: 'from-[#15803d] to-[#4ade80]' },
-  { name: 'Anúncios', icon: BarChart3, bg: 'from-[#1d4ed8] to-[#a78bfa]' },
-  { name: 'WhatsApp no braço', icon: MessageCircle, bg: 'from-[#16a34a] to-[#86efac]' },
-  { name: 'Criador de logo', icon: PenTool, bg: 'from-[#db2777] to-[#fb923c]' },
-]
+// Ícones de app desenhados por categoria (sem marca de ninguém)
+function AppGlyph({ k }: { k: number }) {
+  const common = { viewBox: '0 0 56 56', className: 'h-full w-full' }
+  switch (k) {
+    case 0: // editar vídeo: claquete + linha do tempo
+      return (
+        <svg {...common}>
+          <rect width="56" height="56" rx="14" fill="#14161c" />
+          <path d="M12 14h32v8H12z" fill="#f5f5f4" />
+          <path d="M15 14l4 8M23 14l4 8M31 14l4 8M39 14l4 8" stroke="#14161c" strokeWidth="2.5" />
+          <rect x="12" y="24" width="32" height="10" rx="2" fill="#2b2f3a" />
+          <rect x="12" y="38" width="12" height="5" rx="1.5" fill="#22d3ee" />
+          <rect x="26" y="38" width="9" height="5" rx="1.5" fill="#f472b6" />
+          <rect x="37" y="38" width="7" height="5" rx="1.5" fill="#facc15" />
+          <path d="M30 26v14" stroke="#fff" strokeWidth="1.5" />
+        </svg>
+      )
+    case 1: // arte: camadas + pincel
+      return (
+        <svg {...common}>
+          <rect width="56" height="56" rx="14" fill="url(#g-arte)" />
+          <defs>
+            <linearGradient id="g-arte" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#7c3aed" />
+              <stop offset="1" stopColor="#06b6d4" />
+            </linearGradient>
+          </defs>
+          <rect x="12" y="20" width="22" height="22" rx="4" fill="#ffffff40" />
+          <rect x="17" y="15" width="22" height="22" rx="4" fill="#ffffff70" />
+          <rect x="22" y="10" width="22" height="22" rx="4" fill="#fff" />
+          <circle cx="28" cy="18" r="3" fill="#f472b6" />
+          <circle cx="36" cy="18" r="3" fill="#facc15" />
+          <circle cx="32" cy="25" r="3" fill="#22d3ee" />
+          <path d="M36 46l8-12" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      )
+    case 2: // editor de texto: folha com linhas
+      return (
+        <svg {...common}>
+          <rect width="56" height="56" rx="14" fill="#2563eb" />
+          <path d="M16 10h18l8 8v28H16z" fill="#fff" />
+          <path d="M34 10v8h8" fill="#bfdbfe" />
+          <text x="20" y="28" fontFamily="Georgia,serif" fontSize="10" fontWeight="700" fill="#1e3a8a">Aa</text>
+          <path d="M20 33h18M20 37h18M20 41h12" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )
+    case 3: // abas de chat de IA: várias abas + balão
+      return (
+        <svg {...common}>
+          <rect width="56" height="56" rx="14" fill="#0f766e" />
+          <path d="M8 14h10l2-4h8l2 4h18v6H8z" fill="#5eead4" opacity="0.5" />
+          <path d="M10 20h36a4 4 0 0 1 4 4v14a4 4 0 0 1-4 4H22l-8 6v-6h-4a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4z" fill="#fff" />
+          <path d="M18 29h20M18 34h14" stroke="#14b8a6" strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="45" cy="13" r="8" fill="#ef4444" />
+          <text x="45" y="16" textAnchor="middle" fontFamily="Arial" fontWeight="700" fontSize="8.5" fill="#fff">30</text>
+        </svg>
+      )
+    case 4: // planilha: grade verde
+      return (
+        <svg {...common}>
+          <rect width="56" height="56" rx="14" fill="#15803d" />
+          <rect x="11" y="12" width="34" height="32" rx="3" fill="#fff" />
+          <rect x="11" y="12" width="34" height="8" rx="3" fill="#bbf7d0" />
+          <path d="M22 12v32M33 12v32M11 28h34M11 36h34" stroke="#16a34a" strokeWidth="1.5" />
+        </svg>
+      )
+    case 5: // gerenciador de anúncios: gráfico + megafone
+      return (
+        <svg {...common}>
+          <rect width="56" height="56" rx="14" fill="#1e3a8a" />
+          <rect x="11" y="30" width="6" height="14" rx="1.5" fill="#93c5fd" />
+          <rect x="20" y="24" width="6" height="20" rx="1.5" fill="#60a5fa" />
+          <rect x="29" y="18" width="6" height="26" rx="1.5" fill="#3b82f6" />
+          <path d="M36 14l9-4v16l-9-4z" fill="#facc15" />
+          <rect x="33" y="14" width="4" height="8" rx="1" fill="#fde68a" />
+        </svg>
+      )
+    case 6: // atender no braço: celular cheio de notificação
+      return (
+        <svg {...common}>
+          <rect width="56" height="56" rx="14" fill="#334155" />
+          <rect x="17" y="8" width="22" height="40" rx="5" fill="#0f172a" stroke="#94a3b8" strokeWidth="2" />
+          <rect x="21" y="16" width="12" height="5" rx="2.5" fill="#e2e8f0" />
+          <rect x="23" y="24" width="12" height="5" rx="2.5" fill="#86efac" />
+          <rect x="21" y="32" width="10" height="5" rx="2.5" fill="#e2e8f0" />
+          <circle cx="40" cy="12" r="8" fill="#ef4444" />
+          <text x="40" y="15" textAnchor="middle" fontFamily="Arial" fontWeight="700" fontSize="7.5" fill="#fff">99+</text>
+        </svg>
+      )
+    default: // site de criar logo: formas + caneta
+      return (
+        <svg {...common}>
+          <rect width="56" height="56" rx="14" fill="url(#g-logo)" />
+          <defs>
+            <linearGradient id="g-logo" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stopColor="#db2777" />
+              <stop offset="1" stopColor="#f97316" />
+            </linearGradient>
+          </defs>
+          <circle cx="20" cy="22" r="8" fill="#fff" />
+          <path d="M30 30l8-14 8 14z" fill="#ffffffb0" />
+          <rect x="12" y="34" width="14" height="10" rx="2" fill="#ffffff80" />
+          <path d="M44 34l-12 12-4 1 1-4 12-12z" fill="#fff" />
+        </svg>
+      )
+  }
+}
+
+const APPS = ['App de editar vídeo', 'App de arte', 'Editor de texto', '30 abas de chat de IA', 'Planilha de posts', 'Gerenciador de anúncios', 'Atender no WhatsApp na mão', 'Site de criar logo']
 
 export function DemoChaos({ className }: { className?: string }) {
   const TOTAL = 10500
@@ -290,19 +389,19 @@ export function DemoChaos({ className }: { className?: string }) {
   const erasing = (k: number) => t > 900 + k * step && !gone(k)
   const merged = on(t, 900 + APPS.length * step + 300)
   return (
-    <div ref={ref} aria-hidden className={cx('flex flex-col items-center gap-7', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
+    <div ref={ref} aria-hidden className={cx('relative flex flex-col items-center', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
       <div className="grid grid-cols-4 gap-4 sm:grid-cols-8 sm:gap-5">
-        {APPS.map((a, k) => (
-          <div key={a.name} className={cx('flex w-[72px] flex-col items-center gap-2 transition-all duration-500', gone(k) && 'translate-y-6 scale-50 opacity-0 blur-sm')}>
-            <span className={cx('relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-[16px] bg-gradient-to-br text-white shadow-lg', a.bg)}>
-              <a.icon size={26} strokeWidth={2} />
+        {APPS.map((name, k) => (
+          <div key={name} className={cx('flex w-[76px] flex-col items-center gap-2 transition-all duration-500', gone(k) && 'translate-y-6 scale-50 opacity-0 blur-sm')}>
+            <span className="relative h-[60px] w-[60px] overflow-hidden rounded-[16px] shadow-[0_10px_24px_-10px_#000]">
+              <AppGlyph k={k} />
               {erasing(k) && <span className="eraser absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-white/90 to-transparent" />}
             </span>
-            <span className="text-center text-[11.5px] font-semibold leading-tight text-muted">{a.name}</span>
+            <span className="text-center text-[11.5px] font-semibold leading-tight text-muted">{name}</span>
           </div>
         ))}
       </div>
-      <div className={cx('flex flex-col items-center gap-3 rounded-[22px] border border-accent-line bg-[#ff8a3d14] px-6 py-4 transition-all duration-700 [transition-timing-function:var(--ease-spring)]', merged ? 'scale-100 opacity-100' : 'scale-75 opacity-0')}>
+      <div className={cx('absolute inset-0 m-auto flex h-fit w-fit flex-col items-center gap-3 rounded-[22px] border border-accent-line bg-[#1a120c] px-6 py-4 shadow-[0_20px_60px_-20px_#ff8a3d66] transition-all duration-700 [transition-timing-function:var(--ease-spring)]', merged ? 'scale-100 opacity-100' : 'pointer-events-none scale-75 opacity-0')}>
         <span className="flex items-center gap-2 text-[16px] font-bold">
           <BadgeCheck size={20} className="text-accent" /> Tudo isso dentro do Plotoon
         </span>
