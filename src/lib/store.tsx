@@ -195,6 +195,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setState(empty)
       return
     }
+    // pagou na Cakto antes de criar a conta? os créditos entram agora
+    supabase?.rpc('claim_payments').then(({ data }) => {
+      if (Number(data) > 0) reload()
+    })
     reload()
   }, [live, userId, reload])
 

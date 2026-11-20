@@ -6,12 +6,17 @@ import { ClipArt, clips } from '../components/Showcase'
 import { Badge, Button, Card, SectionTitle, cx, useToast } from '../components/ui'
 import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_MENTOR_IMAGES, CREDITS_PER_PLAN, CREDITS_PER_APP, CREDITS_PER_PRODUCT_VIDEO, formatCredits, partCost } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
+import { brl, checkoutUrl, useOffers } from '../lib/offers'
 
 const planNames: Record<string, string> = { nenhum: 'Sem plano', start: 'Start', estudio: 'Estúdio', pro: 'Pro' }
 
 export function Plans() {
   const toast = useToast()
-  const { credits, plan, usage, addCredits } = useStore()
+  const { credits, plan, usage, addCredits, live } = useStore()
+  const ofertas = useOffers()
+  const pacotes = (ofertas ?? []).filter((o) => o.tipo === 'pacote' && o.cakto_id)
+  const planosVenda = (ofertas ?? []).filter((o) => o.tipo === 'plano' && o.cakto_id)
+  const abrir = (id: string) => window.open(checkoutUrl(id), '_blank', 'noopener')
 
   return (
     <AppShell active="planos">
@@ -21,7 +26,7 @@ export function Plans() {
         <Card className="rise flex flex-col gap-3 p-6">
           <span className="text-[14px] text-muted">Seu plano</span>
           <span className="font-display text-[32px] font-extrabold tracking-[-0.02em]">{planNames[plan] ?? plan}</span>
-          <span className="text-[14px] text-muted">{plan === 'nenhum' ? 'Assinatura pela Cakto em breve' : 'Plano ativo'}</span>
+          <span className="text-[14px] text-muted">{plan === 'nenhum' ? 'Assine um plano e ganhe créditos todo mês' : 'Plano ativo · créditos novos todo mês'}</span>
         </Card>
         <div className="rise rise-1 neon-border flex flex-col gap-3 rounded-2xl bg-surface p-6">
           <span className="flex items-center gap-2 text-[14px] text-muted">
@@ -49,6 +54,23 @@ export function Plans() {
 
       <section className="flex flex-col gap-4">
         <SectionTitle>Comprar créditos</SectionTitle>
+        <p className="m-0 -mt-2 text-[14px] text-muted">Pagamento único. Os créditos não vencem e caem na hora. Pague com o mesmo e-mail da sua conta.</p>
+        {pacotes.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {pacotes.map((p, i) => (
+              <div key={p.id} className={cx('rise lift relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-line bg-surface p-5', `rise-${Math.min(i + 1, 3)}`)}>
+                <span className="text-[14px] font-semibold text-muted">{p.nome}</span>
+                <span className="font-display text-[26px] font-extrabold">{formatCredits(p.creditos)} créditos</span>
+                <span className="text-[15px] text-soft">
+                  {brl(p.preco_brl)} <span className="text-[13px] text-subtle">· {brl(p.preco_brl / p.creditos)} cada</span>
+                </span>
+                <Button onClick={() => abrir(p.cakto_id!)} className="mt-auto">
+                  Comprar
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="grid gap-4 sm:grid-cols-3">
           {creditPacks.map((p, i) => (
             <div key={p.id} className={cx('rise lift relative flex flex-col gap-4 overflow-hidden rounded-2xl border bg-surface p-5', p.highlight ? 'border-accent' : 'border-line', `rise-${i + 1}`)}>
@@ -65,12 +87,14 @@ export function Plans() {
             </div>
           ))}
         </div>
+        )}
       </section>
 
       <section className="flex flex-col gap-4">
         <SectionTitle>Planos</SectionTitle>
         <div className="grid gap-4 lg:grid-cols-3">
           {plans.map((p) => {
+            const venda = planosVenda.find((o) => o.slug === p.id)
             const current = p.id === plan
             return (
               <Card key={p.id} className={cx('flex flex-col gap-5 p-5', current && '!border-accent glow-accent')}>
@@ -79,10 +103,10 @@ export function Plans() {
                   {current && <Badge tone="accent">Seu plano</Badge>}
                 </div>
                 <span className="font-display text-[26px] font-extrabold">
-                  {p.price}
-                  {p.price.startsWith('R$') && <span className="text-[14px] font-normal text-muted"> /mês</span>}
+                  {venda ? brl(venda.preco_brl) : p.price}
+                  {(venda || p.price.startsWith('R$')) && <span className="text-[14px] font-normal text-muted"> /mês</span>}
                 </span>
-                <span className="text-[14px] font-semibold text-accent-text">{p.credits}</span>
+                <span className="text-[14px] font-semibold text-accent-text">{venda ? `${formatCredits(venda.creditos)} créditos todo mês, que acumulam` : p.credits}</span>
                 <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
                   {p.features.map((f) => (
                     <li key={f} className="flex items-center gap-2.5 text-[14px] text-soft">
@@ -90,8 +114,8 @@ export function Plans() {
                     </li>
                   ))}
                 </ul>
-                <Button variant={current ? 'soft' : 'secondary'} disabled={current} onClick={() => toast.show('A troca de plano pelo Cakto entra aqui')} className="mt-auto">
-                  {current ? 'Plano atual' : `Mudar pro ${p.name}`}
+                <Button variant={current ? 'soft' : 'secondary'} disabled={current} onClick={() => (venda ? abrir(venda.cakto_id!) : toast.show(live ? 'Esse plano abre em breve' : 'Na prévia não tem pagamento'))} className="mt-auto">
+                  {current ? 'Plano atual' : plan === 'nenhum' ? `Assinar o ${p.name}` : `Mudar pro ${p.name}`}
                 </Button>
               </Card>
             )

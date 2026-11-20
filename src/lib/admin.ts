@@ -29,7 +29,7 @@ export type AdminUser = { id: string; email: string; name: string | null; plan: 
 export type Consumo = { dia: string; modulo: string; creditos: number; usos: number }
 export type ApiCost = { key: string; label: string; unidade: string; custo_brl: number; acao: string | null }
 export type Setting = { key: string; value: number; description: string | null }
-export type Offer = { id: string; tipo: 'plano' | 'pacote'; nome: string; preco_brl: number; creditos: number; cakto_id: string | null; ativo: boolean; ordem: number }
+export type Offer = { id: string; tipo: 'plano' | 'pacote'; nome: string; preco_brl: number; creditos: number; cakto_id: string | null; slug: string | null; ativo: boolean; ordem: number }
 export type Uso = { modulo: string; custo_usd: number; creditos: number; created_at: string }
 export type Pagamento = { valor_brl: number; status: string; created_at: string; descricao: string | null }
 
@@ -82,7 +82,7 @@ export async function saveCost(key: string, custo_brl: number) {
 }
 export async function saveOffer(o: Omit<Offer, 'id'> & { id?: string }) {
   if (DEMO || !supabase) return { ...o, id: o.id ?? crypto.randomUUID() } as Offer
-  const row = { tipo: o.tipo, nome: o.nome, preco_brl: o.preco_brl, creditos: o.creditos, cakto_id: o.cakto_id, ativo: o.ativo, ordem: o.ordem }
+  const row = { tipo: o.tipo, nome: o.nome, preco_brl: o.preco_brl, creditos: o.creditos, cakto_id: o.cakto_id, slug: o.tipo === 'plano' ? o.slug : null, ativo: o.ativo, ordem: o.ordem }
   const q = o.id ? supabase.from('offers').update(row).eq('id', o.id).select().single() : supabase.from('offers').insert(row).select().single()
   const { data, error } = await q
   return error ? null : ({ ...data, preco_brl: Number(data.preco_brl), creditos: Number(data.creditos) } as Offer)
@@ -131,9 +131,9 @@ function demoAdmin(): AdminData {
       { key: 'usd_brl_cents', value: 550, description: null },
     ],
     offers: [
-      { id: 'o1', tipo: 'plano', nome: 'Start', preco_brl: 47, creditos: 200, cakto_id: null, ativo: true, ordem: 1 },
-      { id: 'o2', tipo: 'plano', nome: 'Estúdio', preco_brl: 97, creditos: 500, cakto_id: null, ativo: true, ordem: 2 },
-      { id: 'o3', tipo: 'pacote', nome: 'Teste', preco_brl: 4.99, creditos: 20, cakto_id: null, ativo: true, ordem: 0 },
+      { id: 'o1', tipo: 'plano', nome: 'Start', preco_brl: 47, creditos: 200, cakto_id: null, slug: 'start', ativo: true, ordem: 1 },
+      { id: 'o2', tipo: 'plano', nome: 'Estúdio', preco_brl: 97, creditos: 500, cakto_id: null, slug: 'estudio', ativo: true, ordem: 2 },
+      { id: 'o3', tipo: 'pacote', nome: 'Teste', preco_brl: 4.99, creditos: 20, cakto_id: null, slug: null, ativo: true, ordem: 0 },
     ],
     usos: [{ modulo: 'video_ia', custo_usd: 0.74, creditos: 30, created_at: d(1) }],
     pagamentos: [

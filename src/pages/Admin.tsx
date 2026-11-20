@@ -6,6 +6,7 @@ import { ModuleHeader } from '../components/Module'
 import { Badge, Button, cx, useToast } from '../components/ui'
 import { deleteOffer, loadAdmin, saveCost, saveOffer, saveSetting, useIsAdmin, type AdminData, type Offer } from '../lib/admin'
 import { applySettings } from '../lib/pricing'
+import { caktoId, checkoutUrl } from '../lib/offers'
 
 type Aba = 'resumo' | 'usuarios' | 'consumo' | 'custos' | 'lucro' | 'config'
 const ABAS: Array<{ id: Aba; t: string; icon: typeof Users }> = [
@@ -440,13 +441,14 @@ function Custos({ d, c, onChange }: { d: AdminData; c: NonNullable<ReturnType<ty
   )
 }
 
-const OFERTA_VAZIA: Omit<Offer, 'id'> = { tipo: 'pacote', nome: '', preco_brl: 0, creditos: 0, cakto_id: null, ativo: true, ordem: 0 }
+const OFERTA_VAZIA: Omit<Offer, 'id'> = { tipo: 'pacote', nome: '', preco_brl: 0, creditos: 0, cakto_id: null, slug: null, ativo: true, ordem: 0 }
 
 function Lucro({ d, c, onChange }: { d: AdminData; c: NonNullable<ReturnType<typeof useContas>>; onChange: (d: AdminData) => void }) {
   const toast = useToast()
   const [nova, setNova] = useState<Omit<Offer, 'id'> | null>(null)
   async function salvar(o: Omit<Offer, 'id'> & { id?: string }) {
     if (!o.nome.trim() || o.creditos <= 0) return toast.show('Coloque um nome e quantos créditos dá.')
+    if (o.tipo === 'plano' && !o.slug) return toast.show('Escolha qual plano do Plotoon é esse (Start, Estúdio ou Pro).')
     const r = await saveOffer(o)
     if (!r) return toast.show('Não consegui salvar agora.')
     onChange({ ...d, offers: o.id ? d.offers.map((x) => (x.id === o.id ? r : x)) : [...d.offers, r] })
@@ -500,6 +502,13 @@ function OfertaLinha({ o, onSave, onDelete }: { o: Offer & { porCredito: number;
         <span className="text-[12.5px] text-muted">
           {brl(o.preco_brl)} · {num(o.creditos)} créditos · {brl(o.porCredito)} por crédito
         </span>
+        {o.cakto_id ? (
+          <a href={checkoutUrl(o.cakto_id)} target="_blank" rel="noreferrer" className="text-[12.5px] font-semibold text-sky-text">
+            Checkout ligado: pay.cakto.com.br/{o.cakto_id}
+          </a>
+        ) : (
+          <span className="text-[12.5px] font-semibold text-[#facc15]">Sem link da Cakto: não aparece pra venda</span>
+        )}
       </span>
       <span className="flex items-center justify-between gap-3 sm:justify-end">
         <span className="flex flex-col text-right">
@@ -521,6 +530,7 @@ function OfertaLinha({ o, onSave, onDelete }: { o: Offer & { porCredito: number;
 
 function OfertaForm({ o, onSave, onCancel }: { o: Omit<Offer, 'id'>; onSave: (o: Omit<Offer, 'id'>) => void; onCancel: () => void }) {
   const [f, setF] = useState(o)
+  const [link, setLink] = useState(o.cakto_id ? checkoutUrl(o.cakto_id) : '')
   const campo = 'h-11 rounded-xl border border-line-strong bg-bg px-3 text-[15px] text-ink outline-none focus:border-accent'
   return (
     <li className="pop flex list-none flex-col gap-3 rounded-2xl border border-accent-line bg-[#ff8a3d0d] p-3.5">
@@ -545,6 +555,25 @@ function OfertaForm({ o, onSave, onCancel }: { o: Omit<Offer, 'id'>; onSave: (o:
           <input inputMode="numeric" value={f.creditos || ''} onChange={(e) => setF({ ...f, creditos: Math.round(Number(e.target.value) || 0) })} placeholder="500" className={campo} />
         </label>
       </div>
+      <div className="grid gap-3 sm:grid-cols-[1fr_2fr]">
+        {f.tipo === 'plano' ? (
+          <label className="flex flex-col gap-1 text-[12.5px] font-semibold text-muted">
+            Qual plano do Plotoon
+            <select value={f.slug ?? ''} onChange={(e) => setF({ ...f, slug: e.target.value || null })} className={campo}>
+              <option value="">Escolha</option>
+              <option value="start">Start</option>
+              <option value="estudio">Estúdio</option>
+              <option value="pro">Pro</option>
+            </select>
+          </label>
+        ) : (
+          <span className="hidden sm:block" />
+        )}
+        <label className="flex flex-col gap-1 text-[12.5px] font-semibold text-muted">
+          Link da oferta na Cakto
+          <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://pay.cakto.com.br/..." inputMode="url" className={campo} />
+        </label>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[14px] text-soft">
           <input type="checkbox" checked={f.ativo} onChange={(e) => setF({ ...f, ativo: e.target.checked })} className="h-5 w-5 accent-[#ff8a3d]" /> Ativo (aparece pra venda)
@@ -553,7 +582,7 @@ function OfertaForm({ o, onSave, onCancel }: { o: Omit<Offer, 'id'>; onSave: (o:
           <Button variant="ghost" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button onClick={() => onSave(f)}>Salvar</Button>
+          <Button onClick={() => onSave({ ...f, cakto_id: caktoId(link) || null })}>Salvar</Button>
         </span>
       </div>
     </li>
