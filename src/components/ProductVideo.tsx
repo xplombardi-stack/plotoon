@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Check, Copy as CopyIcon, Download, ImagePlus, LoaderCircle, Music2, RefreshCw, Sparkles, Wand2, X } from 'lucide-react'
 import { VideoPlayer } from './VideoPlayer'
+import { ShowcaseVideos } from './Exemplos'
 import { Badge, Button, cx, useToast } from './ui'
 import { useBusiness, type Business } from '../lib/business'
 import { CREDITS_PER_PRODUCT_VIDEO } from '../lib/pricing'
 import { shrinkImage, useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
+import { consumeJob, startJob, useJobs } from '../lib/jobs'
 import { TRILHAS, type Trilha } from '../lib/music'
 import { CENA_LABEL, SAMPLE_PHOTO, canRecord, duracao, gravar, loadImage, poster, sampleProduct, sampleRoteiro, type Cena, type Roteiro, type Visual } from '../lib/productVideo'
 
@@ -244,7 +246,6 @@ export function ProductVideoStudio() {
     }
     return base
   })
-  const [busy, setBusy] = useState(false)
   const [recording, setRecording] = useState(false)
   const [usingSample, setUsingSample] = useState(false)
 
@@ -275,33 +276,49 @@ export function ProductVideoStudio() {
     set({ fotos: [...proj.fotos, ...out].slice(0, 4) })
   }
 
-  async function generate() {
+  // o roteiro é escrito fora da tela: dá pra sair e voltar que ele aparece aqui
+  const job = useJobs().filter((j) => j.kind === 'video').at(-1)
+  const busy = job?.status === 'running'
+  useEffect(() => {
+    if (!job || job.status === 'running' || job.consumed) return
+    consumeJob(job.id)
+    reload()
+    if (job.status === 'done') set({ roteiro: job.result as Roteiro })
+    else toast.show(job.error === 'creditos_insuficientes' ? 'Seus créditos acabaram.' : 'Não consegui criar o roteiro agora. Seus créditos foram devolvidos.')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job?.id, job?.status])
+
+  function generate() {
     if (busy) return
     if (proj.produto.trim().length < 2) return toast.show('Conta qual é o produto.')
     if (!proj.fotos.length && !usingSample) return toast.show('Manda pelo menos 1 foto do produto.')
     if (credits < CREDITS_PER_PRODUCT_VIDEO) return toast.show('Você não tem créditos suficientes.')
-    setBusy(true)
-    if (!live || !supabase) {
-      addCredits(-CREDITS_PER_PRODUCT_VIDEO, 'Vídeo do produto')
-      await new Promise((r) => window.setTimeout(r, 4200))
-      set({ roteiro: demoRoteiro(proj) })
-      setBusy(false)
-      return
-    }
-    const { data, error } = await supabase.functions.invoke('video-produto', { body: { produto: proj.produto, oferta: proj.oferta, destaque: proj.destaque, duracao: proj.duracao } })
-    setBusy(false)
-    reload()
-    if (error || !data?.roteiro) {
-      let code = ''
-      try {
-        const ctx = (error as { context?: Response } | null)?.context
-        code = String((ctx ? await ctx.json() : null)?.error ?? '')
-      } catch {
-        /* sem detalhe */
-      }
-      return toast.show(code === 'creditos_insuficientes' ? 'Seus créditos acabaram.' : 'Não consegui criar o roteiro agora. Seus créditos foram devolvidos.')
-    }
-    set({ roteiro: data.roteiro as Roteiro })
+    const snap = proj
+    startJob({
+      kind: 'video',
+      label: 'Criando o roteiro do vídeo',
+      doneLabel: 'Seu vídeo está pronto pra assistir',
+      route: 'estudio-video',
+      run: async () => {
+        if (!live || !supabase) {
+          addCredits(-CREDITS_PER_PRODUCT_VIDEO, 'Vídeo do produto')
+          await new Promise((r) => window.setTimeout(r, 4200))
+          return demoRoteiro(snap)
+        }
+        const { data, error } = await supabase.functions.invoke('video-produto', { body: { produto: snap.produto, oferta: snap.oferta, destaque: snap.destaque, duracao: snap.duracao } })
+        if (error || !data?.roteiro) {
+          let code = 'falha'
+          try {
+            const ctx = (error as { context?: Response } | null)?.context
+            code = String((ctx ? await ctx.json() : null)?.error ?? 'falha')
+          } catch {
+            /* sem detalhe */
+          }
+          throw new Error(code)
+        }
+        return data.roteiro as Roteiro
+      },
+    })
   }
 
   function editScene(i: number, p: Partial<Cena>) {
@@ -537,12 +554,18 @@ export function ProductVideoStudio() {
         </Button>
       </div>
 
-      <div className="rise rise-1 flex flex-col gap-3">
-        <span className="flex items-center justify-between text-[14px] font-semibold text-soft">
-          Olha um exemplo (aperta o play com som)
-          <Badge tone="neutral">Exemplo</Badge>
-        </span>
-        <SampleProductVideo controls trilha="luxo" className="mx-auto max-w-[360px] border border-line-strong" />
+      <div className="rise rise-1 flex flex-col gap-5">
+        <div className="flex flex-col gap-3">
+          <span className="flex items-center justify-between gap-2 text-[14px] font-semibold text-soft">
+            Como fica o seu (aperta o play com som)
+            <Badge tone="neutral">Prévia</Badge>
+          </span>
+          <SampleProductVideo controls trilha="luxo" className="mx-auto max-w-[340px] border border-line-strong" />
+        </div>
+        <div className="flex flex-col gap-3">
+          <span className="text-[14px] font-semibold text-soft">Vídeos de verdade feitos nesse estilo</span>
+          <ShowcaseVideos className="!grid-cols-2" />
+        </div>
       </div>
     </div>
   )

@@ -63,7 +63,7 @@ export function Cursor() {
 
   return (
     <div ref={el} className="plotoon-cursor" aria-hidden>
-      <svg width="34" height="40" viewBox="0 0 34 40" fill="none">
+      <svg width="23" height="27" viewBox="0 0 34 40" fill="none">
         <path d="M3.2 2.6 L30.4 22.4 Q31.6 23.4 30.1 24.1 L19.6 25.2 L24.9 35.3 Q25.4 36.4 24.4 36.9 L20.6 38.6 Q19.5 39 19 37.9 L13.9 27.7 L6.2 34.6 Q5 35.6 4.7 34 L2.1 3.6 Q2 2 3.2 2.6 Z" fill="#0c0c10" stroke="#fff" strokeWidth="2.2" strokeLinejoin="round" />
         <image href="/favicon.png" x="7.2" y="11.6" width="11.5" height="11.5" />
       </svg>

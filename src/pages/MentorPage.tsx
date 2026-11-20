@@ -11,6 +11,7 @@ import { useBusiness } from '../lib/business'
 import { CREDITS_PER_MENTOR, CREDITS_PER_MENTOR_IMAGES } from '../lib/pricing'
 import { shrinkImage, timeAgo, useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
+import { consumeJob, startJob, useJobs } from '../lib/jobs'
 
 type Diag = { nota: number; itens: Array<{ area: string; status: 'bom' | 'melhorar' | 'falta' | 'nao_vi'; dica: string }> }
 type Msg = { id: string; role: 'user' | 'assistant'; text: string; images: string[]; actions: MentorAction[]; diag?: Diag | null; at: number }
@@ -311,13 +312,14 @@ export function MentorPage() {
   const { business, saveBusiness } = useBusiness()
   const toast = useToast()
   const [igOpen, setIgOpen] = useState(false)
+  const job = useJobs().filter((j) => j.kind === 'mentor').at(-1)
+  const busy = job?.status === 'running'
   const [lendo, setLendo] = useState(0)
   const [threads, setThreads] = useState<Thread[]>([])
   const [threadId, setThreadId] = useState<string | null>(null)
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [text, setText] = useState('')
   const [imgs, setImgs] = useState<string[]>([])
-  const [busy, setBusy] = useState(false)
   const [loadingThread, setLoadingThread] = useState(false)
   const [listOpen, setListOpen] = useState(false)
   const end = useRef<HTMLDivElement>(null)
@@ -395,56 +397,82 @@ export function MentorPage() {
     setImgs((x) => [...x, ...out].slice(0, 4))
   }
 
-  async function send(q = text, override?: string[]) {
-    const msg = q.trim()
-    const sentImgs = override ?? imgs
-    const custo = sentImgs.length ? CREDITS_PER_MENTOR_IMAGES : CREDITS_PER_MENTOR
-    if ((!msg && !sentImgs.length) || busy) return
-    if (credits < custo) return toast.show('Você não tem créditos suficientes pra falar com o Mentor.')
-    setMsgs((m) => [...m, { id: `u${Date.now()}`, role: 'user', text: msg, images: sentImgs, actions: [], at: Date.now() }])
-    setText('')
-    setImgs([])
-    setBusy(true)
-
-    if (!live || !supabase) {
-      addCredits(-custo, 'Mentor')
-      await new Promise((r) => window.setTimeout(r, 1400))
-      const r = demoReply(msg, nome, sentImgs.length > 0)
-      setMsgs((m) => [...m, { id: `a${Date.now()}`, role: 'assistant', text: r.text, images: [], actions: r.actions, diag: r.diag ?? null, at: Date.now() }])
-      setBusy(false)
+  // a resposta chega mesmo se a pessoa sair da tela; ao voltar, a conversa aparece com a resposta
+  useEffect(() => {
+    if (!job) return
+    const inp = job.input as { msgs: Msg[]; threadId: string | null }
+    if (job.status === 'running') {
+      if (msgs.length < inp.msgs.length) {
+        setMsgs(inp.msgs)
+        setThreadId(inp.threadId)
+      }
       return
     }
-
-    const { data, error } = await supabase.functions.invoke('mentor', { body: { thread_id: threadId, mensagem: msg, imagens: sentImgs } })
-    setBusy(false)
-    if (error || !data?.mensagem) {
-      let code = ''
-      try {
-        const ctx = (error as { context?: Response } | null)?.context
-        const b = ctx ? await ctx.json() : null
-        code = String(b?.error ?? '')
-        if (b?.thread_id) setThreadId(b.thread_id)
-      } catch {
-        /* sem detalhe */
-      }
-      await reload()
+    if (job.consumed) return
+    consumeJob(job.id)
+    reload()
+    const r = job.result as { thread_id?: string; msg?: Msg } | undefined
+    if (job.status === 'done' && r?.msg) {
+      if (r.thread_id) setThreadId(r.thread_id)
+      setMsgs((m) => [...(m.length >= inp.msgs.length ? m : inp.msgs), r.msg!])
+      loadThreads()
+    } else {
       setMsgs((m) => [
-        ...m,
+        ...(m.length >= inp.msgs.length ? m : inp.msgs),
         {
           id: `e${Date.now()}`,
           role: 'assistant',
-          text: code === 'creditos_insuficientes' ? 'Seus créditos acabaram. Compre mais créditos pra continuar a conversa.' : 'Não consegui responder agora. Seus créditos foram devolvidos, tenta de novo em instantes.',
+          text: job.error === 'creditos_insuficientes' ? 'Seus créditos acabaram. Compre mais créditos pra continuar a conversa.' : 'Não consegui responder agora. Seus créditos foram devolvidos, tenta de novo em instantes.',
           images: [],
           actions: [],
           at: Date.now(),
         },
       ])
-      return
     }
-    setThreadId(data.thread_id)
-    setMsgs((m) => [...m, { id: data.mensagem.id ?? `a${Date.now()}`, role: 'assistant', text: data.mensagem.texto, images: [], actions: data.mensagem.acoes ?? [], diag: data.mensagem.diagnostico ?? null, at: Date.now() }])
-    reload()
-    loadThreads()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job?.id, job?.status])
+
+  function send(q = text, override?: string[]) {
+    const msg = q.trim()
+    const sentImgs = override ?? imgs
+    const custo = sentImgs.length ? CREDITS_PER_MENTOR_IMAGES : CREDITS_PER_MENTOR
+    if ((!msg && !sentImgs.length) || busy) return
+    if (credits < custo) return toast.show('Você não tem créditos suficientes pra falar com o Mentor.')
+    const next: Msg[] = [...msgs, { id: `u${Date.now()}`, role: 'user', text: msg, images: sentImgs, actions: [], at: Date.now() }]
+    setMsgs(next)
+    setText('')
+    setImgs([])
+    const tid = threadId
+    startJob({
+      kind: 'mentor',
+      label: sentImgs.length ? 'Mentor analisando os prints' : 'Mentor pensando na resposta',
+      doneLabel: 'O Mentor respondeu',
+      route: 'mentor',
+      input: { msgs: next, threadId: tid },
+      run: async () => {
+        if (!live || !supabase) {
+          addCredits(-custo, 'Mentor')
+          await new Promise((r) => window.setTimeout(r, 1400))
+          const r = demoReply(msg, nome, sentImgs.length > 0)
+          return { thread_id: undefined, msg: { id: `a${Date.now()}`, role: 'assistant', text: r.text, images: [], actions: r.actions, diag: r.diag ?? null, at: Date.now() } as Msg }
+        }
+        const { data, error } = await supabase.functions.invoke('mentor', { body: { thread_id: tid, mensagem: msg, imagens: sentImgs } })
+        if (error || !data?.mensagem) {
+          let code = 'falha'
+          try {
+            const ctx = (error as { context?: Response } | null)?.context
+            code = String((ctx ? await ctx.json() : null)?.error ?? 'falha')
+          } catch {
+            /* sem detalhe */
+          }
+          throw new Error(code)
+        }
+        return {
+          thread_id: data.thread_id as string,
+          msg: { id: data.mensagem.id ?? `a${Date.now()}`, role: 'assistant', text: data.mensagem.texto, images: [], actions: data.mensagem.acoes ?? [], diag: data.mensagem.diagnostico ?? null, at: Date.now() } as Msg,
+        }
+      },
+    })
   }
 
   function sendInstagram(at: string, prints: string[]) {

@@ -215,14 +215,14 @@ html.custom-cursor * {
   left: 0;
   z-index: 9999;
   pointer-events: none;
-  margin: -3px 0 0 -3px; /* a ponta da seta é o ponto do clique */
+  margin: -2px 0 0 -2px; /* a ponta da seta é o ponto do clique */
   opacity: 0;
   will-change: transform;
 }
 .plotoon-cursor.is-on { opacity: 1; }
 .plotoon-cursor > svg {
   display: block;
-  transform-origin: 3px 3px;
+  transform-origin: 2px 2px;
   filter: drop-shadow(0 0 3px #ff8a3d99) drop-shadow(0 2px 4px #0009);
   transition: transform 0.28s var(--ease-spring), filter 0.25s ease;
   animation: cursor-breathe 2.6s ease-in-out infinite;
@@ -251,10 +251,10 @@ html.custom-cursor * {
 }
 .cursor-click > span {
   position: absolute;
-  left: -18px;
-  top: -18px;
-  width: 36px;
-  height: 36px;
+  left: -14px;
+  top: -14px;
+  width: 28px;
+  height: 28px;
   border-radius: 9999px;
   border: 2px solid #ff8a3d;
   animation: cursor-ripple 0.6s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
@@ -265,8 +265,8 @@ html.custom-cursor * {
   position: absolute;
   left: 0;
   top: 0;
-  width: 3px;
-  height: 10px;
+  width: 2.5px;
+  height: 8px;
   border-radius: 3px;
   background: #ff8a3d;
   transform-origin: 50% 100%;
@@ -359,3 +359,10 @@ html.custom-cursor * {
   42%, 84% { clip-path: inset(0 0 0 100%); }
   100% { clip-path: inset(0 0 0 0); }
 }
+
+/* Fontes do vídeo do produto (desenhadas no canvas) */
+@font-face { font-family: "Barlow Condensed"; font-weight: 800; font-display: swap; src: url("/fonts/barlow-condensed-latin-800-normal.woff2") format("woff2"); }
+@font-face { font-family: "Barlow Condensed"; font-weight: 700; font-display: swap; src: url("/fonts/barlow-condensed-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "JetBrains Mono"; font-weight: 500; font-display: swap; src: url("/fonts/jetbrains-mono-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter Tight"; font-weight: 600; font-display: swap; src: url("/fonts/inter-tight-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter Tight"; font-weight: 800; font-display: swap; src: url("/fonts/inter-tight-latin-800-normal.woff2") format("woff2"); }

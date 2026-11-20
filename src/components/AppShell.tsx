@@ -1,6 +1,7 @@
 import type { ComponentType, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
-import { Coins, FolderOpen, House, LayoutGrid, Plus, X } from 'lucide-react'
+import { Coins, FolderOpen, House, LayoutGrid, LoaderCircle, Plus, X } from 'lucide-react'
+import { dismissJob, useJobs } from '../lib/jobs'
 import { MentorIcon } from './MentorIcon'
 import type { Route } from '../lib/router'
 import { useAuth } from '../lib/auth'
@@ -182,6 +183,41 @@ function BottomBar({ activeId, onCreate, onMore, moreOpen }: { activeId?: Module
   )
 }
 
+// Aviso no canto: tarefas que continuam rodando enquanto a pessoa navega
+function JobsTray({ active }: { active: Route }) {
+  const list = useJobs().filter((j) => !(j.route === active) && (j.status === 'running' || !j.consumed))
+  if (!list.length) return null
+  return (
+    <div className="pointer-events-none fixed inset-x-3 bottom-[92px] z-40 flex flex-col items-end gap-2 sm:inset-x-auto sm:right-5 lg:bottom-5" aria-live="polite">
+      {list.map((j) => {
+        const run = j.status === 'running'
+        const err = j.status === 'error'
+        return (
+          <div key={j.id} className="pop pointer-events-auto flex w-full items-center gap-3 rounded-2xl border border-line-strong bg-side/95 p-2.5 pl-3 shadow-[0_20px_50px_-15px_#000] backdrop-blur sm:w-[330px]">
+            <ModuleIcon id={moduleFor(j.route)?.id ?? 'inicio'} size="sm" />
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-[13.5px] font-semibold text-ink">{run ? `${j.label}…` : err ? 'Não deu certo dessa vez' : j.doneLabel}</span>
+              <span className="text-[12px] text-muted">{run ? 'Pode navegar à vontade, continua aqui' : err ? 'Seus créditos foram devolvidos' : 'Toque pra ver'}</span>
+            </span>
+            {run ? (
+              <LoaderCircle size={18} className="mr-1.5 shrink-0 animate-spin text-accent" aria-label="Em andamento" />
+            ) : (
+              <span className="flex shrink-0 items-center gap-1">
+                <a href={`#${j.route}`} className="press rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-bold text-accent-ink no-underline">
+                  Ver
+                </a>
+                <button type="button" onClick={() => dismissJob(j.id)} aria-label="Fechar aviso" className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg text-muted hover:text-ink">
+                  <X size={15} />
+                </button>
+              </span>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function AppShell({ active, children, wide }: { active: Route; children: ReactNode; wide?: boolean }) {
   const [sheet, setSheet] = useState<'criar' | 'mais' | null>(null)
   const { credits } = useStore()
@@ -217,6 +253,7 @@ export function AppShell({ active, children, wide }: { active: Route; children: 
         <div className={cx('mx-auto flex w-full flex-col gap-8 px-4 pb-12 pt-6 sm:px-8 lg:gap-10 lg:px-10 lg:pt-9', wide ? 'max-w-[1400px]' : 'max-w-[1240px]')}>{children}</div>
       </main>
 
+      <JobsTray active={active} />
       <BottomBar activeId={activeId} onCreate={() => setSheet('criar')} onMore={() => setSheet('mais')} moreOpen={sheet === 'mais'} />
 
       {sheet === 'criar' && (

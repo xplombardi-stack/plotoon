@@ -10,6 +10,7 @@ import { useBusiness } from '../lib/business'
 import { CREDITS_PER_APP } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
+import { consumeJob, startJob, useJobs } from '../lib/jobs'
 
 type Msg = { role: 'user' | 'assistant'; text: string }
 type AppRow = { id: string; name: string; slug: string; html: string; messages: Msg[]; published: boolean; updated_at: string }
@@ -57,11 +58,12 @@ export function AppsPage() {
   const [apps, setApps] = useState<AppRow[]>(() => (live ? [] : readLocal()))
   const [open, setOpen] = useState<AppRow | null>(null)
   const [pedido, setPedido] = useState('')
-  const [busy, setBusy] = useState(false)
   const [device, setDevice] = useState<'cel' | 'pc'>('cel')
   const [tab, setTab] = useState<'chat' | 'previa'>('chat')
   const [error, setError] = useState('')
   const end = useRef<HTMLDivElement>(null)
+  const job = useJobs().filter((j) => j.kind === 'app').at(-1)
+  const busy = job?.status === 'running'
 
   const load = useCallback(async () => {
     if (!live || !supabase) return
@@ -85,53 +87,85 @@ export function AppsPage() {
     }
   }
 
-  async function gerar(texto = pedido) {
+  // a criação roda fora da tela: se a pessoa sair e voltar, o resultado continua aqui
+  useEffect(() => {
+    if (!job) return
+    if (job.status === 'running') {
+      const pend = (job.input as { pending?: AppRow } | undefined)?.pending
+      if (pend && (!open || open.id === pend.id)) setOpen(pend)
+      return
+    }
+    if (job.consumed) return
+    consumeJob(job.id)
+    if (job.status === 'done') {
+      setOpen(job.result as AppRow)
+      setTab('previa')
+      if (live) {
+        reload()
+        load()
+      } else setApps(readLocal())
+    } else {
+      const pend = (job.input as { pending?: AppRow } | undefined)?.pending
+      if (pend) setOpen({ ...pend, messages: pend.messages.slice(0, -1) })
+      reload()
+      setError(job.error === 'creditos_insuficientes' ? 'Você não tem créditos suficientes.' : 'Não consegui montar agora. Seus créditos foram devolvidos, tenta de novo.')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job?.id, job?.status])
+
+  function gerar(texto = pedido) {
     const p = texto.trim()
     if (busy || p.length < 3) return
     if (credits < CREDITS_PER_APP) return setError('Você não tem créditos suficientes.')
     setError('')
     setPedido('')
-    setBusy(true)
-    const pending: AppRow = open ?? { id: '', name: 'Novo app', slug: '', html: '', messages: [], published: false, updated_at: new Date().toISOString() }
-    setOpen({ ...pending, messages: [...pending.messages, { role: 'user', text: p }] })
-
-    if (!live || !supabase) {
-      addCredits(-CREDITS_PER_APP, 'App com IA')
-      await new Promise((r) => window.setTimeout(r, 2200))
-      const nome = open?.name && open.name !== 'Novo app' ? open.name : `${business.name || 'Meu negócio'} · ${MODELOS.find((m) => m.p === p)?.t ?? 'App'}`
-      const row: AppRow = {
-        ...pending,
-        id: pending.id || Math.random().toString(36).slice(2),
-        slug: pending.slug || Math.random().toString(36).slice(2, 10),
-        name: nome,
-        html: demoHtml(nome, business.colors, p),
-        messages: [...pending.messages, { role: 'user', text: p }, { role: 'assistant', text: 'Pronto! Na prévia é um exemplo. Com a IA ligada, o app sai completo do jeito que você pediu.' }],
-        updated_at: new Date().toISOString(),
-      }
-      setOpen(row)
-      saveLocal([row, ...apps.filter((a) => a.id !== row.id)])
-      setBusy(false)
-      return
-    }
-
-    const { data, error: err } = await supabase.functions.invoke('apps', { body: { app_id: open?.id || undefined, pedido: p } })
-    setBusy(false)
-    if (err || !data?.app) {
-      let code = ''
-      try {
-        const ctx = (err as { context?: Response } | null)?.context
-        code = String((ctx ? await ctx.json() : null)?.error ?? '')
-      } catch {
-        /* sem detalhe */
-      }
-      await reload()
-      setOpen(open)
-      return setError(code === 'creditos_insuficientes' ? 'Você não tem créditos suficientes.' : 'Não consegui montar agora. Seus créditos foram devolvidos, tenta de novo.')
-    }
-    setOpen(data.app as AppRow)
-    setTab('previa')
-    reload()
-    load()
+    const base: AppRow = open ?? { id: '', name: 'Novo app', slug: '', html: '', messages: [], published: false, updated_at: new Date().toISOString() }
+    const pending: AppRow = { ...base, messages: [...base.messages, { role: 'user', text: p }] }
+    setOpen(pending)
+    const nomeNegocio = business.name
+    const cores = business.colors
+    startJob({
+      kind: 'app',
+      label: 'Criando seu app',
+      doneLabel: 'Seu app está pronto',
+      route: 'apps',
+      input: { pending },
+      run: async () => {
+        if (!live || !supabase) {
+          addCredits(-CREDITS_PER_APP, 'App com IA')
+          await new Promise((r) => window.setTimeout(r, 2200))
+          const nome = base.name && base.name !== 'Novo app' ? base.name : `${nomeNegocio || 'Meu negócio'} · ${MODELOS.find((m) => m.p === p)?.t ?? 'App'}`
+          const row: AppRow = {
+            ...pending,
+            id: pending.id || Math.random().toString(36).slice(2),
+            slug: pending.slug || Math.random().toString(36).slice(2, 10),
+            name: nome,
+            html: demoHtml(nome, cores, p),
+            messages: [...pending.messages, { role: 'assistant', text: 'Pronto! Na prévia é um exemplo. Com a IA ligada, o app sai completo do jeito que você pediu.' }],
+            updated_at: new Date().toISOString(),
+          }
+          const list = [row, ...readLocal().filter((x) => x.id !== row.id)]
+          try {
+            localStorage.setItem(LOCAL, JSON.stringify(list.slice(0, 20)))
+          } catch {
+            /* sem armazenamento */
+          }
+          return row
+        }
+        const { data, error: err } = await supabase.functions.invoke('apps', { body: { app_id: base.id || undefined, pedido: p } })
+        if (err || !data?.app) {
+          let code = 'falha'
+          try {
+            const ctx = (err as { context?: Response } | null)?.context
+            code = String((ctx ? await ctx.json() : null)?.error ?? 'falha')
+          } catch {
+            /* sem detalhe */
+          }
+          throw new Error(code)
+        }
+        return data.app as AppRow
+      },
+    })
   }
 
   async function publicar(row: AppRow, published: boolean) {

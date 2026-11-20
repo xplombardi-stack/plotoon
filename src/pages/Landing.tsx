@@ -4,6 +4,7 @@ import { plans } from '../data/mock'
 import { DemoAnuncios, DemoApps, DemoCalendario, DemoChaos, DemoCopy, DemoCortes, DemoHub, DemoImagem, DemoLogo, DemoMentor, DemoVideo, DemoWhatsApp } from '../components/FeatureDemos'
 import { ModuleIcon, SoonPill } from '../components/Module'
 import { ImageShowcase } from '../components/BeforeAfter'
+import { ShowcaseVideos } from '../components/Exemplos'
 import { StoryReel } from '../components/StoryReel'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
 import { MODULES, type ModuleId } from '../lib/modules'
@@ -34,6 +35,12 @@ const FEATURES: Feature[] = [
     text: 'Peça o vídeo do jeito que você falaria. Escolha o estilo: o vídeo do seu produto, com texto animado e música, pronto em 1 minuto, ou uma historinha com o seu boneco 3D, que prende do começo ao fim.',
     bullets: ['Vídeo do produto: suas fotos viram um vídeo de 30 a 40 segundos com gancho, oferta e chamada', 'Historinha com o seu boneco 3D, com o mesmo rosto em todas as cenas', 'Você vê o custo antes e ajusta os textos sem gastar crédito'],
     demo: <DemoVideo />,
+    extra: (
+      <div className="flex flex-col gap-4">
+        <h4 className="m-0 font-display text-[20px] font-bold">Vídeos de verdade, feitos nesse estilo</h4>
+        <ShowcaseVideos />
+      </div>
+    ),
   },
   {
     id: 'apps',
@@ -255,6 +262,9 @@ export function Landing() {
                     ) : (
                       <div className="flex flex-col gap-4">
                         <DemoVideo />
+                        <span className="text-[13px] font-bold uppercase tracking-[0.1em] text-accent-text">Feitos nesse estilo</span>
+                        <ShowcaseVideos className="!grid-cols-2" max={4} />
+                        <span className="text-[13px] font-bold uppercase tracking-[0.1em] text-accent-text">Historinhas com boneco</span>
                         <div className="-mx-5 overflow-hidden sm:-mx-7">
                           <StoryReel size="sm" />
                         </div>
