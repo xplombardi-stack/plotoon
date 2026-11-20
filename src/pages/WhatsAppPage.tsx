@@ -1,6 +1,6 @@
 // Atendente WhatsApp: conectar pelo QR code, treinar, testar no simulador e acompanhar as conversas.
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, Bot, Check, CheckCheck, GraduationCap, LoaderCircle, MessageCircle, Pause, Play, Power, QrCode, RotateCcw, Send, Smartphone, UserRound } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { AlertTriangle, ArrowLeft, Bot, Camera, Check, CheckCheck, GraduationCap, Lightbulb, LoaderCircle, MapPin, MessageCircle, Pause, Pencil, Play, Plus, Power, QrCode, RotateCcw, Send, Smartphone, Trash2, Truck, UserRound, X } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Badge, Button, cx, useToast } from '../components/ui'
@@ -10,13 +10,58 @@ import { useStore } from '../lib/store'
 import { DEMO, supabase } from '../lib/supabase'
 
 type Aba = 'conectar' | 'treinar' | 'testar' | 'conversas'
-type Treino = { nome_atendente: string; apresentacao: string; produtos: string; perguntas: string; horario: string; regras: string; tom: string }
+type Entrega = { local: string; taxa: string; prazo: string }
+type Licao = { cliente: string; certo: string }
+type Treino = {
+  nome_atendente: string
+  apresentacao: string
+  produtos: string
+  perguntas: string
+  horario: string
+  regras: string
+  tom: string
+  observacoes: string
+  endereco: string
+  referencia: string
+  mapa: string
+  entregas: Entrega[]
+  fora_area: string
+  licoes: Licao[]
+}
 type Bot = { status: 'desconectado' | 'aguardando_qr' | 'conectado'; numero: string | null; nome_perfil: string | null; qr: string | null; ativo: boolean; treino: Partial<Treino> }
 type Conversa = { id: string; jid: string; nome: string | null; ultima_msg: string | null; ultima_em: string; ia_pausada: boolean; precisa_dono: boolean; nao_lidas: number }
 type Msg = { id: string; de: 'cliente' | 'ia' | 'dono'; texto: string; created_at: string }
 
 const TONS = ['Simpático e próximo', 'Profissional e direto', 'Divertido, com energia', 'Sofisticado e elegante']
-const TREINO_VAZIO: Treino = { nome_atendente: '', apresentacao: '', produtos: '', perguntas: '', horario: '', regras: '', tom: TONS[0] }
+const TREINO_VAZIO: Treino = {
+  nome_atendente: '',
+  apresentacao: '',
+  produtos: '',
+  perguntas: '',
+  horario: '',
+  regras: '',
+  tom: TONS[0],
+  observacoes: '',
+  endereco: '',
+  referencia: '',
+  mapa: '',
+  entregas: [],
+  fora_area: '',
+  licoes: [],
+}
+const CREDITOS_FOTO_CARDAPIO = 2
+const DEMO_CARDAPIO = 'PIZZAS GRANDES (8 fatias)\nMussarela: R$ 49,90\nCalabresa: R$ 52,90\nPortuguesa: R$ 56,90\nFrango com catupiry: R$ 58,90\nBEBIDAS\nRefrigerante 2L: R$ 14,00'
+
+// diminui a foto antes de mandar (mais rápido e mais barato de ler)
+async function fotoParaBase64(file: File): Promise<string> {
+  const bmp = await createImageBitmap(file)
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height))
+  const c = document.createElement('canvas')
+  c.width = Math.round(bmp.width * k)
+  c.height = Math.round(bmp.height * k)
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
+  return c.toDataURL('image/jpeg', 0.85).split(',')[1]
+}
 
 async function erroDe(error: unknown) {
   try {
@@ -160,35 +205,159 @@ function Campo({ label, dica, value, onChange, rows = 3, placeholder }: { label:
   )
 }
 
-function Treinar({ treino, onChange, onSave, salvando }: { treino: Treino; onChange: (t: Treino) => void; onSave: () => void; salvando: boolean }) {
-  const set = (k: keyof Treino) => (v: string) => onChange({ ...treino, [k]: v })
+function Secao({ icon: Icon, titulo, dica, children }: { icon: typeof MapPin; titulo: string; dica?: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-5 rounded-[22px] border border-line bg-surface p-5">
-      <div className="flex flex-col gap-1">
-        <h2 className="m-0 font-display text-[19px] font-bold">O que o atendente precisa saber</h2>
-        <p className="m-0 text-[14px] text-muted">Ele já usa o que está em Meu Negócio. Aqui você ensina o resto. Quanto mais detalhe, melhor ele vende.</p>
+    <section className="flex flex-col gap-4 rounded-[22px] border border-line bg-surface p-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#ff8a3d1a] text-accent">
+          <Icon size={19} />
+        </span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 className="m-0 font-display text-[18px] font-bold">{titulo}</h2>
+          {dica && <p className="m-0 text-[13.5px] text-muted">{dica}</p>}
+        </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Campo label="Nome do atendente" rows={1} value={treino.nome_atendente} onChange={set('nome_atendente')} placeholder="Ex.: Ana" />
-        <label className="flex flex-col gap-1.5">
-          <span className="text-[14px] font-semibold text-ink">Jeito de falar</span>
-          <select value={treino.tom} onChange={(e) => set('tom')(e.target.value)} className="h-12 rounded-xl border border-line-strong bg-bg px-3 text-[15px] text-ink outline-none focus:border-accent">
-            {TONS.map((t) => (
-              <option key={t}>{t}</option>
+      {children}
+    </section>
+  )
+}
+
+const inputCls = 'h-12 min-w-0 rounded-xl border border-line-strong bg-bg px-3.5 text-[15px] text-ink outline-none placeholder:text-subtle focus:border-accent'
+
+function Treinar({ treino, onChange, onSave, salvando, live }: { treino: Treino; onChange: (t: Treino) => void; onSave: () => void; salvando: boolean; live: boolean }) {
+  const toast = useToast()
+  const { credits, reload, addCredits } = useStore()
+  const [lendo, setLendo] = useState(0)
+  const fotoRef = useRef<HTMLInputElement>(null)
+  const set = (k: keyof Treino) => (v: string) => onChange({ ...treino, [k]: v })
+  const setEntrega = (i: number, p: Partial<Entrega>) => onChange({ ...treino, entregas: treino.entregas.map((e, j) => (j === i ? { ...e, ...p } : e)) })
+
+  async function lerFotos(files: FileList | null) {
+    const lista = [...(files ?? [])].filter((f) => f.type.startsWith('image/')).slice(0, 6)
+    if (!lista.length) return
+    if (credits < lista.length * CREDITOS_FOTO_CARDAPIO) return toast.show(`Precisa de ${lista.length * CREDITOS_FOTO_CARDAPIO} créditos pra ler ${lista.length > 1 ? 'essas fotos' : 'essa foto'}.`)
+    let texto = treino.produtos.trim()
+    let lidas = 0
+    for (const [i, f] of lista.entries()) {
+      setLendo(i + 1)
+      let lido = ''
+      if (live && supabase) {
+        const imagem = await fotoParaBase64(f).catch(() => '')
+        if (!imagem) continue
+        const { data, error } = await supabase.functions.invoke('whatsapp', { body: { acao: 'ler_cardapio', imagem } })
+        if (error) {
+          const e = await erroDe(error)
+          toast.show(e === 'creditos_insuficientes' ? 'Seus créditos acabaram.' : e === 'sem_itens' ? 'Não achei itens com preço nessa foto (os créditos voltaram).' : 'Não consegui ler uma das fotos. Tenta uma foto mais nítida (os créditos voltaram).')
+          if (e === 'creditos_insuficientes') break
+          continue
+        }
+        lido = String(data?.texto ?? '').trim()
+      } else {
+        await new Promise((r) => setTimeout(r, 1200))
+        lido = DEMO_CARDAPIO
+        addCredits(-CREDITOS_FOTO_CARDAPIO, 'Atendente: leitura do cardápio')
+      }
+      if (lido) {
+        texto = texto ? `${texto}\n${lido}` : lido
+        lidas++
+      }
+    }
+    setLendo(0)
+    if (fotoRef.current) fotoRef.current.value = ''
+    if (live) reload()
+    if (lidas) {
+      onChange({ ...treino, produtos: texto })
+      toast.show('Cardápio lido! Confira os preços e clique em Salvar treino.')
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Secao icon={GraduationCap} titulo="O básico" dica="Ele já usa o que está em Meu Negócio. Aqui você ensina o resto.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Campo label="Nome do atendente" rows={1} value={treino.nome_atendente} onChange={set('nome_atendente')} placeholder="Ex.: Ana" />
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[14px] font-semibold text-ink">Jeito de falar</span>
+            <select value={treino.tom} onChange={(e) => set('tom')(e.target.value)} className="h-12 rounded-xl border border-line-strong bg-bg px-3 text-[15px] text-ink outline-none focus:border-accent">
+              {TONS.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </label>
+          <Campo label="Horário de atendimento" rows={1} value={treino.horario} onChange={set('horario')} placeholder="Seg a sáb, 9h às 19h" />
+          <Campo label="Como se apresentar" rows={1} value={treino.apresentacao} onChange={set('apresentacao')} placeholder="Oi! Aqui é a Ana da Loja X 😊" />
+        </div>
+      </Secao>
+
+      <Secao icon={Camera} titulo="Cardápio, produtos e preços" dica="É a única fonte de preço que ele usa: o que não estiver aqui, ele não inventa.">
+        <input ref={fotoRef} type="file" accept="image/*" multiple hidden onChange={(e) => lerFotos(e.target.files)} />
+        <button type="button" onClick={() => fotoRef.current?.click()} disabled={!!lendo} className="press flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-bg p-4 text-left hover:border-accent disabled:cursor-wait">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#ff8a3d1a] text-accent">{lendo ? <LoaderCircle size={20} className="animate-spin" /> : <Camera size={20} />}</span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-[15px] font-semibold text-ink">{lendo ? `Lendo a foto ${lendo}…` : 'Mandar foto do cardápio ou da tabela de preços'}</span>
+            <span className="text-[13px] text-muted">{lendo ? 'Leva uns segundos por foto.' : `Ele lê os itens e os valores e escreve aqui embaixo. ${CREDITOS_FOTO_CARDAPIO} créditos por foto, até 6 de uma vez.`}</span>
+          </span>
+        </button>
+        <Campo label="Itens e preços" dica="Um por linha. Pode escrever, colar ou corrigir o que ele leu da foto." rows={7} value={treino.produtos} onChange={set('produtos')} placeholder={'Pizza grande calabresa: R$ 52,90\nBorda recheada: + R$ 10,00\nRefrigerante 2L: R$ 14,00'} />
+      </Secao>
+
+      <Secao icon={MapPin} titulo="Loja e entrega" dica="Pra ele explicar onde fica e cobrar a taxa certa de cada lugar.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Campo label="Endereço da loja" rows={1} value={treino.endereco} onChange={set('endereco')} placeholder="Rua das Palmeiras, 230, Centro" />
+          <Campo label="Ponto de referência" rows={1} value={treino.referencia} onChange={set('referencia')} placeholder="Ao lado da farmácia, em frente à praça" />
+        </div>
+        <Campo label="Link do mapa (opcional)" dica="Copie no Google Maps em Compartilhar. Ele manda quando perguntarem onde fica." rows={1} value={treino.mapa} onChange={set('mapa')} placeholder="https://maps.app.goo.gl/…" />
+        <div className="flex flex-col gap-2">
+          <span className="flex items-center gap-2 text-[14px] font-semibold text-ink">
+            <Truck size={16} className="text-accent" /> Onde entrega e quanto custa
+          </span>
+          {treino.entregas.map((e, i) => (
+            <div key={i} className="grid grid-cols-[1fr_1fr_44px] gap-2 rounded-2xl border border-line bg-bg p-2 sm:grid-cols-[1fr_130px_150px_44px] sm:border-0 sm:bg-transparent sm:p-0">
+              <input value={e.local} onChange={(ev) => setEntrega(i, { local: ev.target.value })} placeholder="Bairro ou região" aria-label="Bairro ou região" className={cx(inputCls, 'col-span-3 sm:col-span-1')} />
+              <input value={e.taxa} onChange={(ev) => setEntrega(i, { taxa: ev.target.value })} placeholder="Taxa: R$ 6" aria-label="Taxa de entrega" className={inputCls} />
+              <input value={e.prazo} onChange={(ev) => setEntrega(i, { prazo: ev.target.value })} placeholder="Prazo: 40 min" aria-label="Prazo de entrega" className={inputCls} />
+              <button type="button" onClick={() => onChange({ ...treino, entregas: treino.entregas.filter((_, j) => j !== i) })} aria-label="Remover lugar" className="press flex h-12 w-11 cursor-pointer items-center justify-center rounded-xl text-muted hover:bg-white/5 hover:text-ink">
+                <Trash2 size={17} />
+              </button>
+            </div>
+          ))}
+          <button type="button" onClick={() => onChange({ ...treino, entregas: [...treino.entregas, { local: '', taxa: '', prazo: '' }] })} className="press flex h-11 cursor-pointer items-center gap-2 self-start rounded-full border border-line-strong px-4 text-[14px] font-semibold text-soft hover:text-ink">
+            <Plus size={16} /> Adicionar lugar
+          </button>
+        </div>
+        <Campo label="Fora dessas áreas" rows={1} value={treino.fora_area} onChange={set('fora_area')} placeholder="Não entregamos, só retirada na loja" />
+      </Secao>
+
+      <Secao icon={MessageCircle} titulo="Perguntas e regras">
+        <Campo label="Perguntas que os clientes sempre fazem" dica="Pergunta e resposta, do jeito que você responderia." rows={5} value={treino.perguntas} onChange={set('perguntas')} placeholder={'Aceita Pix? Sim, Pix, cartão em até 3x sem juros.\nPode meio a meio? Pode, cobra o sabor mais caro.'} />
+        <Campo label="Regras importantes" dica="O que ele nunca deve fazer, quando chamar você, promoções do momento." rows={3} value={treino.regras} onChange={set('regras')} placeholder={'Não dar desconto sem falar comigo.\nSe pedirem troca, me chame.'} />
+      </Secao>
+
+      <Secao icon={Lightbulb} titulo="Observações" dica="Escreva do seu jeito, como se estivesse explicando pra um funcionário novo. Vale qualquer coisa.">
+        <Campo label="O que mais ele precisa saber" rows={5} value={treino.observacoes} onChange={set('observacoes')} placeholder={'Sexta e sábado o movimento é grande, avisa que pode atrasar uns 15 min.\nCliente antigo gosta de ser chamado pelo nome.\nA pizza de chocolate é a que mais sai, sempre ofereça de sobremesa.'} />
+        {treino.licoes.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <span className="text-[14px] font-semibold text-ink">Correções que você fez no simulador</span>
+            {treino.licoes.map((l, i) => (
+              <div key={i} className="flex items-start gap-3 rounded-2xl border border-line bg-bg p-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1 text-[13.5px]">
+                  {l.cliente && <span className="text-muted">Cliente: "{l.cliente}"</span>}
+                  <span className="text-ink">Responder assim: {l.certo}</span>
+                </div>
+                <button type="button" onClick={() => onChange({ ...treino, licoes: treino.licoes.filter((_, j) => j !== i) })} aria-label="Apagar correção" className="press flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-muted hover:bg-white/5 hover:text-ink">
+                  <Trash2 size={16} />
+                </button>
+              </div>
             ))}
-          </select>
-        </label>
+          </div>
+        )}
+      </Secao>
+
+      <div className="sticky bottom-[92px] z-20 flex justify-end lg:bottom-4">
+        <Button size="lg" onClick={onSave} disabled={salvando} className="shadow-[0_10px_30px_-8px_rgba(0,0,0,.6)]">
+          {salvando ? <LoaderCircle size={18} className="animate-spin" /> : <GraduationCap size={18} />} Salvar treino
+        </Button>
       </div>
-      <Campo label="Produtos, serviços e preços" dica="Um por linha. É a única fonte de preço que ele usa: o que não estiver aqui, ele não inventa." rows={5} value={treino.produtos} onChange={set('produtos')} placeholder={'Camiseta básica: R$ 59,90 (P ao GG, 6 cores)\nCalça jeans: R$ 149,90\nFrete grátis acima de R$ 200'} />
-      <Campo label="Perguntas que os clientes sempre fazem" dica="Pergunta e resposta, do jeito que você responderia." rows={5} value={treino.perguntas} onChange={set('perguntas')} placeholder={'Aceita Pix? Sim, Pix, cartão em até 3x sem juros.\nEntrega? Entregamos em toda a cidade em até 2 dias.'} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <Campo label="Horário de atendimento" rows={1} value={treino.horario} onChange={set('horario')} placeholder="Seg a sáb, 9h às 19h" />
-        <Campo label="Como se apresentar" rows={1} value={treino.apresentacao} onChange={set('apresentacao')} placeholder="Oi! Aqui é a Ana da Loja X 😊" />
-      </div>
-      <Campo label="Regras importantes" dica="O que ele nunca deve fazer, quando chamar você, promoções do momento." rows={3} value={treino.regras} onChange={set('regras')} placeholder={'Não dar desconto sem falar comigo.\nSe pedirem troca, me chame.'} />
-      <Button size="lg" onClick={onSave} disabled={salvando} className="self-start">
-        {salvando ? <LoaderCircle size={18} className="animate-spin" /> : <GraduationCap size={18} />} Salvar treino
-      </Button>
     </div>
   )
 }
@@ -197,8 +366,21 @@ function Treinar({ treino, onChange, onSave, salvando }: { treino: Treino; onCha
 type SimMsg = { de: 'cliente' | 'ia'; texto: string }
 const DEMO_RESP = ['Oi! Tudo bem? 😊', 'Temos sim! A camiseta básica sai por R$ 59,90 e vai do P ao GG.', 'Qual tamanho você usa?']
 
-function Testar({ treino, nome, live }: { treino: Treino; nome: string; live: boolean }) {
+function Testar({ treino, nome, live, onLicao }: { treino: Treino; nome: string; live: boolean; onLicao: (l: Licao) => void }) {
   const [msgs, setMsgs] = useState<SimMsg[]>([])
+  const [corrigindo, setCorrigindo] = useState<number | null>(null)
+  const [certo, setCerto] = useState('')
+  const [corrigidas, setCorrigidas] = useState<number[]>([])
+
+  function salvarCorrecao(i: number) {
+    const t = certo.trim()
+    if (!t) return
+    const cliente = [...msgs.slice(0, i)].reverse().find((m) => m.de === 'cliente')?.texto ?? ''
+    onLicao({ cliente: cliente.slice(0, 300), certo: t.slice(0, 1000) })
+    setCorrigidas((c) => [...c, i])
+    setCorrigindo(null)
+    setCerto('')
+  }
   const [txt, setTxt] = useState('')
   const [digitando, setDigitando] = useState(false)
   const [chamou, setChamou] = useState(false)
@@ -245,17 +427,45 @@ function Testar({ treino, nome, live }: { treino: Treino; nome: string; live: bo
             <span className="truncate text-[15px] font-semibold text-white">{treino.nome_atendente || nome || 'Seu atendente'}</span>
             <span className="text-[12px] text-[#9fb5ad]">{digitando ? 'digitando…' : 'simulador · não envia pro WhatsApp'}</span>
           </span>
-          <button type="button" onClick={() => (setMsgs([]), setChamou(false))} aria-label="Recomeçar conversa" className="press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[#9fb5ad] hover:bg-white/5">
+          <button type="button" onClick={() => (setMsgs([]), setChamou(false), setCorrigidas([]), setCorrigindo(null))} aria-label="Recomeçar conversa" className="press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[#9fb5ad] hover:bg-white/5">
             <RotateCcw size={18} />
           </button>
         </div>
         <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-3 py-4">
           {!msgs.length && <p className="m-auto max-w-[260px] text-center text-[13.5px] text-[#9fb5ad]">Escreva como se fosse um cliente. Ex.: "oi, quanto custa?"</p>}
-          {msgs.map((m, i) => (
-            <div key={i} className={cx('pop max-w-[80%] rounded-2xl px-3.5 py-2 text-[14.5px] leading-snug', m.de === 'cliente' ? 'self-end rounded-br-md bg-[#1f6f55] text-white' : 'self-start rounded-bl-md bg-[#1c2724] text-[#e6efec]')}>
-              {m.texto}
-            </div>
-          ))}
+          {msgs.map((m, i) =>
+            m.de === 'cliente' ? (
+              <div key={i} className="pop max-w-[80%] self-end rounded-2xl rounded-br-md bg-[#1f6f55] px-3.5 py-2 text-[14.5px] leading-snug text-white">
+                {m.texto}
+              </div>
+            ) : (
+              <div key={i} className="pop flex max-w-[88%] flex-col items-start gap-1.5 self-start">
+                <div className="flex items-end gap-1">
+                  <div className={cx('rounded-2xl rounded-bl-md bg-[#1c2724] px-3.5 py-2 text-[14.5px] leading-snug text-[#e6efec]', corrigidas.includes(i) && 'line-through opacity-50')}>{m.texto}</div>
+                  {!digitando && corrigindo !== i && !corrigidas.includes(i) && (
+                    <button type="button" onClick={() => (setCorrigindo(i), setCerto(''))} aria-label="Corrigir essa resposta" title="Corrigir essa resposta" className="press flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-[#7d948c] hover:bg-white/5 hover:text-white">
+                      <Pencil size={15} />
+                    </button>
+                  )}
+                  {corrigidas.includes(i) && <Check size={16} className="mb-2 shrink-0 text-[#6ee7b7]" aria-label="Corrigida" />}
+                </div>
+                {corrigindo === i && (
+                  <div className="flex w-[min(340px,78vw)] flex-col gap-2 rounded-2xl border border-[#2a3a35] bg-[#111c18] p-3">
+                    <span className="text-[13px] font-semibold text-white">Como ele deveria ter respondido?</span>
+                    <textarea autoFocus value={certo} onChange={(e) => setCerto(e.target.value)} rows={3} placeholder="Escreva a resposta certa. Ele aprende e responde assim nas próximas vezes." className="resize-none rounded-xl bg-[#1c2724] px-3 py-2 text-[14px] text-white outline-none placeholder:text-[#7d948c]" />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => salvarCorrecao(i)} disabled={!certo.trim()} className="press flex h-10 cursor-pointer items-center gap-1.5 rounded-full bg-[#25d366] px-4 text-[13.5px] font-semibold text-[#0b1411] disabled:opacity-40">
+                        <Check size={15} /> Ensinar
+                      </button>
+                      <button type="button" onClick={() => setCorrigindo(null)} className="press flex h-10 cursor-pointer items-center gap-1.5 rounded-full px-3 text-[13.5px] text-[#9fb5ad] hover:text-white">
+                        <X size={15} /> Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ),
+          )}
           {digitando && (
             <div className="self-start rounded-2xl rounded-bl-md bg-[#1c2724] px-4 py-3">
               <span className="flex gap-1">
@@ -265,7 +475,7 @@ function Testar({ treino, nome, live }: { treino: Treino; nome: string; live: bo
               </span>
             </div>
           )}
-          {chamou && <p className="pop mx-auto mt-2 rounded-full bg-[#facc1522] px-3 py-1 text-[12px] font-semibold text-[#fde68a]">Aqui ele chamaria você pra assumir a conversa</p>}
+          {chamou && <p className="pop mx-auto mt-2 rounded-full bg-[#facc1522] px-3 py-1 text-center text-[12px] font-semibold text-[#fde68a]">Aqui você receberia o aviso pra assumir a conversa</p>}
           <div ref={fim} />
         </div>
         <form onSubmit={(e) => (e.preventDefault(), enviar())} className="flex items-center gap-2 border-t border-white/5 bg-[#111c18] p-2.5">
@@ -277,12 +487,12 @@ function Testar({ treino, nome, live }: { treino: Treino; nome: string; live: bo
       </div>
       <div className="flex flex-col gap-3 rounded-[22px] border border-line bg-surface p-5 text-[14px] text-soft">
         <h3 className="m-0 font-display text-[17px] font-bold text-ink">Como ele responde</h3>
-        {['Mensagens curtas, divididas como gente digita', 'Mostra "digitando…" e espera o cliente terminar de escrever', 'Entende áudio e foto', 'Nunca inventa preço: usa só o que está no treino', 'Chama você quando o cliente quer fechar, reclamar ou falar com uma pessoa'].map((t) => (
+        {['Mensagens curtas, divididas como gente digita', 'Mostra "digitando…" e espera o cliente terminar de escrever', 'Entende áudio e foto', 'Nunca inventa preço: usa só o que está no treino', 'Quando precisa de você, diz que vai verificar e te avisa', 'Resposta ruim? Toque no lápis e ensine o jeito certo'].map((t) => (
           <span key={t} className="flex gap-2">
             <Check size={16} className="mt-0.5 shrink-0 text-[#6ee7b7]" /> {t}
           </span>
         ))}
-        <p className="m-0 mt-1 text-[12.5px] text-muted">O simulador usa o treino que está na tela, mesmo sem salvar. É grátis.</p>
+        <p className="m-0 mt-1 text-[12.5px] text-muted">O simulador usa o treino que está na tela, mesmo sem salvar. É grátis. As correções já ficam salvas.</p>
       </div>
     </div>
   )
@@ -501,12 +711,18 @@ export function WhatsAppPage() {
     [live, uid],
   )
 
-  async function salvarTreino() {
-    if (!live || !supabase || !uid) return toast.show('Treino salvo (na prévia fica só na tela).')
+  async function salvarTreino(t: Treino = treino, aviso = 'Treino salvo! O atendente já usa nas próximas respostas.') {
+    if (!live || !supabase || !uid) return toast.show(`${aviso.split('!')[0]}! (na prévia fica só na tela)`)
     setSalvando(true)
-    const { error } = await supabase.from('whatsapp_bots').upsert({ user_id: uid, instance, treino, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
+    const { error } = await supabase.from('whatsapp_bots').upsert({ user_id: uid, instance, treino: t, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
     setSalvando(false)
-    toast.show(error ? 'Não consegui salvar agora.' : 'Treino salvo! O atendente já usa nas próximas respostas.')
+    toast.show(error ? 'Não consegui salvar agora.' : aviso)
+  }
+
+  function ensinar(l: Licao) {
+    const novo = { ...treino, licoes: [...treino.licoes, l].slice(-40) }
+    setTreino(novo)
+    salvarTreino(novo, 'Aprendido! Nas próximas vezes ele responde desse jeito.')
   }
 
   const conectado = bot?.status === 'conectado'
@@ -529,8 +745,8 @@ export function WhatsAppPage() {
       </div>
       <div className="rise" key={aba}>
         {aba === 'conectar' && <Conectar bot={bot} onBot={onBot} live={live} />}
-        {aba === 'treinar' && <Treinar treino={treino} onChange={setTreino} onSave={salvarTreino} salvando={salvando} />}
-        {aba === 'testar' && <Testar treino={treino} nome={business.name} live={live} />}
+        {aba === 'treinar' && <Treinar treino={treino} onChange={setTreino} onSave={() => salvarTreino()} salvando={salvando} live={live} />}
+        {aba === 'testar' && <Testar treino={treino} nome={business.name} live={live} onLicao={ensinar} />}
         {aba === 'conversas' && <Conversas uid={uid} live={live} />}
       </div>
     </AppShell>

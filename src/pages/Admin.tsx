@@ -28,6 +28,8 @@ const NOMES: Record<string, { t: string; grupo: 'preco' | 'video' | 'indique' | 
   credits_per_image: { t: 'Imagem', grupo: 'preco' },
   credits_per_logo: { t: 'Logo', grupo: 'preco' },
   credits_per_character: { t: 'Boneco 3D', grupo: 'preco' },
+  credits_per_whatsapp_reply: { t: 'WhatsApp: cada resposta da IA', grupo: 'preco' },
+  credits_per_menu_photo: { t: 'WhatsApp: ler foto do cardápio', grupo: 'preco' },
   credits_per_product_video: { t: 'Vídeo modelo', grupo: 'video' },
   credits_per_video_second: { t: 'Vídeo do produto (por segundo)', grupo: 'video' },
   credits_per_scene_fix: { t: 'Ajuste de cena', grupo: 'video' },

@@ -1,5 +1,5 @@
 // Atendente WhatsApp (QR code via Evolution API)
-//  POST com login:   { acao: "conectar" | "status" | "desconectar" | "simular" | "enviar" | "pausar" }
+//  POST com login:   { acao: "conectar" | "status" | "desconectar" | "simular" | "enviar" | "ler_cardapio" }
 //  POST ?hook=TOKEN: avisos da Evolution (mensagem nova, conexão, QR)  -> a IA responde como gente
 // Segredos: EVOLUTION_URL, EVOLUTION_API_KEY, ANTHROPIC_API_KEY (GEMINI_API_KEY pra ouvir áudio)
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -43,22 +43,44 @@ async function hookToken(instance: string) {
 const hookUrl = async (instance: string) => `${SUPA_URL}/functions/v1/whatsapp?hook=${await hookToken(instance)}&i=${instance}`;
 
 /* ---------------- o atendente ---------------- */
-type Treino = { apresentacao?: string; produtos?: string; perguntas?: string; horario?: string; regras?: string; tom?: string; nome_atendente?: string };
+type Treino = {
+  apresentacao?: string; produtos?: string; perguntas?: string; horario?: string; regras?: string; tom?: string; nome_atendente?: string;
+  observacoes?: string; endereco?: string; referencia?: string; mapa?: string; fora_area?: string;
+  entregas?: Array<{ local?: string; taxa?: string; prazo?: string }>;
+  licoes?: Array<{ cliente?: string; certo?: string }>;
+};
+const bloco = (titulo: string, txt?: string) => (txt && txt.trim() ? `${titulo}\n${txt.trim().slice(0, 6000)}\n\n` : "");
 
 function sistema(neg: J | null, t: Treino) {
   const n = neg ?? {};
-  return `Você é ${t.nome_atendente || "a pessoa do atendimento"} da ${n.name || "empresa"} respondendo clientes no WhatsApp. Você conversa como uma pessoa de verdade da equipe, nunca como robô.
+  const empresa = String(n.name || "empresa");
+  const entregas = (Array.isArray(t.entregas) ? t.entregas : [])
+    .filter((e) => str(e?.local).trim())
+    .slice(0, 80)
+    .map((e) => `${str(e.local).trim()}: taxa ${str(e.taxa).trim() || "não informada"}${str(e.prazo).trim() ? `, prazo ${str(e.prazo).trim()}` : ""}`)
+    .join("\n");
+  const loja = [t.endereco && `Endereço: ${t.endereco}`, t.referencia && `Ponto de referência: ${t.referencia}`, t.mapa && `Link do mapa (mande quando perguntarem onde fica ou como chegar): ${t.mapa}`].filter(Boolean).join("\n");
+  const licoes = (Array.isArray(t.licoes) ? t.licoes : [])
+    .filter((l) => str(l?.certo).trim())
+    .slice(-40)
+    .map((l) => (str(l.cliente).trim() ? `Quando o cliente disse "${str(l.cliente).trim()}", o certo é responder assim: ${str(l.certo).trim()}` : `Responda assim: ${str(l.certo).trim()}`))
+    .join("\n");
 
-Sobre o negócio: ${n.name || ""}${n.niche ? ` (${n.niche})` : ""}. Vende: ${n.sells || "ver produtos abaixo"}. Público: ${n.audience || "geral"}.
-${t.apresentacao ? `Apresentação: ${t.apresentacao}\n` : ""}${t.produtos ? `Produtos, serviços e preços (a única fonte de preço que vale):\n${t.produtos}\n` : ""}${t.perguntas ? `Perguntas frequentes e respostas:\n${t.perguntas}\n` : ""}${t.horario ? `Horário de atendimento: ${t.horario}\n` : ""}${t.regras ? `Regras do dono (siga sempre):\n${t.regras}\n` : ""}
-Jeito de escrever: ${t.tom || "simpático, próximo e direto"}. Português do Brasil, natural de WhatsApp.
+  return `Você é ${t.nome_atendente || "a pessoa do atendimento"} da ${empresa} respondendo clientes no WhatsApp. Você conversa como uma pessoa de verdade da loja, nunca como robô.
+
+Sobre o negócio: ${empresa}${n.niche ? ` (${n.niche})` : ""}. Vende: ${n.sells || "ver produtos abaixo"}. Público: ${n.audience || "geral"}.
+
+${t.apresentacao ? `Apresentação: ${t.apresentacao}\n\n` : ""}${bloco("Produtos, cardápio e preços (a única fonte de preço que vale):", t.produtos)}${bloco("Perguntas frequentes e respostas:", t.perguntas)}${t.horario ? `Horário de atendimento: ${t.horario}\n\n` : ""}${bloco("Onde fica a loja:", loja)}${bloco("Lugares de entrega, taxa e prazo de cada um (use a taxa do lugar do cliente e some no total):", entregas)}${t.fora_area ? `Se o cliente estiver fora desses lugares: ${t.fora_area}\n\n` : ""}${bloco("Regras do dono (siga sempre):", t.regras)}${bloco("Observações do dono (leve tudo em conta):", t.observacoes)}${bloco("Correções do dono. Em situações parecidas, responda desse jeito, que vale mais que qualquer outra instrução acima:", licoes)}Jeito de escrever: ${t.tom || "simpático, próximo e direto"}. Português do Brasil, natural de WhatsApp.
 - Mensagens curtas, como gente digita: 1 a 3 frases. Se precisar falar mais, separe em até 3 mensagens com uma linha em branco entre elas.
 - Sem markdown, sem listas com hífen, sem negrito. No máximo 1 emoji quando fizer sentido.
 - Use o nome do cliente às vezes, não em toda mensagem. Não repita saudação se já cumprimentou.
-- Faça uma pergunta por vez pra entender o que a pessoa quer e conduza pra venda com naturalidade (tamanho, quantidade, entrega, forma de pagamento).
-- NUNCA invente preço, prazo, estoque, desconto ou informação que não está acima. Se não souber, diga que vai confirmar com a equipe e termine com [CHAMAR_DONO].
-- Se o cliente quiser fechar o pedido, pagar, reclamar, pedir pra falar com uma pessoa, ou estiver irritado: responda com cuidado e termine com [CHAMAR_DONO].
-- Não diga que é uma IA, a menos que perguntem diretamente; se perguntarem, seja honesto e diga que é o atendente virtual da ${n.name || "empresa"} e que uma pessoa da equipe pode assumir.
+- Faça uma pergunta por vez pra entender o que a pessoa quer e conduza pra venda com naturalidade (quantidade, tamanho, entrega, forma de pagamento).
+- Quando somar um pedido, confira a conta com cuidado e inclua a taxa de entrega do lugar do cliente.
+- Se o cliente falar um bairro ou lugar que não está na lista de entrega, não chute a taxa: use a regra de fora da área, ou diga que vai verificar.
+- NUNCA invente preço, prazo, estoque, desconto, taxa ou informação que não está acima. Se não souber, diga algo como "vou verificar aqui, só um minuto" e termine com [CHAMAR_DONO].
+- Se o cliente quiser fechar o pedido, pagar, reclamar, ou estiver irritado: responda com cuidado, diga que vai verificar/confirmar e que é só um minutinho, e termine com [CHAMAR_DONO].
+- NUNCA diga "vou falar com a equipe", "vou chamar alguém", "vou passar pro responsável", "um atendente vai te responder" ou parecido. Fale sempre em primeira pessoa: "vou verificar", "já confirmo pra você", "só um minuto".
+- Não diga que é uma IA, a menos que perguntem diretamente; se perguntarem, seja honesto e diga que é o atendente virtual da ${empresa}.
 - Nunca fale de assuntos fora do negócio por muito tempo; traga a conversa de volta com gentileza.`;
 }
 
@@ -267,6 +289,56 @@ Deno.serve(async (req) => {
       const r = await responder(neg, treino, hist);
       if (r) await db.from("ai_usage").insert({ user_id: user.id, modulo: "whatsapp_teste", ref: "simulador", input_tokens: r.i, output_tokens: r.o, custo_usd: r.custo, creditos: 0 });
       return json({ partes: r?.partes ?? [], chamar: r?.chamar ?? false });
+    }
+
+    if (acao === "ler_cardapio") {
+      // lê a foto do cardápio / tabela de preços e devolve em texto
+      const imagem = str(body.imagem).replace(/^data:[^,]+,/, "");
+      if (!imagem || imagem.length > 7_000_000) return json({ error: "imagem_invalida" }, 400);
+      const { data: pr } = await db.from("settings").select("value").eq("key", "credits_per_menu_photo").maybeSingle();
+      const custoCred = Number(pr?.value ?? 2);
+      const cob = await db.rpc("spend_credits", { p_user: user.id, p_amount: custoCred, p_reason: "Atendente: leitura do cardápio", p_story: null });
+      if (cob.error) return json({ error: "creditos_insuficientes" }, 402);
+      try {
+        const key = Deno.env.get("ANTHROPIC_API_KEY");
+        if (!key) throw new Error("sem_chave");
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+          body: JSON.stringify({
+            model: MODEL,
+            max_tokens: 8000,
+            output_config: { effort: "low" },
+            messages: [{
+              role: "user",
+              content: [
+                { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imagem } },
+                { type: "text", text: `Essa é a foto de um cardápio, catálogo ou tabela de preços. Transcreva tudo o que dá pra vender, em português, em texto simples:
+- Um item por linha, no formato "Nome do item (detalhes como tamanho, sabor, ingredientes): R$ 0,00".
+- Se o mesmo item tem preços diferentes por tamanho, escreva os tamanhos na mesma linha, por exemplo "Pizza calabresa: broto R$ 30,00, grande R$ 52,90".
+- Quando houver seções (ex.: PIZZAS, BEBIDAS), escreva o nome da seção em maiúsculas numa linha antes dos itens.
+- Inclua também adicionais, combos, taxas e observações de preço que aparecerem.
+- Copie os preços exatamente como estão. Se algum preço ou nome estiver ilegível, escreva "(confirmar)" no lugar, nunca chute.
+- Sem markdown, sem asteriscos, sem comentários seus antes ou depois. Se a foto não for de cardápio ou preços, responda só: NADA` },
+              ],
+            }],
+          }),
+        });
+        if (!res.ok) throw new Error(`anthropic_${res.status}: ${(await res.text()).slice(0, 300)}`);
+        const data = await res.json();
+        const texto = ((data.content ?? []) as J[]).filter((b) => b.type === "text").map((b) => String(b.text)).join("\n").replace(/\*\*/g, "").trim();
+        const custo = Number(data.usage?.input_tokens ?? 0) * USD_IN + Number(data.usage?.output_tokens ?? 0) * USD_OUT;
+        await db.from("ai_usage").insert({ user_id: user.id, modulo: "whatsapp_cardapio", ref: "foto", input_tokens: data.usage?.input_tokens ?? 0, output_tokens: data.usage?.output_tokens ?? 0, custo_usd: custo, creditos: custoCred });
+        if (!texto || /^NADA\b/i.test(texto)) {
+          await db.rpc("refund_credits", { p_user: user.id, p_amount: custoCred, p_reason: "Atendente: leitura do cardápio (devolvido)" });
+          return json({ error: "sem_itens" }, 422);
+        }
+        return json({ texto });
+      } catch (e) {
+        console.error(e);
+        await db.rpc("refund_credits", { p_user: user.id, p_amount: custoCred, p_reason: "Atendente: leitura do cardápio (devolvido)" });
+        return json({ error: "falhou" }, 502);
+      }
     }
 
     if (acao === "conectar") {
