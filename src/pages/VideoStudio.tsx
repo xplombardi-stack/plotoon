@@ -4,7 +4,7 @@ import { ArrowRight, Check, Clapperboard, Clock, Coins, Megaphone, Mic, PackageO
 import { MentorIcon } from '../components/MentorIcon'
 import { SampleProductVideo } from '../components/ProductVideo'
 import { AiVideoStudio, VIDEO_IA_PEDIDO } from '../components/AiVideo'
-import { CREDITS_PER_CUSTOM_VIDEO, CREDITS_PER_SECOND } from '../lib/pricing'
+import { CREDITS_PER_SECOND, customVideoCost } from '../lib/pricing'
 import { go } from '../lib/router'
 import { AppShell } from '../components/AppShell'
 import { LoopVideo } from '../components/LoopVideo'
@@ -170,7 +170,7 @@ function Chooser({ pedido, onPick, onClose }: { pedido: Pedido; onPick: (s: 'pro
       steps: ['Você manda as fotos e escolhe as cores', 'A IA olha as fotos, cria o conceito e escreve cada cena', 'Você assiste, ajusta qualquer cena e baixa'],
       facts: [
         { icon: Clock, t: 'Pronto em 3 a 5 min' },
-        { icon: Coins, t: `${CREDITS_PER_CUSTOM_VIDEO} créditos` },
+        { icon: Coins, t: `A partir de ${customVideoCost(20)} créditos` },
         { icon: Check, t: 'Não precisa de boneco' },
       ],
       art: <SampleProductVideo className="h-full" />,

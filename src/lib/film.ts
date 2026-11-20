@@ -1,6 +1,7 @@
 // Lado da página do "filme": prepara fotos e fontes, conversa com o worker e entrega cada quadro.
 import type { InitMsg, SceneDef } from './filmWorker'
-import { playMusic, type Trilha } from './music'
+import { mixarTrilha, playMusic, type Trilha } from './music'
+import { AudioBufferSource, BufferTarget, CanvasSource, Mp4OutputFormat, Output, QUALITY_HIGH, canEncodeAudio, canEncodeVideo } from 'mediabunny'
 
 export type { SceneDef }
 export type Cena = SceneDef & { titulo?: string; descricao?: string }
@@ -131,17 +132,88 @@ function pickMime() {
   const list = ['video/mp4;codecs=avc1.42E01E,mp4a.40.2', 'video/mp4;codecs=avc1.4D401F,mp4a.40.2', 'video/mp4;codecs=avc1,mp4a', 'video/mp4;codecs=avc3,mp4a', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
   return list.find((m) => MediaRecorder.isTypeSupported(m)) ?? ''
 }
-export function canRecordFilm() {
+function canRecordRealtime() {
   return canRunFilm() && typeof MediaRecorder !== 'undefined' && !!pickMime() && typeof HTMLCanvasElement.prototype.captureStream === 'function'
+}
+/** Navegador consegue montar o MP4 quadro a quadro (WebCodecs)? */
+function canExportFrames() {
+  return canRunFilm() && typeof VideoEncoder !== 'undefined' && typeof OfflineAudioContext !== 'undefined'
+}
+export function canRecordFilm() {
+  return canExportFrames() || canRecordRealtime()
 }
 
 export type GravacaoFilme = { blob: Blob; mime: string; ext: 'mp4' | 'webm' }
 
+const FPS = 30
+
 /**
- * Grava o filme quadro a quadro, no ritmo do relógio do áudio. Chame direto no clique.
+ * Monta o MP4 quadro a quadro (igual Remotion: cada quadro é desenhado no seu tempo exato e só então
+ * entra no vídeo). Não depende da velocidade do aparelho, então nunca trava nem pula quadro.
+ * Áudio: música + efeitos gerados offline, já nivelados.
+ */
+function exportarFilme(canvas: HTMLCanvasElement, proj: Projetor, filme: Filme, trilha: Trilha, onProgress: (s: number, total: number) => void) {
+  const total = duracaoFilme(filme)
+  let cancelled = false
+  const done = (async (): Promise<GravacaoFilme> => {
+    await proj.ready
+    // 1080x1920 quando o aparelho codifica; senão 720x1280
+    let w = 1080
+    let h = 1920
+    if (!(await canEncodeVideo('avc', { width: w, height: h, bitrate: 10_000_000 }))) {
+      w = 720
+      h = 1280
+      if (!(await canEncodeVideo('avc', { width: w, height: h }))) throw new Error('sem_codificador')
+    }
+    canvas.width = w
+    canvas.height = h
+    const ctx = canvas.getContext('2d')!
+    const output = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target: new BufferTarget() })
+    const video = new CanvasSource(canvas, { codec: 'avc', bitrate: QUALITY_HIGH, keyFrameInterval: 2 })
+    output.addVideoTrack(video, { frameRate: FPS })
+    const audioCodec = (await canEncodeAudio('aac')) ? 'aac' : (await canEncodeAudio('opus')) ? 'opus' : null
+    const audio = audioCodec ? new AudioBufferSource({ codec: audioCodec, bitrate: 160_000 }) : null
+    if (audio) output.addAudioTrack(audio)
+    await output.start()
+    if (audio) {
+      let acc = 0
+      const cortes = filme.cenas.slice(0, -1).map((c) => (acc += c.dur))
+      await audio.add(await mixarTrilha(trilha, total, cortes))
+    }
+    const n = Math.round(total * FPS)
+    for (let i = 0; i < n; i++) {
+      if (cancelled) {
+        await output.cancel()
+        throw new Error('cancelado')
+      }
+      const t = i / FPS
+      const b = await proj.frame(t, w, h)
+      if (b) {
+        ctx.drawImage(b, 0, 0, w, h)
+        b.close()
+      }
+      await video.add(t, 1 / FPS)
+      if (i % 3 === 0) onProgress(t, total)
+    }
+    await output.finalize()
+    onProgress(total, total)
+    const buf = (output.target as BufferTarget).buffer!
+    return { blob: new Blob([buf], { type: 'video/mp4' }), mime: 'video/mp4', ext: 'mp4' }
+  })()
+  return { done, cancel: () => (cancelled = true) as unknown as void }
+}
+
+/** Grava o filme pronto pra baixar: quadro a quadro quando dá; senão, no tempo real (navegador antigo). */
+export function gravarFilme(canvas: HTMLCanvasElement, proj: Projetor, filme: Filme, trilha: Trilha, onProgress: (s: number, total: number) => void) {
+  if (canExportFrames()) return exportarFilme(canvas, proj, filme, trilha, onProgress)
+  return gravarTempoReal(canvas, proj, filme, trilha, onProgress)
+}
+
+/**
+ * Plano B pra navegador sem WebCodecs: grava no ritmo do relógio do áudio.
  * Se a pessoa trocar de aba, pausa e continua quando ela voltar.
  */
-export function gravarFilme(canvas: HTMLCanvasElement, proj: Projetor, filme: Filme, trilha: Trilha, onProgress: (s: number, total: number) => void) {
+function gravarTempoReal(canvas: HTMLCanvasElement, proj: Projetor, filme: Filme, trilha: Trilha, onProgress: (s: number, total: number) => void) {
   const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
   const ac = new AC()
   const total = duracaoFilme(filme)

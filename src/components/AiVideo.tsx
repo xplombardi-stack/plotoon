@@ -10,7 +10,7 @@ import { consumeJob, startJob, updateJob, useJobs } from '../lib/jobs'
 import { canRecordFilm, capaFilme, gravarFilme, type Filme, type Projetor } from '../lib/film'
 import { FILME_EXEMPLO, EXEMPLO_CODIGO } from '../lib/filmExample'
 import { TRILHAS, type Trilha } from '../lib/music'
-import { CREDITS_PER_CUSTOM_VIDEO, CREDITS_PER_SCENE_FIX } from '../lib/pricing'
+import { CREDITS_PER_SCENE_FIX, customVideoCost } from '../lib/pricing'
 import { shrinkImage, useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
 
@@ -90,7 +90,7 @@ async function criar(snap: Projeto, live: boolean, jobId: () => string | undefin
     if (id) updateJob(id, p)
   }
   if (!live || !supabase) {
-    addCredits(-CREDITS_PER_CUSTOM_VIDEO, 'Vídeo com IA')
+    addCredits(-customVideoCost(snap.duracao), 'Vídeo com IA')
     prog({ etapa: 'plano', prontas: 0, total: 5 })
     await new Promise((r) => setTimeout(r, 2500))
     const plano = demoPlano(snap)
@@ -258,10 +258,10 @@ function Recorder({ proj, filme, trilha, nome, onClose, onSaved }: { proj: Proje
           {phase === 'gravando' && (
             <>
               <Badge tone="accent" className="self-start">
-                <span className="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-[#ef4444]" /> Gravando
+                <span className="mr-1 inline-block h-2 w-2 animate-pulse rounded-full bg-[#ef4444]" /> Montando
               </Badge>
-              <h2 className="m-0 font-display text-[22px] font-extrabold">Gravando o seu vídeo</h2>
-              <p className="m-0 text-[14.5px] text-muted">Leva o tempo do vídeo ({Math.round(total)}s). Deixa essa tela aberta: se trocar de aba, a gravação pausa e continua quando voltar.</p>
+              <h2 className="m-0 font-display text-[22px] font-extrabold">Montando o seu vídeo em alta</h2>
+              <p className="m-0 text-[14.5px] text-muted">Cada quadro é desenhado um por um (30 por segundo), com música e efeitos sonoros. Por isso o vídeo sai liso, sem travar. Leva de 1 a 3 minutos.</p>
               <div className="h-2.5 overflow-hidden rounded-full bg-surface-2">
                 <div className="h-full rounded-full bg-gradient-to-r from-accent to-[#ff5da2] transition-[width] duration-200" style={{ width: `${(prog / total) * 100}%` }} />
               </div>
@@ -454,7 +454,7 @@ export function AiVideoStudio() {
     if (busy) return
     if (proj.produto.trim().length < 2 && proj.pedido.trim().length < 3) return toast.show('Conta qual é o produto ou o que você quer no vídeo.')
     if (!proj.tantoFaz && proj.cores.length < 2) return toast.show('Escolha pelo menos 2 cores, ou marque "Tanto faz".')
-    if (credits < CREDITS_PER_CUSTOM_VIDEO) return toast.show('Você não tem créditos suficientes.')
+    if (credits < customVideoCost(proj.duracao)) return toast.show('Você não tem créditos suficientes.')
     const snap = { ...proj, fotos: proj.fotos.length ? proj.fotos : live ? [] : ['/demo/perfume-depois.jpg'] }
     const id = startJob({
       kind: 'video',
@@ -688,8 +688,9 @@ export function AiVideoStudio() {
             <span className="text-[14px] font-semibold text-ink">Duração</span>
             <div className="grid grid-cols-3 gap-2">
               {([20, 30, 40] as const).map((d) => (
-                <button key={d} type="button" aria-pressed={proj.duracao === d} onClick={() => set({ duracao: d })} className={cx('press min-h-11 cursor-pointer rounded-xl border-2 text-[14px] font-semibold', proj.duracao === d ? 'border-accent text-ink' : 'border-line text-muted hover:text-ink')}>
+                <button key={d} type="button" aria-pressed={proj.duracao === d} onClick={() => set({ duracao: d })} className={cx('press flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-xl border-2 text-[15px] font-bold leading-tight', proj.duracao === d ? 'border-accent text-ink' : 'border-line text-muted hover:text-ink')}>
                   {d}s
+                  <span className="text-[11.5px] font-semibold text-muted">{customVideoCost(d)} créditos</span>
                 </button>
               ))}
             </div>
@@ -705,7 +706,7 @@ export function AiVideoStudio() {
         </div>
 
         <Button size="lg" onClick={gerar} className="self-stretch sm:self-start">
-          <Sparkles size={18} /> Criar meu vídeo · {CREDITS_PER_CUSTOM_VIDEO} créditos
+          <Sparkles size={18} /> Criar meu vídeo · {customVideoCost(proj.duracao)} créditos
         </Button>
         <p className="m-0 -mt-2 text-[12.5px] text-muted">Depois de pronto, dá pra pedir ajuste em qualquer cena ({CREDITS_PER_SCENE_FIX} créditos cada).</p>
       </div>

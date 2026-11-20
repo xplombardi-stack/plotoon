@@ -12,8 +12,8 @@ export let CREDITS_PER_IMAGE = 2
 export let CREDITS_PER_PLAN = 3
 export let CREDITS_PER_APP = 8
 export let CREDITS_PER_PRODUCT_VIDEO = 3
-export let CREDITS_PER_CUSTOM_VIDEO = 15
-export let CREDITS_PER_SCENE_FIX = 2
+export let CREDITS_PER_VIDEO_SECOND = 1 // vídeo do produto com IA: 1 crédito por segundo
+export let CREDITS_PER_SCENE_FIX = 3
 export const PART_LENGTHS = [10, 15]
 
 export function applySettings(s: Record<string, number>) {
@@ -30,7 +30,7 @@ export function applySettings(s: Record<string, number>) {
   if (s.credits_per_plan) CREDITS_PER_PLAN = s.credits_per_plan
   if (s.credits_per_app) CREDITS_PER_APP = s.credits_per_app
   if (s.credits_per_product_video) CREDITS_PER_PRODUCT_VIDEO = s.credits_per_product_video
-  if (s.credits_per_custom_video) CREDITS_PER_CUSTOM_VIDEO = s.credits_per_custom_video
+  if (s.credits_per_video_second) CREDITS_PER_VIDEO_SECOND = s.credits_per_video_second
   if (s.credits_per_scene_fix) CREDITS_PER_SCENE_FIX = s.credits_per_scene_fix
 }
 
@@ -43,4 +43,9 @@ export function storyCost(parts: number, seconds = SECONDS_PER_PART) {
 }
 export function formatCredits(n: number) {
   return n.toLocaleString('pt-BR')
+}
+
+/** Preço do vídeo do produto com IA: cresce com a duração. */
+export function customVideoCost(seconds: number) {
+  return Math.ceil(seconds * CREDITS_PER_VIDEO_SECOND)
 }

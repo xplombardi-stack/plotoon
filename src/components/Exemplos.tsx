@@ -7,7 +7,6 @@ import { cx } from './ui'
 export type Exemplo = { id: string; titulo: string; tipo: string; video: string; capa: string }
 
 export const EXEMPLOS: Exemplo[] = [
-  { id: 'perfume-ia', titulo: 'Feito pela IA do Plotoon, do zero', tipo: 'Vídeo do produto', video: '/exemplos/perfume-ia.mp4', capa: '/exemplos/perfume-ia.jpg' },
   { id: 'correios', titulo: 'Explicativo com 3D e dados', tipo: 'Notícia explicada', video: '/exemplos/correios.mp4', capa: '/exemplos/correios.jpg' },
 ]
 

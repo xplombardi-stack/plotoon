@@ -43,7 +43,7 @@ function noiseBuffer(ac: BaseAudioContext) {
 }
 
 /** Começa a tocar e devolve a função que para. `offset` = de que segundo do vídeo começar. */
-export function playMusic(ac: AudioContext, out: AudioNode, trilha: Trilha, dur: number, offset = 0): () => void {
+export function playMusic(ac: BaseAudioContext, out: AudioNode, trilha: Trilha, dur: number, offset = 0): () => void {
   if (trilha === 'nenhuma') return () => {}
   const st = STYLES[trilha]
   const beat = 60 / st.bpm
@@ -241,6 +241,15 @@ export function playMusic(ac: AudioContext, out: AudioNode, trilha: Trilha, dur:
       next++
     }
   }
+  // sem relógio de verdade (render offline): agenda tudo de uma vez
+  const offline = typeof OfflineAudioContext !== 'undefined' && ac instanceof OfflineAudioContext
+  if (offline) {
+    while (next * bar < dur) {
+      scheduleBar(next, next * bar)
+      next++
+    }
+    return () => {}
+  }
   tick()
   const id = window.setInterval(tick, 250)
   return () => {
@@ -252,4 +261,87 @@ export function playMusic(ac: AudioContext, out: AudioNode, trilha: Trilha, dur:
     master.gain.linearRampToValueAtTime(0, n + 0.12)
     window.setTimeout(() => master.disconnect(), 300)
   }
+}
+
+/* ---------- trilha final do vídeo (música + efeitos), gerada offline ---------- */
+
+function whoosh(ac: BaseAudioContext, out: AudioNode, at: number, noise: AudioBuffer, peak = 0.32) {
+  const src = ac.createBufferSource()
+  src.buffer = noise
+  src.loop = true
+  const bp = ac.createBiquadFilter()
+  bp.type = 'bandpass'
+  bp.Q.value = 1.4
+  bp.frequency.setValueAtTime(300, at)
+  bp.frequency.exponentialRampToValueAtTime(4200, at + 0.32)
+  bp.frequency.exponentialRampToValueAtTime(900, at + 0.55)
+  const g = ac.createGain()
+  g.gain.setValueAtTime(0.0001, at)
+  g.gain.exponentialRampToValueAtTime(peak, at + 0.3)
+  g.gain.exponentialRampToValueAtTime(0.0001, at + 0.6)
+  src.connect(bp).connect(g).connect(out)
+  src.start(at)
+  src.stop(at + 0.65)
+}
+
+function impacto(ac: BaseAudioContext, out: AudioNode, at: number, noise: AudioBuffer, peak = 0.6) {
+  const o = ac.createOscillator()
+  o.type = 'sine'
+  o.frequency.setValueAtTime(140, at)
+  o.frequency.exponentialRampToValueAtTime(38, at + 0.45)
+  const g = ac.createGain()
+  g.gain.setValueAtTime(0.0001, at)
+  g.gain.exponentialRampToValueAtTime(peak, at + 0.01)
+  g.gain.exponentialRampToValueAtTime(0.0001, at + 0.7)
+  o.connect(g).connect(out)
+  o.start(at)
+  o.stop(at + 0.75)
+  const n = ac.createBufferSource()
+  n.buffer = noise
+  const lp = ac.createBiquadFilter()
+  lp.type = 'lowpass'
+  lp.frequency.value = 2400
+  const gn = ac.createGain()
+  gn.gain.setValueAtTime(peak * 0.35, at)
+  gn.gain.exponentialRampToValueAtTime(0.0001, at + 0.18)
+  n.connect(lp).connect(gn).connect(out)
+  n.start(at)
+  n.stop(at + 0.2)
+}
+
+/**
+ * Áudio final do vídeo, pronto pra juntar com a imagem: música + whoosh nas trocas de cena + impacto
+ * no começo e no fechamento. Gerado offline (não depende do tempo real), com o volume nivelado.
+ */
+export async function mixarTrilha(trilha: Trilha, dur: number, cortes: number[], sr = 48000): Promise<AudioBuffer> {
+  const ac = new OfflineAudioContext(2, Math.ceil(sr * (dur + 0.05)), sr)
+  const bus = ac.createGain()
+  bus.connect(ac.destination)
+  playMusic(ac, bus, trilha, dur, 0)
+  const noise = noiseBuffer(ac)
+  const sfx = ac.createGain()
+  sfx.gain.value = trilha === 'nenhuma' ? 0.7 : 1
+  sfx.connect(bus)
+  impacto(ac, sfx, 0.02, noise, 0.5)
+  for (const c of cortes) if (c > 0.5 && c < dur - 0.3) whoosh(ac, sfx, Math.max(0, c - 0.32), noise)
+  if (cortes.length) impacto(ac, sfx, cortes[cortes.length - 1] + 0.1, noise, 0.35)
+  const buf = await ac.startRendering()
+  // nivela: pico em -1 dB e volume parecido entre vídeos (RMS perto de -16 dB)
+  let peak = 0
+  let sum = 0
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch)
+    for (let i = 0; i < d.length; i++) {
+      const v = Math.abs(d[i])
+      if (v > peak) peak = v
+      sum += d[i] * d[i]
+    }
+  }
+  const rms = Math.sqrt(sum / (buf.length * buf.numberOfChannels)) || 1e-6
+  const ganho = Math.min(0.158 / rms, 0.89 / (peak || 1))
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch)
+    for (let i = 0; i < d.length; i++) d[i] = Math.max(-0.95, Math.min(0.95, d[i] * ganho))
+  }
+  return buf
 }
