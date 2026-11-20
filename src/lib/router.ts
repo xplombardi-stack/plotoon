@@ -26,6 +26,7 @@ export const routes = [
   'anuncios',
   'biblioteca',
   'apps',
+  'admin',
   'publico',
 ] as const
 

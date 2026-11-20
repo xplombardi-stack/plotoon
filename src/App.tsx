@@ -19,6 +19,7 @@ import { Ads, Clips, WhatsApp } from './pages/Soon'
 import { ImagePage } from './pages/ImagePage'
 import { CalendarPage } from './pages/CalendarPage'
 import { AppsPage, PublicApp } from './pages/AppsPage'
+import { AdminPage } from './pages/Admin'
 import { MentorPage } from './pages/MentorPage'
 import { CopyPage } from './pages/CopyPage'
 import { useBusiness } from './lib/business'
@@ -101,6 +102,8 @@ function Screen() {
       return <Ads />
     case 'apps':
       return <AppsPage />
+    case 'admin':
+      return <AdminPage />
     case 'elenco':
       return <Cast />
     case 'novo-personagem':

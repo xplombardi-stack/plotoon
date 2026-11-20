@@ -1,3 +1,4 @@
+import { useIsAdmin } from '../lib/admin'
 import type { ComponentType, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { Coins, FolderOpen, House, LayoutGrid, LoaderCircle, Plus, X } from 'lucide-react'
@@ -41,8 +42,14 @@ function NavItem({ id, on, onPick }: { id: ModuleId; on: boolean; onPick?: () =>
 }
 
 function NavGroups({ activeId, onPick }: { activeId?: ModuleId; onPick?: () => void }) {
+  const admin = useIsAdmin()
   return (
     <div className="flex flex-col gap-4">
+      {admin && (
+        <div className="flex flex-col gap-0.5">
+          <NavItem id="admin" on={activeId === 'admin'} onPick={onPick} />
+        </div>
+      )}
       {NAV_GROUPS.map((g, i) => (
         <div key={i} className="flex flex-col gap-0.5">
           {g.title && <span className="px-3 pb-1 text-[11px] font-bold uppercase tracking-[0.12em] text-subtle">{g.title}</span>}

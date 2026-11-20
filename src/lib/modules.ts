@@ -1,6 +1,6 @@
 // Mapa dos módulos do Estúdio: usado no menu, no cabeçalho de cada tela e nos atalhos.
 import type { ComponentType } from 'react'
-import { AppWindow, BookOpen, CalendarDays, Clapperboard, Coins, FolderOpen, House, Image, MessageCircle, PenLine, Scissors, Store, TrendingUp } from 'lucide-react'
+import { AppWindow, BookOpen, ShieldCheck, CalendarDays, Clapperboard, Coins, FolderOpen, House, Image, MessageCircle, PenLine, Scissors, Store, TrendingUp } from 'lucide-react'
 import { MentorIcon } from '../components/MentorIcon'
 import type { Route } from './router'
 
@@ -19,6 +19,7 @@ export type ModuleId =
   | 'aulas'
   | 'meu-negocio'
   | 'planos'
+  | 'admin'
 
 export type ModuleInfo = {
   id: ModuleId
@@ -62,6 +63,7 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
     ready: true,
     match: ['elenco', 'novo-personagem', 'comecar'],
   },
+  admin: { id: 'admin', name: 'Painel Admin', short: 'Admin', phrase: 'Usuários, consumo, custos, lucro e preços. Só você vê.', icon: ShieldCheck, color: 'from-[#34d399] to-[#5b8cff]', ready: true },
   planos: { id: 'planos', name: 'Créditos e planos', short: 'Créditos', phrase: 'Seu saldo, quanto custa cada coisa e os planos.', icon: Coins, color: 'from-[#ff8a3d] to-[#facc15]', ready: true },
 }
 

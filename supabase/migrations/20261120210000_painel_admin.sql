@@ -183,3 +183,5 @@ begin
 end $$;
 revoke execute on function public.admin_consumo(integer) from public, anon;
 grant execute on function public.admin_consumo(integer) to authenticated;
+
+insert into public.settings (key, value, description) values ('usd_brl_cents', 550, 'Câmbio: quanto vale 1 dólar, em centavos de real (pra converter o custo real das IAs)') on conflict (key) do nothing;

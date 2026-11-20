@@ -25,7 +25,12 @@ const cors = {
 };
 const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
-async function claudeText(key: string, body: Record<string, unknown>) {
+// soma os tokens de cada chamada (pra registrar o custo real no painel)
+type Uso = { i: number; o: number };
+const USD_IN = 2 / 1e6, USD_OUT = 10 / 1e6; // Sonnet 5.5: US$ 2 / US$ 10 por milhão de tokens
+const custoUsd = (u: Uso) => u.i * USD_IN + u.o * USD_OUT;
+
+async function claudeText(key: string, body: Record<string, unknown>, uso?: Uso) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
@@ -33,6 +38,10 @@ async function claudeText(key: string, body: Record<string, unknown>) {
   });
   if (!res.ok) throw new Error(`anthropic_${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
+  if (uso) {
+    uso.i += Number(data.usage?.input_tokens ?? 0) + Number(data.usage?.cache_creation_input_tokens ?? 0);
+    uso.o += Number(data.usage?.output_tokens ?? 0);
+  }
   const text = ((data.content ?? []) as Array<Record<string, unknown>>)
     .filter((b) => b.type === "text")
     .map((b) => String(b.text))
@@ -215,7 +224,7 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: "corpo_invalido" }, 400);
   }
-  const { data: precos } = await admin.from("settings").select("key, value").in("key", ["credits_per_custom_video", "credits_per_scene_fix"]);
+  const { data: precos } = await admin.from("settings").select("key, value").in("key", ["credits_per_video_second", "credits_per_scene_fix"]);
   const preco = Object.fromEntries((precos ?? []).map((r) => [r.key, Number(r.value)]));
 
   /* ---------- PLANO ---------- */
@@ -247,7 +256,8 @@ Deno.serve(async (req) => {
     }
     if (produto.length < 2 && pedido.length < 3) return json({ error: "pedido_vazio" }, 400);
 
-    const custo = preco.credits_per_custom_video ?? 15;
+    const custo = Math.ceil(duracao * (preco.credits_per_video_second ?? 1));
+    const uso: Uso = { i: 0, o: 0 };
     const cob = await admin.rpc("spend_credits", { p_user: user.id, p_amount: custo, p_reason: "Vídeo com IA", p_story: null });
     if (cob.error) {
       const sem = String(cob.error.message).includes("creditos_insuficientes");
@@ -260,7 +270,7 @@ Deno.serve(async (req) => {
         type: "text",
         text: `${imagens.length ? `Acima: ${imagens.length} foto(s) do produto.\n` : "Sem foto do produto (crie o filme com tipografia, formas e 3D).\n"}Produto: ${produto || "ver pedido"}\n${oferta ? `Preço/oferta: ${oferta}\n` : "Sem preço informado (não invente).\n"}${pedido ? `O que a pessoa quer: ${pedido}\n` : ""}Chamada final: ${chamada || "Chama no WhatsApp"}\n\nCrie o plano e responda só com o JSON.`,
       });
-      const bruto = await claudeText(key, { max_tokens: 16000, system: planoSystem(neg, duracao, cores.length >= 2 ? cores : null), messages: [{ role: "user", content }] });
+      const bruto = await claudeText(key, { max_tokens: 16000, system: planoSystem(neg, duracao, cores.length >= 2 ? cores : null), messages: [{ role: "user", content }] }, uso);
       const plano = parseJson(bruto) ?? {};
       if (!arr(plano.cenas).length) console.error("plano sem cenas:", bruto.slice(0, 1500));
       let cenas = arr<Record<string, unknown>>(plano.cenas).slice(0, 7).map((c) => ({
@@ -294,10 +304,12 @@ Deno.serve(async (req) => {
         .select("id")
         .single();
       if (error) throw error;
+      await admin.from("ai_usage").insert({ user_id: user.id, modulo: "video_ia", ref: proj.id, input_tokens: uso.i, output_tokens: uso.o, custo_usd: custoUsd(uso), creditos: custo });
       const { data: perfil } = await admin.from("profiles").select("credits").eq("id", user.id).single();
       return json({ projeto_id: proj.id, plano: final, creditos: perfil?.credits ?? null });
     } catch (e) {
       console.error(e);
+      if (uso.i) await admin.from("ai_usage").insert({ user_id: user.id, modulo: "video_ia", ref: "falhou", input_tokens: uso.i, output_tokens: uso.o, custo_usd: custoUsd(uso), creditos: 0 });
       await admin.rpc("refund_credits", { p_user: user.id, p_amount: custo, p_reason: "Vídeo com IA (devolvido)" });
       return json({ error: "falha_plano" }, 502);
     }
@@ -317,7 +329,7 @@ Deno.serve(async (req) => {
 
     // a 1ª versão e 2 consertos automáticos vêm no preço do vídeo; ajuste pedido pela pessoa cobra
     let custo = 0;
-    if (ajuste) custo = preco.credits_per_scene_fix ?? 2;
+    if (ajuste) custo = preco.credits_per_scene_fix ?? 3;
     else if (estado.geracoes >= 3) return json({ error: "limite_cena" }, 429);
     if (custo) {
       const cob = await admin.rpc("spend_credits", { p_user: user.id, p_amount: custo, p_reason: "Vídeo com IA: ajuste de cena", p_story: null });
@@ -326,6 +338,7 @@ Deno.serve(async (req) => {
         return json({ error: sem ? "creditos_insuficientes" : "cobranca_falhou" }, sem ? 402 : 500);
       }
     }
+    const uso: Uso = { i: 0, o: 0 };
     try {
       const { data: neg } = await admin.from("business_profiles").select("name, tone").eq("user_id", user.id).maybeSingle();
       const c = plano.cenas[i];
@@ -349,7 +362,7 @@ Direção: ${c.visual}`;
       if (ajuste && estado.code) pedidoTxt += `\n\nEsta é a versão atual da cena:\n\`\`\`js\n${estado.code}\n\`\`\`\nA pessoa pediu este ajuste: "${ajuste}". Reescreva a cena aplicando o ajuste e mantendo o que estava bom.`;
       if (erro && estado.code) pedidoTxt += `\n\nA versão anterior deu este erro ao rodar: "${erro}".\nCódigo anterior:\n\`\`\`js\n${estado.code}\n\`\`\`\nCorrija o erro (pode reescrever).`;
       pedidoTxt += "\n\nResponda só com o bloco ```js.";
-      const bruto = await claudeText(key, { max_tokens: 32000, output_config: { effort: "medium" }, system: cenaSystem(EXEMPLO), messages: [{ role: "user", content: pedidoTxt }] });
+      const bruto = await claudeText(key, { max_tokens: 32000, output_config: { effort: "medium" }, system: cenaSystem(EXEMPLO), messages: [{ role: "user", content: pedidoTxt }] }, uso);
       const code = parseCode(bruto);
       if (code.length < 80 || !/return\s+function/.test(code)) {
         console.error("cena sem código:", bruto.slice(0, 800));
@@ -367,10 +380,12 @@ Direção: ${c.visual}`;
       // grava só esta cena (as outras podem estar sendo escritas ao mesmo tempo)
       const up = await admin.rpc("video_set_cena", { p_id: id, p_i: i, p_code: code });
       if (up.error) throw up.error;
+      await admin.from("ai_usage").insert({ user_id: user.id, modulo: ajuste ? "video_ia_ajuste" : "video_ia", ref: id, input_tokens: uso.i, output_tokens: uso.o, custo_usd: custoUsd(uso), creditos: custo });
       const { data: perfil } = await admin.from("profiles").select("credits").eq("id", user.id).single();
       return json({ cena: i, codigo: code, creditos: perfil?.credits ?? null });
     } catch (e) {
       console.error(e);
+      if (uso.i) await admin.from("ai_usage").insert({ user_id: user.id, modulo: ajuste ? "video_ia_ajuste" : "video_ia", ref: "falhou", input_tokens: uso.i, output_tokens: uso.o, custo_usd: custoUsd(uso), creditos: 0 });
       if (custo) await admin.rpc("refund_credits", { p_user: user.id, p_amount: custo, p_reason: "Vídeo com IA: ajuste (devolvido)" });
       return json({ error: "falha_cena" }, 502);
     }
