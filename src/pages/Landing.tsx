@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react'
 import { ArrowRight, Check, ChevronDown, FolderOpen, Play, Sparkles, Store } from 'lucide-react'
 import { plans } from '../data/mock'
-import { DemoAnuncios, DemoCalendario, DemoChaos, DemoCopy, DemoCortes, DemoHub, DemoImagem, DemoLogo, DemoMentor, DemoWhatsApp } from '../components/FeatureDemos'
+import { DemoAnuncios, DemoApps, DemoCalendario, DemoChaos, DemoCopy, DemoCortes, DemoHub, DemoImagem, DemoLogo, DemoMentor, DemoWhatsApp } from '../components/FeatureDemos'
 import { ModuleIcon, SoonPill } from '../components/Module'
 import { StepIdea } from '../components/StepDemos'
 import { StoryReel } from '../components/StoryReel'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
 import { MODULES, type ModuleId } from '../lib/modules'
-import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_PLAN, MAX_PARTS, partCost } from '../lib/pricing'
+import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_PLAN, CREDITS_PER_APP, MAX_PARTS, partCost } from '../lib/pricing'
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -33,6 +33,14 @@ const FEATURES: Feature[] = [
     text: 'Conte a ideia em uma frase. O Diretor escreve a história em partes, você vê o custo antes, e o app junta tudo num vídeo vertical pronto pra postar.',
     bullets: ['Historinhas com o seu boneco 3D, com o mesmo rosto em todas as cenas', `Até ${MAX_PARTS} partes de 10 ou 15 segundos num vídeo só, com chamada pra ação no final`, 'Também: vídeo com IA, criativo de anúncio e avatar falando'],
     demo: <StepIdea className="aspect-[4/3] w-full overflow-hidden rounded-[24px] border border-line-strong" />,
+  },
+  {
+    id: 'apps',
+    module: 'apps',
+    title: 'O app do seu negócio, criado numa conversa',
+    text: 'Cardápio digital, catálogo, agendamento, link na bio, página de vendas. Você conta o que quer, a IA monta o app inteiro com a sua marca, você ajusta pelo chat e publica com um link.',
+    bullets: ['Sem programar e sem contratar ninguém', 'Pedidos, agendamentos e orçamentos chegam no seu WhatsApp', 'Ajuste qualquer coisa só pedindo: cor, texto, preço, seção nova'],
+    demo: <DemoApps className="mx-auto w-full max-w-[520px]" />,
   },
   {
     id: 'imagem',
@@ -94,11 +102,11 @@ const FEATURES: Feature[] = [
 ]
 
 const faq = [
-  { q: 'O que é o Plotoon?', a: 'Um estúdio de marketing com IA pra pequenos negócios. Em vez de usar um app de vídeo, um de design, um de texto, várias abas de chat e planilhas, você cria, vende e planeja tudo aqui, com um Mentor que conhece o seu negócio.' },
+  { q: 'O que é o Plotoon?', a: 'Um estúdio de marketing com IA pra pequenos negócios. Em vez de usar um app de vídeo, um de design, um de texto, vários chats de IA e planilhas, você cria, vende e planeja tudo aqui: vídeos, imagens, textos, até o app do seu negócio, com um Mentor que conhece você.' },
   { q: 'Preciso saber editar ou mexer com design?', a: 'Não. Você conta o que quer e a IA faz: o vídeo, a imagem, a logo ou o texto. Você só escolhe e posta.' },
   { q: 'Preciso assinar outras ferramentas?', a: 'Não. Tudo é gerado aqui dentro do Plotoon e usa os mesmos créditos.' },
   { q: 'Como funcionam os créditos?', a: `Cada coisa que você gera gasta créditos, e você vê o valor antes de apertar o botão. Uma parte de vídeo de 10 segundos gasta ${partCost(10)} créditos, um boneco 3D gasta ${CREDITS_PER_CHARACTER} e uma logo gasta ${CREDITS_PER_LOGO}.` },
-  { q: 'Tudo já está funcionando?', a: 'O Mentor, a Copy, o Calendário, o Estúdio de Imagem, a logo com IA, o boneco 3D, as historinhas, o perfil do negócio e a Biblioteca já estão no ar. As funções marcadas como "Em breve" estão sendo ligadas uma a uma, e você usa todas com a mesma conta.' },
+  { q: 'Tudo já está funcionando?', a: 'O Mentor, o Criador de Apps, a Copy, o Calendário, o Estúdio de Imagem, a logo com IA, o boneco 3D, as historinhas, o perfil do negócio e a Biblioteca já estão no ar. As funções marcadas como "Em breve" estão sendo ligadas uma a uma, e você usa todas com a mesma conta.' },
   { q: 'Funciona no celular?', a: 'Sim. É só abrir pelo navegador do celular. Foi feito pensando no celular primeiro.' },
 ]
 
@@ -365,6 +373,7 @@ export function Landing() {
                 ['Mensagem pro Mentor', CREDITS_PER_MENTOR],
                 ['3 opções de copy', CREDITS_PER_COPY],
                 ['Calendário do mês', CREDITS_PER_PLAN],
+                ['Criar ou ajustar um app', CREDITS_PER_APP],
               ].map(([k, v]) => (
                 <div key={String(k)} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5">
                   <span className="text-[15px] font-semibold">{k}</span>

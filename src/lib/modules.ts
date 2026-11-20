@@ -1,6 +1,6 @@
 // Mapa dos módulos do Estúdio: usado no menu, no cabeçalho de cada tela e nos atalhos.
 import type { LucideIcon } from 'lucide-react'
-import { BookOpen, CalendarDays, Clapperboard, Coins, FolderOpen, House, Image, MessageCircle, PenLine, Scissors, Sparkles, Store, TrendingUp } from 'lucide-react'
+import { AppWindow, BookOpen, CalendarDays, Clapperboard, Coins, FolderOpen, House, Image, MessageCircle, PenLine, Scissors, Sparkles, Store, TrendingUp } from 'lucide-react'
 import type { Route } from './router'
 
 export type ModuleId =
@@ -10,6 +10,7 @@ export type ModuleId =
   | 'estudio-imagem'
   | 'cortes'
   | 'copy'
+  | 'apps'
   | 'whatsapp'
   | 'calendario'
   | 'anuncios'
@@ -45,6 +46,7 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
   'estudio-imagem': { id: 'estudio-imagem', name: 'Estúdio de Imagem', short: 'Imagem', phrase: 'Foto de produto profissional, post, banner e capa.', icon: Image, color: 'from-[#38bdf8] to-[#5b8cff]', ready: true },
   cortes: { id: 'cortes', name: 'Cortes', phrase: 'Suba um vídeo longo e receba cortes verticais com legenda.', icon: Scissors, color: 'from-[#f472b6] to-[#ff5d5d]', ready: false },
   copy: { id: 'copy', name: 'Copy', phrase: 'Legenda, gancho, anúncio e mensagem de venda no tom do seu negócio.', icon: PenLine, color: 'from-[#facc15] to-[#ff8a3d]', ready: true },
+  apps: { id: 'apps', name: 'Criador de Apps', short: 'Apps', phrase: 'Crie o app ou site do seu negócio conversando com a IA.', icon: AppWindow, color: 'from-[#22d3ee] to-[#a78bfa]', ready: true },
   whatsapp: { id: 'whatsapp', name: 'Atendente WhatsApp', short: 'WhatsApp', phrase: 'Um atendente com IA respondendo seus clientes e achando quem quer comprar.', icon: MessageCircle, color: 'from-[#34d399] to-[#10b981]', ready: false },
   calendario: { id: 'calendario', name: 'Calendário', phrase: 'O mês planejado pelo Mentor. Cada post sai direto do dia.', icon: CalendarDays, color: 'from-[#5b8cff] to-[#a78bfa]', ready: true },
   anuncios: { id: 'anuncios', name: 'Anúncios', phrase: 'Raio-x das suas campanhas do Meta: o que pausar, escalar ou trocar.', icon: TrendingUp, color: 'from-[#38bdf8] to-[#34d399]', ready: false },
@@ -65,14 +67,14 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
 // Menu do computador, agrupado
 export const NAV_GROUPS: Array<{ title?: string; items: ModuleId[] }> = [
   { items: ['inicio', 'mentor'] },
-  { title: 'Criar', items: ['estudio-video', 'estudio-imagem', 'cortes', 'copy'] },
+  { title: 'Criar', items: ['estudio-video', 'estudio-imagem', 'apps', 'cortes', 'copy'] },
   { title: 'Vender', items: ['whatsapp'] },
   { title: 'Planejar', items: ['calendario'] },
   { title: 'Analisar', items: ['anuncios'] },
   { items: ['biblioteca', 'aulas', 'meu-negocio'] },
 ]
 
-export const CREATE_MODULES: ModuleId[] = ['estudio-video', 'estudio-imagem', 'cortes', 'copy']
+export const CREATE_MODULES: ModuleId[] = ['estudio-video', 'estudio-imagem', 'apps', 'copy', 'cortes']
 
 export function moduleFor(route: Route): ModuleInfo | undefined {
   return Object.values(MODULES).find((m) => m.id === route || m.match?.includes(route))

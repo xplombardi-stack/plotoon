@@ -68,7 +68,7 @@ export function Home() {
       {/* atalhos pra criar */}
       <section className="flex flex-col gap-4">
         <SectionTitle>Criar</SectionTitle>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
           {CREATE_MODULES.map((id, i) => {
             const m = MODULES[id]
             return (

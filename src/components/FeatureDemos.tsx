@@ -421,8 +421,8 @@ export function DemoChaos({ className }: { className?: string }) {
 
 /* ---------- Topo: o app mostrando cada função acontecendo ---------- */
 
-const HUB: ModuleId[] = ['mentor', 'estudio-video', 'estudio-imagem', 'cortes', 'copy', 'whatsapp', 'calendario', 'anuncios']
-const HUB_MS: Record<string, number> = { mentor: 17500, 'estudio-video': 12500, 'estudio-imagem': 9500, cortes: 11000, copy: 6500, whatsapp: 13500, calendario: 10500, anuncios: 10000 }
+const HUB: ModuleId[] = ['mentor', 'estudio-video', 'apps', 'estudio-imagem', 'cortes', 'copy', 'whatsapp', 'calendario', 'anuncios']
+const HUB_MS: Record<string, number> = { apps: 13000, mentor: 17500, 'estudio-video': 12500, 'estudio-imagem': 9500, cortes: 11000, copy: 6500, whatsapp: 13500, calendario: 10500, anuncios: 10000 }
 
 // A demo de cada módulo, do tamanho que precisar
 export function ModuleDemo({ id, className, base }: { id: ModuleId; className?: string; base?: number }) {
@@ -445,6 +445,8 @@ export function ModuleDemo({ id, className, base }: { id: ModuleId; className?: 
       <DemoAnuncios className="w-full" />
     ) : id === 'biblioteca' ? (
       <DemoBiblioteca className="w-full" />
+    ) : id === 'apps' ? (
+      <DemoApps className="w-full" />
     ) : (
       <DemoLogo className="w-full" />
     )
@@ -975,6 +977,72 @@ export function DemoAnuncios({ className }: { className?: string }) {
       <p className={cx('m-0 rounded-xl border border-[#34d39940] bg-[#34d39912] px-3 py-2 text-[12.5px] text-[#a7f3d0] transition-all duration-500', on(t, 5400) ? 'opacity-100' : 'opacity-0')}>
         Pausando 1 campanha e escalando a melhor, você economiza uns R$ 290 por semana.
       </p>
+    </Frame>
+  )
+}
+
+/* ---------- Criador de Apps: pede no chat, o app vai se montando ---------- */
+
+const APP_PEDIDO = 'Cria um cardápio digital da Doce da Bia com botão de pedir no WhatsApp'
+const APP_ITENS = [
+  { e: '🍫', n: 'Brigadeiro', p: 'R$ 15' },
+  { e: '🍓', n: 'Morango', p: 'R$ 16' },
+  { e: '🥛', n: 'Ninho com Nutella', p: 'R$ 18' },
+]
+
+export function DemoApps({ className }: { className?: string }) {
+  const TOTAL = 13000
+  const { ref, t } = useLoop(TOTAL, 11000)
+  const pedido = typed(APP_PEDIDO, t, 300, 40)
+  const sent = on(t, 2300)
+  const building = t > 2600 && t < 7400
+  const step = Math.floor(Math.max(0, t - 2800) / 800) // 0 cabeçalho, 1-3 itens, 4 botão
+  const cart = on(t, 8200)
+  const published = on(t, 9600)
+  return (
+    <Frame innerRef={ref} className={cx('grid grid-cols-[1fr_1.05fr] gap-3 p-3.5 sm:p-4', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
+      <div className="flex min-w-0 flex-col gap-2.5">
+        <span className="flex items-center gap-2 text-[13px] font-bold">
+          <ModuleIcon id="apps" size="sm" /> Criador de Apps
+        </span>
+        <div className="flex flex-1 flex-col justify-end gap-2">
+          {sent && <p className="pop m-0 self-end rounded-[14px] rounded-br-md bg-accent px-3 py-2 text-[12px] font-medium leading-snug text-accent-ink">{APP_PEDIDO}</p>}
+          {building && (
+            <span className="flex items-center gap-1.5 text-[11.5px] text-[#a5f3fc]">
+              <LoaderCircle size={13} className="animate-spin" /> Construindo seu app…
+            </span>
+          )}
+          {on(t, 7400) && <p className="pop m-0 rounded-[14px] rounded-tl-md border border-line bg-surface px-3 py-2 text-[12px] leading-snug text-soft">Pronto! Cardápio com carrinho e pedido direto no seu WhatsApp. Quer que eu coloque os combos?</p>}
+        </div>
+        <div className={cx('rounded-xl border border-line-strong bg-bg/70 px-2.5 py-2 text-[11.5px]', !sent && 'caret')}>{sent ? <span className="text-subtle">Peça um ajuste…</span> : pedido}</div>
+        <span className={cx('flex items-center gap-1.5 rounded-lg border border-[#34d39955] bg-[#34d39914] px-2 py-1.5 text-[11px] font-semibold text-[#6ee7b7] transition-all duration-500', published ? 'opacity-100' : 'opacity-0')}>
+          <Check size={13} /> Publicado · plotoon.app/p/docedabia
+        </span>
+      </div>
+      <div className="relative mx-auto w-full max-w-[200px] overflow-hidden rounded-[26px] border-[5px] border-[#1f2430] bg-white">
+        <div className="flex min-h-[330px] flex-col">
+          <div className={cx('flex flex-col items-center gap-1 bg-gradient-to-br from-[#ff5da2] to-[#facc15] px-3 pb-3 pt-4 text-white transition-all duration-500', step >= 0 && t > 2800 ? 'opacity-100' : 'opacity-0')}>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-[16px]">🧁</span>
+            <span className="text-[13px] font-extrabold">Doce da Bia</span>
+            <span className="text-[9.5px] opacity-90">Bolo de pote · entrega no bairro</span>
+          </div>
+          <div className="flex flex-1 flex-col gap-1.5 p-2.5">
+            {APP_ITENS.map((it, k) => (
+              <div key={it.n} className={cx('flex items-center gap-2 rounded-lg border border-[#f1f1f1] p-1.5 transition-all duration-500 [transition-timing-function:var(--ease-spring)]', step >= k + 1 ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0')}>
+                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[#fff1f7] text-[16px]">{it.e}</span>
+                <span className="flex min-w-0 flex-1 flex-col leading-tight">
+                  <span className="truncate text-[10.5px] font-bold text-[#111]">{it.n}</span>
+                  <span className="text-[9.5px] font-semibold text-[#db2777]">{it.p}</span>
+                </span>
+                <span className={cx('flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-bold text-white transition-colors', cart && k < 2 ? 'bg-[#16a34a]' : 'bg-[#ff5da2]')}>{cart && k < 2 ? '✓' : '+'}</span>
+              </div>
+            ))}
+          </div>
+          <div className={cx('m-2.5 mt-0 rounded-xl bg-[#16a34a] px-3 py-2 text-center text-[10.5px] font-bold text-white transition-all duration-500', step >= 4 ? 'opacity-100' : 'opacity-0')}>
+            {cart ? '2 itens · R$ 31 · Pedir no WhatsApp' : 'Pedir no WhatsApp'}
+          </div>
+        </div>
+      </div>
     </Frame>
   )
 }

@@ -10,6 +10,7 @@ export let CREDITS_PER_MENTOR_IMAGES = 2
 export let CREDITS_PER_COPY = 1
 export let CREDITS_PER_IMAGE = 2
 export let CREDITS_PER_PLAN = 3
+export let CREDITS_PER_APP = 8
 export const PART_LENGTHS = [10, 15]
 
 export function applySettings(s: Record<string, number>) {
@@ -24,6 +25,7 @@ export function applySettings(s: Record<string, number>) {
   if (s.credits_per_copy) CREDITS_PER_COPY = s.credits_per_copy
   if (s.credits_per_image) CREDITS_PER_IMAGE = s.credits_per_image
   if (s.credits_per_plan) CREDITS_PER_PLAN = s.credits_per_plan
+  if (s.credits_per_app) CREDITS_PER_APP = s.credits_per_app
 }
 
 // custo de uma parte (gerar ou refazer)

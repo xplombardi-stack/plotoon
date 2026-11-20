@@ -25,6 +25,8 @@ export const routes = [
   'calendario',
   'anuncios',
   'biblioteca',
+  'apps',
+  'publico',
 ] as const
 
 export type Route = (typeof routes)[number]
@@ -33,6 +35,7 @@ const valid = new Set<string>(routes)
 
 function read(): Route {
   const h = window.location.hash.replace('#', '')
+  if (h.startsWith('p/')) return 'publico'
   return (valid.has(h) ? h : 'site') as Route
 }
 

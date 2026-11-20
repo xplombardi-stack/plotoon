@@ -18,11 +18,12 @@ import { VideoStudio } from './pages/VideoStudio'
 import { Ads, Clips, WhatsApp } from './pages/Soon'
 import { ImagePage } from './pages/ImagePage'
 import { CalendarPage } from './pages/CalendarPage'
+import { AppsPage, PublicApp } from './pages/AppsPage'
 import { MentorPage } from './pages/MentorPage'
 import { CopyPage } from './pages/CopyPage'
 import { useBusiness } from './lib/business'
 
-const publicRoutes: Route[] = ['site', 'entrar', 'criar-conta']
+const publicRoutes: Route[] = ['site', 'entrar', 'criar-conta', 'publico']
 // telas que dá pra abrir antes de terminar o cadastro do negócio
 const beforeSetup: Route[] = ['comecar', 'novo-personagem', 'conta', 'planos']
 
@@ -56,6 +57,8 @@ function Screen() {
   }
 
   switch (route) {
+    case 'publico':
+      return <PublicApp />
     case 'site':
       return <Landing />
     case 'entrar':
@@ -96,6 +99,8 @@ function Screen() {
       return <CalendarPage />
     case 'anuncios':
       return <Ads />
+    case 'apps':
+      return <AppsPage />
     case 'elenco':
       return <Cast />
     case 'novo-personagem':
@@ -112,9 +117,10 @@ function Screen() {
 }
 
 export default function App() {
+  const route = useRoute()
   return (
     <>
-      <Cursor />
+      {route !== 'publico' && <Cursor />}
       <Screen />
     </>
   )
