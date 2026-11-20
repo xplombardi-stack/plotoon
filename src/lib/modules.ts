@@ -31,7 +31,7 @@ export type ModuleInfo = {
 
 export const MODULES: Record<ModuleId, ModuleInfo> = {
   inicio: { id: 'inicio', name: 'Início', phrase: 'Seu painel: créditos, atalhos e o que você criou por último.', icon: House, color: 'from-[#ff8a3d] to-[#ff5da2]', ready: true },
-  mentor: { id: 'mentor', name: 'Mentor', phrase: 'Converse sobre vendas, ideias e estratégia. Ele conhece o seu negócio.', icon: Sparkles, color: 'from-[#a78bfa] to-[#5b8cff]', ready: false },
+  mentor: { id: 'mentor', name: 'Mentor', phrase: 'Converse sobre vendas, ideias e estratégia. Ele conhece o seu negócio.', icon: Sparkles, color: 'from-[#a78bfa] to-[#5b8cff]', ready: true },
   'estudio-video': {
     id: 'estudio-video',
     name: 'Estúdio de Vídeo',
@@ -42,11 +42,11 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
     ready: true,
     match: ['nova-historinha', 'editor', 'videos'],
   },
-  'estudio-imagem': { id: 'estudio-imagem', name: 'Estúdio de Imagem', short: 'Imagem', phrase: 'Foto de produto profissional, post, banner e capa.', icon: Image, color: 'from-[#38bdf8] to-[#5b8cff]', ready: false },
+  'estudio-imagem': { id: 'estudio-imagem', name: 'Estúdio de Imagem', short: 'Imagem', phrase: 'Foto de produto profissional, post, banner e capa.', icon: Image, color: 'from-[#38bdf8] to-[#5b8cff]', ready: true },
   cortes: { id: 'cortes', name: 'Cortes', phrase: 'Suba um vídeo longo e receba cortes verticais com legenda.', icon: Scissors, color: 'from-[#f472b6] to-[#ff5d5d]', ready: false },
-  copy: { id: 'copy', name: 'Copy', phrase: 'Legenda, gancho, anúncio e mensagem de venda no tom do seu negócio.', icon: PenLine, color: 'from-[#facc15] to-[#ff8a3d]', ready: false },
+  copy: { id: 'copy', name: 'Copy', phrase: 'Legenda, gancho, anúncio e mensagem de venda no tom do seu negócio.', icon: PenLine, color: 'from-[#facc15] to-[#ff8a3d]', ready: true },
   whatsapp: { id: 'whatsapp', name: 'Atendente WhatsApp', short: 'WhatsApp', phrase: 'Um atendente com IA respondendo seus clientes e achando quem quer comprar.', icon: MessageCircle, color: 'from-[#34d399] to-[#10b981]', ready: false },
-  calendario: { id: 'calendario', name: 'Calendário', phrase: 'O mês planejado pelo Mentor. Cada post sai direto do dia.', icon: CalendarDays, color: 'from-[#5b8cff] to-[#a78bfa]', ready: false },
+  calendario: { id: 'calendario', name: 'Calendário', phrase: 'O mês planejado pelo Mentor. Cada post sai direto do dia.', icon: CalendarDays, color: 'from-[#5b8cff] to-[#a78bfa]', ready: true },
   anuncios: { id: 'anuncios', name: 'Anúncios', phrase: 'Raio-x das suas campanhas do Meta: o que pausar, escalar ou trocar.', icon: TrendingUp, color: 'from-[#38bdf8] to-[#34d399]', ready: false },
   biblioteca: { id: 'biblioteca', name: 'Biblioteca', phrase: 'Tudo que você gerou, guardado num lugar só.', icon: FolderOpen, color: 'from-[#94a3b8] to-[#64748b]', ready: true },
   aulas: { id: 'aulas', name: 'Aulas', phrase: 'Passo a passo pra criar, postar e vender mais.', icon: BookOpen, color: 'from-[#a78bfa] to-[#f472b6]', ready: false },

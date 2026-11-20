@@ -1,21 +1,15 @@
 // Módulos com a tela pronta e a API ainda não ligada: conteúdo de exemplo e um aviso discreto.
 import type { ReactNode } from 'react'
-import { AlertTriangle, ArrowRight, CalendarPlus, Clapperboard, Copy, ImagePlus, Link2, MessageCircle, Pause, QrCode, Rocket, ShieldCheck, Sparkles, TrendingUp, Upload, Wand2 } from 'lucide-react'
+import { AlertTriangle, Link2, MessageCircle, Pause, QrCode, Rocket, ShieldCheck, TrendingUp, Upload, Wand2 } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { LoopVideo } from '../components/LoopVideo'
 import { ModuleHeader, SoonNotice } from '../components/Module'
-import { DemoMentor, ModuleDemo } from '../components/FeatureDemos'
+import { ModuleDemo } from '../components/FeatureDemos'
 import { stories as reel } from '../components/StoryReel'
-import { Button, cx, go } from '../components/ui'
-import { tipOfTheDay, useBusiness } from '../lib/business'
+import { Button, cx } from '../components/ui'
 import type { ModuleId } from '../lib/modules'
-import estiloCinema from '../assets/estilos/estilo-cinema.webp'
-import estiloRealista from '../assets/estilos/estilo-realista.webp'
-import estiloFofinho from '../assets/estilos/estilo-fofinho.webp'
-import cardCreditos from '../assets/inicio/card-creditos.webp'
 
 const box = 'rounded-[24px] border border-line bg-surface p-5 sm:p-6'
-const fieldCls = 'min-h-12 w-full rounded-[14px] border border-line-strong bg-bg/70 px-4 text-[15px] text-ink outline-none placeholder:text-subtle'
 
 function Frame({ id, phase, children, demo = true }: { id: ModuleId; phase: number; children: ReactNode; demo?: boolean }) {
   return (
@@ -33,86 +27,6 @@ function Frame({ id, phase, children, demo = true }: { id: ModuleId; phase: numb
   )
 }
 
-function useBiz() {
-  const { business } = useBusiness()
-  return { ...business, nome: business.name || 'sua loja', produto: business.sells ? business.sells.split(/[,.]/)[0] : 'seu produto' }
-}
-
-/* ---------- Mentor ---------- */
-export function Mentor() {
-  const b = useBiz()
-  const tip = tipOfTheDay(b)
-  function make() {
-    try {
-      sessionStorage.setItem('plotoon:ideia', tip.idea)
-      sessionStorage.removeItem('plotoon:rascunho')
-    } catch {
-      /* sem armazenamento */
-    }
-    go('nova-historinha')
-  }
-  return (
-    <Frame id="mentor" phase={2} demo={false}>
-      <div className="grid items-start gap-5 lg:grid-cols-[1.15fr_1fr]">
-        <DemoMentor className="rise h-[520px]" />
-        <div className={cx(box, 'rise rise-1 flex flex-col gap-4')}>
-          <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-[#c4b5fd]">
-            <Sparkles size={15} aria-hidden /> Sugestão de hoje pra {b.nome}
-          </span>
-          <span className="text-balance font-display text-[20px] font-bold leading-snug">{tip.idea}</span>
-          <span className="text-[14px] text-muted">{tip.why}</span>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={make}>
-              <Clapperboard size={16} /> Gerar esse vídeo <ArrowRight size={16} />
-            </Button>
-            <Button variant="soft" disabled>
-              <CalendarPlus size={16} /> Agendar
-            </Button>
-          </div>
-          <p className="m-0 border-t border-line pt-4 text-[13.5px] leading-relaxed text-muted">
-            Quando o Mentor estiver ativo, você conversa com ele aqui: ele pede o seu Instagram, analisa o perfil e monta o plano com um botão pra cada passo.
-          </p>
-        </div>
-      </div>
-    </Frame>
-  )
-}
-
-/* ---------- Estúdio de Imagem ---------- */
-export function ImageStudio() {
-  const b = useBiz()
-  const kinds = [
-    { t: 'Foto de produto', s: 'Fundo de estúdio, luz profissional', img: estiloRealista },
-    { t: 'Post', s: 'Feed e carrossel no tamanho certo', img: estiloFofinho },
-    { t: 'Banner', s: 'Site, loja e promoções', img: cardCreditos },
-    { t: 'Capa', s: 'Reels, YouTube e destaques', img: estiloCinema },
-  ]
-  return (
-    <Frame id="estudio-imagem" phase={3}>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {kinds.map((k, i) => (
-          <div key={k.t} className={cx('rise lift relative flex aspect-[4/5] flex-col justify-end overflow-hidden rounded-[22px] border border-line-strong p-4', `rise-${i + 1}`)}>
-            <img src={k.img} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-            <span className="relative text-[16px] font-bold text-white">{k.t}</span>
-            <span className="relative text-[13px] text-white/75">{k.s}</span>
-          </div>
-        ))}
-      </div>
-      <div className={cx(box, 'rise flex flex-col gap-4')}>
-        <div className="flex flex-col items-center gap-2 rounded-[18px] border-[1.5px] border-dashed border-line-strong px-4 py-8 text-center opacity-80">
-          <ImagePlus size={28} className="text-accent" aria-hidden />
-          <span className="text-[15px] font-semibold">Envie a foto do produto</span>
-          <span className="text-[13px] text-muted">Pode ser de celular. A IA limpa o fundo e monta a cena.</span>
-        </div>
-        <input disabled className={fieldCls} placeholder={`Como você quer a foto? Ex.: ${b.produto} numa mesa de mármore, luz natural`} />
-        <Button size="lg" disabled className="self-start">
-          Gerar 4 imagens · 8 créditos
-        </Button>
-      </div>
-    </Frame>
-  )
-}
 
 /* ---------- Cortes ---------- */
 export function Clips() {
@@ -155,45 +69,6 @@ export function Clips() {
           ))}
         </div>
       </section>
-    </Frame>
-  )
-}
-
-/* ---------- Copy ---------- */
-export function CopyStudio() {
-  const b = useBiz()
-  const types = ['Legenda', 'Gancho', 'Texto de anúncio', 'Mensagem de venda']
-  const samples = [
-    { t: 'Legenda', body: `Chegou o que faltava pra você ✨\n${b.produto} com aquele cuidado que só a ${b.nome} tem. Corre que é por pouco tempo!\n\n👉 Chama no direct` },
-    { t: 'Gancho', body: 'Ninguém te conta isso antes de você comprar…' },
-    { t: 'Mensagem de venda', body: `Oi! Vi que você se interessou por ${b.produto}. Hoje ainda dá pra garantir com condição especial. Quer que eu separe o seu?` },
-  ]
-  return (
-    <Frame id="copy" phase={3}>
-      <div className={cx(box, 'rise flex flex-col gap-4')}>
-        <div className="flex flex-wrap gap-2">
-          {types.map((t, i) => (
-            <span key={t} className={cx('flex min-h-10 items-center rounded-full px-4 text-[14px] font-semibold', i === 0 ? 'bg-ink text-bg' : 'border border-line-strong text-soft')}>
-              {t}
-            </span>
-          ))}
-        </div>
-        <textarea disabled rows={3} className={cx(fieldCls, 'resize-none py-3')} placeholder="Sobre o que é o post? Ex.: chegou coleção nova, promoção de sexta…" />
-        <Button size="lg" disabled className="self-start">
-          Escrever 3 opções · 1 crédito
-        </Button>
-      </div>
-      <div className="grid gap-4 lg:grid-cols-3">
-        {samples.map((s, i) => (
-          <div key={s.t} className={cx('rise flex flex-col gap-3 rounded-[20px] border border-line bg-surface p-5', `rise-${i + 1}`)}>
-            <span className="text-[12px] font-bold uppercase tracking-[0.1em] text-accent-text">{s.t}</span>
-            <p className="m-0 flex-1 whitespace-pre-wrap text-[15px] leading-relaxed text-soft">{s.body}</p>
-            <span className="flex items-center gap-1.5 text-[13px] font-semibold text-muted">
-              <Copy size={14} aria-hidden /> Copiar
-            </span>
-          </div>
-        ))}
-      </div>
     </Frame>
   )
 }
@@ -255,53 +130,6 @@ export function WhatsApp() {
               <span className="shrink-0 text-[12px] text-subtle">{c.t}</span>
             </div>
           ))}
-        </div>
-      </div>
-    </Frame>
-  )
-}
-
-/* ---------- Calendário ---------- */
-export function Calendar() {
-  const now = new Date()
-  const first = new Date(now.getFullYear(), now.getMonth(), 1)
-  const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
-  const offset = first.getDay()
-  const month = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
-  const planned: Record<number, string> = { 2: 'video', 5: 'post', 8: 'video', 11: 'copy', 14: 'video', 17: 'post', 20: 'video', 23: 'copy', 26: 'video', 29: 'post' }
-  const dot: Record<string, string> = { video: 'bg-accent', post: 'bg-sky', copy: 'bg-[#facc15]' }
-  return (
-    <Frame id="calendario" phase={4}>
-      <div className={cx(box, 'rise flex flex-col gap-4')}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="m-0 font-display text-[20px] font-bold capitalize">{month}</h2>
-          <Button disabled>
-            <Sparkles size={16} /> Mentor, planeja meu mês
-          </Button>
-        </div>
-        <div className="grid grid-cols-7 gap-1 text-center text-[12px] font-semibold text-subtle sm:gap-2">
-          {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
-            <span key={i}>{d}</span>
-          ))}
-          {Array.from({ length: offset }).map((_, i) => (
-            <span key={`e${i}`} />
-          ))}
-          {Array.from({ length: days }).map((_, i) => {
-            const d = i + 1
-            const kind = planned[d]
-            const today = d === now.getDate()
-            return (
-              <span key={d} className={cx('flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border text-[13px] sm:text-[14px]', today ? 'border-accent bg-[#ff8a3d14] font-bold text-ink' : 'border-line bg-bg/40 text-soft')}>
-                {d}
-                {kind && <span className={cx('h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2', dot[kind])} />}
-              </span>
-            )
-          })}
-        </div>
-        <div className="flex flex-wrap gap-4 text-[13px] text-muted">
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent" /> Vídeo</span>
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-sky" /> Post</span>
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#facc15]" /> Copy</span>
         </div>
       </div>
     </Frame>

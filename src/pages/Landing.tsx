@@ -7,7 +7,7 @@ import { StepIdea } from '../components/StepDemos'
 import { StoryReel } from '../components/StoryReel'
 import { Badge, LinkButton, Logo, cx } from '../components/ui'
 import { MODULES, type ModuleId } from '../lib/modules'
-import { CREDITS_PER_CHARACTER, CREDITS_PER_LOGO, MAX_PARTS, partCost } from '../lib/pricing'
+import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_PLAN, MAX_PARTS, partCost } from '../lib/pricing'
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -98,7 +98,7 @@ const faq = [
   { q: 'Preciso saber editar ou mexer com design?', a: 'Não. Você conta o que quer e a IA faz: o vídeo, a imagem, a logo ou o texto. Você só escolhe e posta.' },
   { q: 'Preciso assinar outras ferramentas?', a: 'Não. Tudo é gerado aqui dentro do Plotoon e usa os mesmos créditos.' },
   { q: 'Como funcionam os créditos?', a: `Cada coisa que você gera gasta créditos, e você vê o valor antes de apertar o botão. Uma parte de vídeo de 10 segundos gasta ${partCost(10)} créditos, um boneco 3D gasta ${CREDITS_PER_CHARACTER} e uma logo gasta ${CREDITS_PER_LOGO}.` },
-  { q: 'Tudo já está funcionando?', a: 'As historinhas em vídeo, o boneco 3D, a logo com IA, o perfil do negócio e a Biblioteca já estão no ar. As funções marcadas como "Em breve" estão sendo ligadas uma a uma, e você usa todas com a mesma conta.' },
+  { q: 'Tudo já está funcionando?', a: 'O Mentor, a Copy, o Calendário, o Estúdio de Imagem, a logo com IA, o boneco 3D, as historinhas, o perfil do negócio e a Biblioteca já estão no ar. As funções marcadas como "Em breve" estão sendo ligadas uma a uma, e você usa todas com a mesma conta.' },
   { q: 'Funciona no celular?', a: 'Sim. É só abrir pelo navegador do celular. Foi feito pensando no celular primeiro.' },
 ]
 
@@ -361,6 +361,10 @@ export function Landing() {
                 ['Parte de vídeo de 15 segundos', partCost(15)],
                 ['Boneco 3D com o seu rosto', CREDITS_PER_CHARACTER],
                 ['Logo com IA', CREDITS_PER_LOGO],
+                ['Imagem com IA', CREDITS_PER_IMAGE],
+                ['Mensagem pro Mentor', CREDITS_PER_MENTOR],
+                ['3 opções de copy', CREDITS_PER_COPY],
+                ['Calendário do mês', CREDITS_PER_PLAN],
               ].map(([k, v]) => (
                 <div key={String(k)} className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5">
                   <span className="text-[15px] font-semibold">{k}</span>

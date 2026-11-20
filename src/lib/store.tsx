@@ -421,3 +421,24 @@ export function photoThumb(file: File, size = 1024): Promise<string> {
     img.src = url
   })
 }
+
+// Diminui a imagem mantendo a proporção (pra prints e fotos de produto)
+export function shrinkImage(file: File, max = 1400): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height))
+      const c = document.createElement('canvas')
+      c.width = Math.round(img.width * scale)
+      c.height = Math.round(img.height * scale)
+      const ctx = c.getContext('2d')
+      if (!ctx) return reject(new Error('sem canvas'))
+      ctx.drawImage(img, 0, 0, c.width, c.height)
+      URL.revokeObjectURL(url)
+      resolve(c.toDataURL('image/jpeg', 0.86))
+    }
+    img.onerror = reject
+    img.src = url
+  })
+}

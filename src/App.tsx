@@ -15,7 +15,11 @@ import { Cursor } from './components/Cursor'
 import { MyBusiness, Onboarding } from './pages/Business'
 import { Library } from './pages/Library'
 import { VideoStudio } from './pages/VideoStudio'
-import { Ads, Calendar, Clips, CopyStudio, ImageStudio, Mentor, WhatsApp } from './pages/Soon'
+import { Ads, Clips, WhatsApp } from './pages/Soon'
+import { ImagePage } from './pages/ImagePage'
+import { CalendarPage } from './pages/CalendarPage'
+import { MentorPage } from './pages/MentorPage'
+import { CopyPage } from './pages/CopyPage'
 import { useBusiness } from './lib/business'
 
 const publicRoutes: Route[] = ['site', 'entrar', 'criar-conta']
@@ -79,17 +83,17 @@ function Screen() {
     case 'biblioteca':
       return <Library />
     case 'mentor':
-      return <Mentor />
+      return <MentorPage />
     case 'estudio-imagem':
-      return <ImageStudio />
+      return <ImagePage />
     case 'cortes':
       return <Clips />
     case 'copy':
-      return <CopyStudio />
+      return <CopyPage />
     case 'whatsapp':
       return <WhatsApp />
     case 'calendario':
-      return <Calendar />
+      return <CalendarPage />
     case 'anuncios':
       return <Ads />
     case 'elenco':

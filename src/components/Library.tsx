@@ -114,7 +114,8 @@ export function useLibraryEntries(): Entry[] {
         file: i.file,
         body: i.body,
         reuse: () => {
-          if (i.body) stash('plotoon:reusar', i.body)
+          if (i.kind === 'copy' && i.meta) stash('plotoon:copy', JSON.stringify({ tipo: i.meta.tipo, tema: i.meta.tema, extra: i.meta.extra }))
+          else if (i.kind === 'imagem' && i.meta?.pedido) stash('plotoon:imagem', JSON.stringify({ pedido: i.meta.pedido, formato: i.meta.formato }))
           go(MODULE_ROUTE[i.kind])
         },
       })

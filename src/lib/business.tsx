@@ -32,6 +32,7 @@ export type LibraryItem = {
   preview?: string
   file?: string
   body?: string
+  meta?: Record<string, unknown>
   createdAt: number
 }
 
@@ -65,6 +66,8 @@ type Ctx = {
   createLogo: (opts: { name: string; niche: string; colors: string[]; style: LogoStyle; idea: string }) => Promise<LogoResult>
   applyLogo: (url: string, path?: string) => Promise<boolean>
   library: LibraryItem[]
+  addLocalItem: (item: Omit<LibraryItem, 'id' | 'createdAt'>) => void
+  reloadLibrary: () => Promise<void>
 }
 
 // Logo de exemplo na prévia (sem gastar com IA): monograma com as cores da marca
@@ -157,7 +160,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     if (!supabase || !userId) return
     const [biz, lib] = await Promise.all([
       supabase.from('business_profiles').select('name, niche, sells, audience, tone, logo_path, colors, socials, completed_at').eq('user_id', userId).maybeSingle(),
-      supabase.from('library_items').select('id, kind, module, title, preview_path, file_path, body, created_at').order('created_at', { ascending: false }).limit(200),
+      supabase.from('library_items').select('id, kind, module, title, preview_path, file_path, body, meta, created_at').order('created_at', { ascending: false }).limit(200),
     ])
     const paths = [biz.data?.logo_path, ...(lib.data ?? []).flatMap((i) => [i.preview_path, i.file_path])].filter(Boolean) as string[]
     const signed: Record<string, string> = {}
@@ -193,6 +196,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         preview: i.preview_path ? signed[i.preview_path] : undefined,
         file: i.file_path ? signed[i.file_path] : undefined,
         body: i.body ?? undefined,
+        meta: (i.meta as Record<string, unknown>) ?? undefined,
         createdAt: new Date(i.created_at).getTime(),
       })),
     )
@@ -309,9 +313,25 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
     [live, business.logoPath, saveBusiness],
   )
 
+  // prévia: guarda na Biblioteca do navegador
+  const addLocalItem = useCallback((item: Omit<LibraryItem, 'id' | 'createdAt'>) => {
+    setLibrary((l) => {
+      const next = [{ ...item, id: Math.random().toString(36).slice(2), createdAt: Date.now() }, ...l]
+      try {
+        localStorage.setItem(LIB_KEY, JSON.stringify(next.slice(0, 60)))
+      } catch {
+        /* sem armazenamento */
+      }
+      return next
+    })
+  }, [])
+  const reloadLibrary = useCallback(async () => {
+    if (live) await load()
+  }, [live, load])
+
   const value = useMemo(
-    () => ({ business, loaded, saveBusiness, uploadLogo, createLogo, applyLogo, library }),
-    [business, loaded, saveBusiness, uploadLogo, createLogo, applyLogo, library],
+    () => ({ business, loaded, saveBusiness, uploadLogo, createLogo, applyLogo, library, addLocalItem, reloadLibrary }),
+    [business, loaded, saveBusiness, uploadLogo, createLogo, applyLogo, library, addLocalItem, reloadLibrary],
   )
   return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>
 }

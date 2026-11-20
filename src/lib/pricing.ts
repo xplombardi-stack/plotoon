@@ -5,6 +5,11 @@ export let MAX_SECONDS_PER_PART = 15
 export let CREDITS_PER_SECOND = 3
 export let CREDITS_PER_CHARACTER = 5
 export let CREDITS_PER_LOGO = 5
+export let CREDITS_PER_MENTOR = 1
+export let CREDITS_PER_MENTOR_IMAGES = 2
+export let CREDITS_PER_COPY = 1
+export let CREDITS_PER_IMAGE = 2
+export let CREDITS_PER_PLAN = 3
 export const PART_LENGTHS = [10, 15]
 
 export function applySettings(s: Record<string, number>) {
@@ -14,6 +19,11 @@ export function applySettings(s: Record<string, number>) {
   if (s.credits_per_second) CREDITS_PER_SECOND = s.credits_per_second
   if (s.credits_per_character) CREDITS_PER_CHARACTER = s.credits_per_character
   if (s.credits_per_logo) CREDITS_PER_LOGO = s.credits_per_logo
+  if (s.credits_per_mentor) CREDITS_PER_MENTOR = s.credits_per_mentor
+  if (s.credits_per_mentor_images) CREDITS_PER_MENTOR_IMAGES = s.credits_per_mentor_images
+  if (s.credits_per_copy) CREDITS_PER_COPY = s.credits_per_copy
+  if (s.credits_per_image) CREDITS_PER_IMAGE = s.credits_per_image
+  if (s.credits_per_plan) CREDITS_PER_PLAN = s.credits_per_plan
 }
 
 // custo de uma parte (gerar ou refazer)

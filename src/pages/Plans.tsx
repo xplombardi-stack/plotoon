@@ -4,7 +4,7 @@ import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { ClipArt, clips } from '../components/Showcase'
 import { Badge, Button, Card, SectionTitle, cx, useToast } from '../components/ui'
-import { CREDITS_PER_CHARACTER, formatCredits, partCost } from '../lib/pricing'
+import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_MENTOR_IMAGES, CREDITS_PER_PLAN, formatCredits, partCost } from '../lib/pricing'
 import { timeAgo, useStore } from '../lib/store'
 
 const planNames: Record<string, string> = { nenhum: 'Sem plano', start: 'Start', estudio: 'Estúdio', pro: 'Pro' }
@@ -36,6 +36,11 @@ export function Plans() {
             <li className="flex justify-between gap-3"><span>1 parte de vídeo (15s)</span><strong>{partCost(15)}</strong></li>
             <li className="flex justify-between gap-3"><span>Refazer 1 parte</span><strong>igual à parte</strong></li>
             <li className="flex justify-between gap-3"><span>Gerar 1 boneco</span><strong>{CREDITS_PER_CHARACTER}</strong></li>
+            <li className="flex justify-between gap-3"><span>Logo com IA</span><strong>{CREDITS_PER_LOGO}</strong></li>
+            <li className="flex justify-between gap-3"><span>Imagem com IA</span><strong>{CREDITS_PER_IMAGE}</strong></li>
+            <li className="flex justify-between gap-3"><span>Mensagem pro Mentor</span><strong>{CREDITS_PER_MENTOR} ({CREDITS_PER_MENTOR_IMAGES} com prints)</strong></li>
+            <li className="flex justify-between gap-3"><span>3 opções de copy</span><strong>{CREDITS_PER_COPY}</strong></li>
+            <li className="flex justify-between gap-3"><span>Calendário do mês</span><strong>{CREDITS_PER_PLAN}</strong></li>
           </ul>
         </Card>
       </div>

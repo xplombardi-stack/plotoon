@@ -80,13 +80,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     async signUp(name, email, password) {
       if (!supabase) return { error: null, needsConfirm: false }
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { name }, emailRedirectTo: window.location.origin + '/' },
-      })
-      if (error) return { error: pt(error.message), needsConfirm: false }
-      return { error: null, needsConfirm: !data.session }
+      // a conta já nasce confirmada (sem e-mail de confirmação) e a pessoa entra direto
+      const { error } = await supabase.functions.invoke('cadastro', { body: { name, email, password } })
+      if (error) {
+        let code = ''
+        try {
+          const ctx = (error as { context?: Response }).context
+          code = String((ctx ? await ctx.json() : null)?.error ?? '')
+        } catch {
+          /* sem detalhe */
+        }
+        const msg: Record<string, string> = {
+          ja_existe: 'Esse e-mail já tem conta. Tente entrar.',
+          email_invalido: 'Confira o e-mail.',
+          senha_curta: 'A senha precisa ter pelo menos 6 caracteres.',
+          senha_fraca: 'Escolha uma senha mais forte.',
+          nome_vazio: 'Coloque o seu nome.',
+        }
+        return { error: msg[code] ?? 'Não deu certo agora. Tente de novo.', needsConfirm: false }
+      }
+      const { error: e2 } = await supabase.auth.signInWithPassword({ email, password })
+      return { error: e2 ? pt(e2.message) : null, needsConfirm: false }
     },
     async signInWithGoogle() {
       if (!supabase) return null
