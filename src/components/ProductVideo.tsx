@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Check, Copy as CopyIcon, Download, ImagePlus, LoaderCircle, Music2, RefreshCw, Sparkles, Wand2, X } from 'lucide-react'
 import { VideoPlayer } from './VideoPlayer'
+import { FilmPlayer, type FilmSource } from './FilmPlayer'
+import { FILME_EXEMPLO } from '../lib/filmExample'
 import { ShowcaseVideos } from './Exemplos'
 import { Badge, Button, cx, useToast } from './ui'
 import { useBusiness, type Business } from '../lib/business'
@@ -11,7 +13,7 @@ import { shrinkImage, useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { consumeJob, startJob, useJobs } from '../lib/jobs'
 import { TRILHAS, type Trilha } from '../lib/music'
-import { CENA_LABEL, SAMPLE_PHOTO, canRecord, duracao, gravar, loadImage, poster, sampleProduct, sampleRoteiro, type Cena, type Roteiro, type Visual } from '../lib/productVideo'
+import { CENA_LABEL, SAMPLE_PHOTO, canRecord, duracao, gravar, loadImage, poster, type Cena, type Roteiro, type Visual } from '../lib/productVideo'
 
 const PROJ_KEY = 'plotoon:produto-projeto'
 export const PRODUTO_PEDIDO = 'plotoon:produto-pedido'
@@ -50,13 +52,10 @@ export function useBrandVisual(b: Business, fotos: CanvasImageSource[], chamada?
   )
 }
 
-/** Vídeo de exemplo (perfume), usado nas prévias e na escolha de estilo. */
+/** Vídeo de exemplo (filme feito no mesmo motor), usado nas prévias e na escolha de estilo. */
+const SAMPLE_SRC: FilmSource = { filme: FILME_EXEMPLO, fotos: [SAMPLE_PHOTO], logo: null, marca: { nome: 'Essência Decants', arroba: '@essenciadecants', chamada: 'Chama no WhatsApp' } }
 export function SampleProductVideo({ className, controls = false, trilha = 'nenhuma' }: { className?: string; controls?: boolean; trilha?: Trilha }) {
-  const imgs = useImages([SAMPLE_PHOTO])
-  const fallback = useMemo(() => [sampleProduct('#c98a2b')], [])
-  const roteiro = useMemo(() => sampleRoteiro(), [])
-  const visual = useMemo<Visual>(() => ({ cores: ['#ff8a3d', '#facc15'], marca: 'Essência Decants', arroba: '@essenciadecants', chamada: 'Chama no WhatsApp', fotos: imgs.length ? imgs : fallback }), [imgs, fallback])
-  return <VideoPlayer roteiro={roteiro} visual={visual} autoPlay loop controls={controls} trilha={trilha} className={className} />
+  return <FilmPlayer src={SAMPLE_SRC} autoPlay loop controls={controls} trilha={trilha} className={className} />
 }
 
 /* ---------- roteiro de exemplo na prévia (sem IA) ---------- */

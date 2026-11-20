@@ -16,6 +16,7 @@ export type Job = {
   result?: unknown
   error?: string
   consumed: boolean // a tela já usou o resultado
+  progress?: unknown // andamento (ex.: cenas prontas)
 }
 
 let jobs: Job[] = []
@@ -70,5 +71,13 @@ export function consumeJob(id: string) {
 
 export function dismissJob(id: string) {
   jobs = jobs.filter((j) => j.id !== id)
+  emit()
+}
+
+/** Atualiza o andamento de uma tarefa (a tela mostra enquanto roda). */
+export function updateJob(id: string, progress: unknown) {
+  const j = jobs.find((x) => x.id === id)
+  if (!j) return
+  j.progress = progress
   emit()
 }

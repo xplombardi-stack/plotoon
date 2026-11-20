@@ -2,8 +2,9 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { ArrowRight, Check, Clapperboard, Clock, Coins, Megaphone, Mic, PackageOpen, Plus, UserRound, Users, Wand2, X } from 'lucide-react'
 import { MentorIcon } from '../components/MentorIcon'
-import { PRODUTO_PEDIDO, ProductVideoStudio, SampleProductVideo } from '../components/ProductVideo'
-import { CREDITS_PER_PRODUCT_VIDEO, CREDITS_PER_SECOND } from '../lib/pricing'
+import { SampleProductVideo } from '../components/ProductVideo'
+import { AiVideoStudio, VIDEO_IA_PEDIDO } from '../components/AiVideo'
+import { CREDITS_PER_CUSTOM_VIDEO, CREDITS_PER_SECOND } from '../lib/pricing'
 import { go } from '../lib/router'
 import { AppShell } from '../components/AppShell'
 import { LoopVideo } from '../components/LoopVideo'
@@ -165,11 +166,11 @@ function Chooser({ pedido, onPick, onClose }: { pedido: Pedido; onPick: (s: 'pro
     {
       id: 'produto' as const,
       title: 'Vídeo do produto',
-      sub: 'Seu produto em destaque, com texto animado, música e chamada pra ação. Ideal pra vitrine, loja e anúncio.',
-      steps: ['Você manda as fotos do produto', 'A IA escreve o roteiro (gancho, benefícios, oferta)', 'O vídeo aparece na hora: ajusta e baixa'],
+      sub: 'Um filme feito do zero pro seu produto: conceito próprio, 3D, motion design, a sua oferta e as suas cores. Ideal pra loja e anúncio.',
+      steps: ['Você manda as fotos e escolhe as cores', 'A IA olha as fotos, cria o conceito e escreve cada cena', 'Você assiste, ajusta qualquer cena e baixa'],
       facts: [
-        { icon: Clock, t: 'Pronto em 1 minuto' },
-        { icon: Coins, t: `${CREDITS_PER_PRODUCT_VIDEO} créditos` },
+        { icon: Clock, t: 'Pronto em 3 a 5 min' },
+        { icon: Coins, t: `${CREDITS_PER_CUSTOM_VIDEO} créditos` },
         { icon: Check, t: 'Não precisa de boneco' },
       ],
       art: <SampleProductVideo className="h-full" />,
@@ -275,7 +276,7 @@ export function VideoStudio() {
   function pickStyle(s: 'produto' | 'historinha') {
     if (!pedido) return
     try {
-      if (s === 'produto') sessionStorage.setItem(PRODUTO_PEDIDO, pedido.ideia)
+      if (s === 'produto') sessionStorage.setItem(VIDEO_IA_PEDIDO, pedido.ideia)
       else {
         sessionStorage.setItem('plotoon:ideia', pedido.ideia)
         sessionStorage.removeItem('plotoon:rascunho')
@@ -337,7 +338,7 @@ export function VideoStudio() {
       </div>
 
       <div role="tabpanel" key={`${tab}-${reset}`}>
-        {tab === 'produto' && <ProductVideoStudio />}
+        {tab === 'produto' && <AiVideoStudio />}
         {tab === 'historinhas' && <Stories />}
         {tab === 'ia' && (
           <SoonTab
