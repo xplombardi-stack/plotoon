@@ -34,9 +34,12 @@ Deno.serve(async (req) => {
   } catch {
     return new Response("corpo_invalido", { status: 400 });
   }
-  const secret = Deno.env.get("CAKTO_WEBHOOK_SECRET") ?? "";
-  const valido = !!secret && str(body.secret) === secret;
-  const { secret: _s, ...semSegredo } = body;
+  const secret = (Deno.env.get("CAKTO_WEBHOOK_SECRET") ?? "").trim();
+  const recebida = str(body.secret).trim();
+  const valido = !!secret && recebida === secret;
+  // nunca guarda a chave; só o suficiente pra entender por que não bateu
+  const { secret: _s, ...resto } = body;
+  const semSegredo: J = valido ? resto : { ...resto, _chave: { configurada_no_supabase: !!secret, tamanho_esperado: secret.length, tamanho_recebido: recebida.length } };
   const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
   const evento = str(body.event).slice(0, 60);
   const { data: reg } = await db.from("cakto_events").insert({ event: evento, valido, raw: semSegredo }).select("id").single();
