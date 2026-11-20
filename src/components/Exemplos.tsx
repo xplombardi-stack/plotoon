@@ -8,6 +8,9 @@ export type Exemplo = { id: string; titulo: string; tipo: string; video: string;
 
 export const EXEMPLOS: Exemplo[] = [
   { id: 'correios', titulo: 'Explicativo com 3D e dados', tipo: 'Notícia explicada', video: '/exemplos/correios.mp4', capa: '/exemplos/correios.jpg' },
+  { id: 'app-nas-lojas', titulo: 'Telas de app animadas', tipo: 'Produto digital', video: '/exemplos/app-nas-lojas.mp4', capa: '/exemplos/app-nas-lojas.jpg' },
+  { id: 'instagram-reels', titulo: 'Novidade explicada em 20s', tipo: 'Notícia rápida', video: '/exemplos/instagram-reels.mp4', capa: '/exemplos/instagram-reels.jpg' },
+  { id: 'gta6-caixa', titulo: 'Curiosidade que prende', tipo: 'Curiosidade', video: '/exemplos/gta6-caixa.mp4', capa: '/exemplos/gta6-caixa.jpg' },
 ]
 
 function Card({ e, className }: { e: Exemplo; className?: string }) {
