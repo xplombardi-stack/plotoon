@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
-// Cursor da Plotoon: seta preta com borda branca, brilho laranja e o símbolo da marca dentro.
-// Normal (brilho respirando), hover (realça) e clique (pulso circular + risquinhos). Só em computador.
+// Cursor da Plotoon: seta fina e limpa (branca com contorno escuro). No hover fica laranja;
+// no clique, pulso circular + risquinhos. Só em computador.
 export function Cursor() {
   const el = useRef<HTMLDivElement>(null)
 
@@ -63,9 +63,8 @@ export function Cursor() {
 
   return (
     <div ref={el} className="plotoon-cursor" aria-hidden>
-      <svg width="23" height="27" viewBox="0 0 34 40" fill="none">
-        <path d="M3.2 2.6 L30.4 22.4 Q31.6 23.4 30.1 24.1 L19.6 25.2 L24.9 35.3 Q25.4 36.4 24.4 36.9 L20.6 38.6 Q19.5 39 19 37.9 L13.9 27.7 L6.2 34.6 Q5 35.6 4.7 34 L2.1 3.6 Q2 2 3.2 2.6 Z" fill="#0c0c10" stroke="#fff" strokeWidth="2.2" strokeLinejoin="round" />
-        <image href="/favicon.png" x="7.2" y="11.6" width="11.5" height="11.5" />
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <path className="seta" d="M5.2 3.2v15.6c0 .6.7.9 1.1.5l3.5-3.3 2.6 5.6c.2.4.6.6 1 .4l1.7-.8c.4-.2.6-.6.4-1l-2.6-5.5h4.7c.6 0 .9-.7.5-1.1L6.3 2.7c-.4-.4-1.1-.1-1.1.5Z" strokeWidth="1.3" strokeLinejoin="round" />
       </svg>
     </div>
   )

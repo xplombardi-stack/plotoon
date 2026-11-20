@@ -215,31 +215,25 @@ html.custom-cursor * {
   left: 0;
   z-index: 9999;
   pointer-events: none;
-  margin: -2px 0 0 -2px; /* a ponta da seta é o ponto do clique */
+  margin: -3px 0 0 -5px; /* a ponta da seta é o ponto do clique */
   opacity: 0;
   will-change: transform;
 }
 .plotoon-cursor.is-on { opacity: 1; }
 .plotoon-cursor > svg {
   display: block;
-  transform-origin: 2px 2px;
-  filter: drop-shadow(0 0 3px #ff8a3d99) drop-shadow(0 2px 4px #0009);
-  transition: transform 0.28s var(--ease-spring), filter 0.25s ease;
-  animation: cursor-breathe 2.6s ease-in-out infinite;
+  transform-origin: 5px 3px;
+  filter: drop-shadow(0 1px 2px #0008);
+  transition: transform 0.2s var(--ease-spring);
 }
-.plotoon-cursor.is-hover > svg {
-  transform: scale(1.14);
-  filter: drop-shadow(0 0 7px #ff8a3d) drop-shadow(0 0 16px #ff8a3d88);
-  animation: none;
+.plotoon-cursor .seta {
+  fill: #fff;
+  stroke: #0b0b0f;
+  transition: fill 0.18s ease, stroke 0.18s ease;
 }
-.plotoon-cursor.is-down > svg {
-  transform: scale(0.88);
-  filter: drop-shadow(0 0 10px #ff8a3d) drop-shadow(0 0 22px #ff8a3daa);
-}
-@keyframes cursor-breathe {
-  0%, 100% { filter: drop-shadow(0 0 3px #ff8a3d88) drop-shadow(0 2px 4px #0009); }
-  50% { filter: drop-shadow(0 0 7px #ff8a3dcc) drop-shadow(0 2px 4px #0009); }
-}
+.plotoon-cursor.is-hover > svg { transform: scale(1.06); }
+.plotoon-cursor.is-hover .seta { fill: #ff8a3d; stroke: #1a0d03; }
+.plotoon-cursor.is-down > svg { transform: scale(0.9); }
 
 /* clique: pulso circular laranja + risquinhos de destaque */
 .cursor-click {
