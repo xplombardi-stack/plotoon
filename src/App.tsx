@@ -15,7 +15,8 @@ import { Cursor } from './components/Cursor'
 import { MyBusiness, Onboarding } from './pages/Business'
 import { Library } from './pages/Library'
 import { VideoStudio } from './pages/VideoStudio'
-import { Ads, Clips } from './pages/Soon'
+import { Clips } from './pages/Soon'
+import { AnunciosPage } from './pages/AnunciosPage'
 import { WhatsAppPage } from './pages/WhatsAppPage'
 import { ImagePage } from './pages/ImagePage'
 import { CalendarPage } from './pages/CalendarPage'
@@ -100,7 +101,7 @@ function Screen() {
     case 'calendario':
       return <CalendarPage />
     case 'anuncios':
-      return <Ads />
+      return <AnunciosPage />
     case 'apps':
       return <AppsPage />
     case 'admin':
