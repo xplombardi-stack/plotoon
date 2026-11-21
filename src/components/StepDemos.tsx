@@ -1,6 +1,6 @@
 // Mini demonstrações animadas dos passos (só ilustração, não é a ferramenta de verdade)
 import { useEffect, useRef, useState } from 'react'
-import { Check, CornerDownLeft, Download, Film, LoaderCircle, Sparkles } from 'lucide-react'
+import { Check, CornerDownLeft, Download, Film, LoaderCircle, Zap } from 'lucide-react'
 import { LoopVideo } from './LoopVideo'
 import { cx } from './ui'
 import { clips } from './Showcase'
@@ -77,7 +77,7 @@ export function StepIdea({ className }: { className?: string }) {
         {on(t, 3000) && (
           <div className="pop rounded-xl border border-line bg-surface/90 px-3 py-2 backdrop-blur">
             <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-sky-text">
-              <Sparkles size={11} /> Prompt
+              <Zap size={11} /> Prompt
             </div>
             <p className="m-0 line-clamp-2 text-[11px] leading-snug text-soft">
               {prompt}

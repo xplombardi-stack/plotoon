@@ -1,7 +1,7 @@
 // Meu Negócio: cadastro em passos no primeiro acesso (#comecar) e edição depois (#meu-negocio).
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, AtSign, Check, Globe, ImagePlus, Lock, Music2, Phone, Play, Plus, RefreshCw, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, AtSign, Check, Globe, ImagePlus, Lock, Music2, Phone, Play, Plus, RefreshCw, Zap } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Toon } from '../components/art'
@@ -126,7 +126,7 @@ function LogoMaker({ business }: { business: Business }) {
     return (
       <button type="button" onClick={() => setOpen(true)} className="press group flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl border border-[#a78bfa55] bg-gradient-to-r from-[#a78bfa1f] to-transparent p-3.5 text-left hover:border-[#a78bfa99]">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a78bfa] to-[#5b8cff] text-white">
-          <Sparkles size={19} className="transition-transform group-hover:rotate-12" aria-hidden />
+          <Zap size={19} className="transition-transform group-hover:rotate-12" aria-hidden />
         </span>
         <span className="flex flex-col">
           <span className="text-[15px] font-bold text-ink">{business.logo ? 'Criar outra logo com IA' : 'Não tem logo? Crie com IA'}</span>
@@ -139,7 +139,7 @@ function LogoMaker({ business }: { business: Business }) {
     <div className="pop flex flex-col gap-4 rounded-2xl border border-[#a78bfa55] bg-[#a78bfa0d] p-4">
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2 text-[15px] font-bold">
-          <Sparkles size={17} className="text-[#c4b5fd]" aria-hidden /> Criar logo com IA
+          <Zap size={17} className="text-[#c4b5fd]" aria-hidden /> Criar logo com IA
         </span>
         <span className="text-[12.5px] text-muted">Você tem {formatCredits(credits)} créditos</span>
       </div>
@@ -152,7 +152,7 @@ function LogoMaker({ business }: { business: Business }) {
       </div>
       <input aria-label="Ideia pra logo (opcional)" value={idea} maxLength={240} onChange={(e) => setIdea(e.target.value)} placeholder="Ideia (opcional): ex.: uma agulha formando a letra A" className={inputCls} />
       <Button size="lg" onClick={make} disabled={busy} className="self-stretch sm:self-start">
-        {busy ? 'Desenhando sua logo…' : made.length ? <>Gerar outra · {CREDITS_PER_LOGO} créditos <RefreshCw size={16} /></> : <>Criar logo · {CREDITS_PER_LOGO} créditos <Sparkles size={16} /></>}
+        {busy ? 'Desenhando sua logo…' : made.length ? <>Gerar outra · {CREDITS_PER_LOGO} créditos <RefreshCw size={16} /></> : <>Criar logo · {CREDITS_PER_LOGO} créditos <Zap size={16} /></>}
       </Button>
       {error && <p role="alert" className="m-0 text-[13.5px] text-[#fca5a5]">{error}</p>}
       {(busy || made.length > 0) && (
@@ -160,7 +160,7 @@ function LogoMaker({ business }: { business: Business }) {
           {busy && (
             <span className="relative aspect-square overflow-hidden rounded-xl border border-line-strong bg-white/5">
               <span className="shimmer absolute inset-0" />
-              <Sparkles size={22} className="absolute inset-0 m-auto animate-pulse text-[#c4b5fd]" aria-hidden />
+              <Zap size={22} className="absolute inset-0 m-auto animate-pulse text-[#c4b5fd]" aria-hidden />
             </span>
           )}
           {made.map((l) => {
@@ -367,7 +367,7 @@ function BrandPreview({ b, focus, compact }: { b: Business; focus: string; compa
   return (
     <div className="flex w-full max-w-[400px] flex-col gap-4 rounded-[26px] border border-white/10 bg-[#0d1017]/90 p-5 shadow-[0_30px_80px_-30px_#000] backdrop-blur">
       <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-[#c4b5fd]">
-        <Sparkles size={14} aria-hidden /> Seu estúdio aprendendo sobre você
+        <Zap size={14} aria-hidden /> Seu estúdio aprendendo sobre você
       </span>
       <div className="flex items-center gap-3.5">
         <span className={cx('h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white/15 transition-all', ring('marca'))}>{avatar}</span>

@@ -1,7 +1,7 @@
 // Vídeo com IA, sem modelo: a pessoa manda fotos, conta o que quer e escolhe as cores (ou "tanto faz").
 // O Claude cria o conceito, a oferta e escreve cada cena do zero. O vídeo roda e é gravado no navegador.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Check, Copy as CopyIcon, Download, ImagePlus, LoaderCircle, Palette, Plus, RefreshCw, Sparkles, Wand2, X } from 'lucide-react'
+import { ArrowLeft, Check, Copy as CopyIcon, Download, ImagePlus, LoaderCircle, Palette, Plus, RefreshCw, Zap, Wand2, X } from 'lucide-react'
 import { FilmPlayer, type FilmSource } from './FilmPlayer'
 import { ShowcaseVideos } from './Exemplos'
 import { Badge, Button, cx, useToast } from './ui'
@@ -566,7 +566,7 @@ export function AiVideoStudio() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 flex-col gap-1.5">
               <Badge tone="accent" className="self-start">
-                <Sparkles size={13} /> Feito do zero pra você
+                <Zap size={13} /> Feito do zero pra você
               </Badge>
               <h2 className="m-0 font-display text-[23px] font-extrabold leading-tight">{plano.titulo}</h2>
               <p className="m-0 text-[14.5px] text-soft">{plano.conceito}</p>
@@ -706,7 +706,7 @@ export function AiVideoStudio() {
         </div>
 
         <Button size="lg" onClick={gerar} className="self-stretch sm:self-start">
-          <Sparkles size={18} /> Criar meu vídeo · {customVideoCost(proj.duracao)} créditos
+          <Zap size={18} /> Criar meu vídeo · {customVideoCost(proj.duracao)} créditos
         </Button>
         <p className="m-0 -mt-2 text-[12.5px] text-muted">Depois de pronto, dá pra pedir ajuste em qualquer cena ({CREDITS_PER_SCENE_FIX} créditos cada).</p>
       </div>

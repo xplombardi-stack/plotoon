@@ -1,7 +1,7 @@
 // Criador de Apps: a pessoa conversa com a IA e ela monta o app/site do negócio.
 // Prévia ao vivo isolada, ajustes pelo chat e publicação com link.
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Check, Copy as CopyIcon, ExternalLink, Globe, Monitor, Send, Smartphone, Sparkles, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Copy as CopyIcon, ExternalLink, Globe, Monitor, Send, Smartphone, Zap, Trash2 } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleDemo } from '../components/FeatureDemos'
 import { ModuleHeader, ModuleIcon } from '../components/Module'
@@ -207,7 +207,7 @@ export function AppsPage() {
               </p>
             )}
             <Button size="lg" onClick={() => gerar()} disabled={busy || pedido.trim().length < 3} className="self-stretch sm:self-start">
-              <Sparkles size={18} /> Criar app · {CREDITS_PER_APP} créditos
+              <Zap size={18} /> Criar app · {CREDITS_PER_APP} créditos
             </Button>
           </div>
           <ModuleDemo id="apps" className="h-[340px] w-full" />
@@ -317,7 +317,7 @@ export function AppsPage() {
             {busy && (
               <div className="flex flex-col gap-2 rounded-2xl border border-[#22d3ee44] bg-[#22d3ee0d] p-3.5">
                 <span className="flex items-center gap-2 text-[14px] font-semibold text-[#a5f3fc]">
-                  <Sparkles size={16} className="animate-pulse" /> Construindo seu app…
+                  <Zap size={16} className="animate-pulse" /> Construindo seu app…
                 </span>
                 <span className="text-[12.5px] text-muted">Leva cerca de 1 minuto. Pode deixar essa tela aberta.</span>
                 <span className="relative h-1.5 overflow-hidden rounded-full bg-line">

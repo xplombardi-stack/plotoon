@@ -1,6 +1,6 @@
 // Estúdio de Imagem: foto de produto, post, story e banner com IA (Nano Banana).
 import { useRef, useState } from 'react'
-import { Download, ImagePlus, RotateCcw, Sparkles, X } from 'lucide-react'
+import { Download, ImagePlus, RotateCcw, Zap, X } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Button, cx } from '../components/ui'
@@ -195,7 +195,7 @@ export function ImagePage() {
             </p>
           )}
           <Button size="lg" onClick={gerar} disabled={busy} className="self-stretch sm:self-start">
-            <Sparkles size={18} /> {busy ? 'Criando a imagem…' : `Gerar imagem · ${CREDITS_PER_IMAGE} créditos`}
+            <Zap size={18} /> {busy ? 'Criando a imagem…' : `Gerar imagem · ${CREDITS_PER_IMAGE} créditos`}
           </Button>
         </section>
 

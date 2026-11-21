@@ -1,7 +1,7 @@
 // Estúdio do "Vídeo do produto": fotos + o que é o produto → o Claude escreve o roteiro →
 // o vídeo aparece na hora, a pessoa ajusta os textos e baixa. Feito sem boneco e sem Google Flow.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Check, Copy as CopyIcon, Download, ImagePlus, LoaderCircle, Music2, RefreshCw, Sparkles, Wand2, X } from 'lucide-react'
+import { ArrowLeft, Check, Copy as CopyIcon, Download, ImagePlus, LoaderCircle, Music2, RefreshCw, Zap, Wand2, X } from 'lucide-react'
 import { VideoPlayer } from './VideoPlayer'
 import { FilmPlayer, type FilmSource } from './FilmPlayer'
 import { FILME_EXEMPLO } from '../lib/filmExample'
@@ -549,7 +549,7 @@ export function ProductVideoStudio() {
         </div>
 
         <Button size="lg" onClick={generate} disabled={busy} className="self-stretch sm:self-start">
-          <Sparkles size={18} /> Criar meu vídeo · {CREDITS_PER_PRODUCT_VIDEO} créditos
+          <Zap size={18} /> Criar meu vídeo · {CREDITS_PER_PRODUCT_VIDEO} créditos
         </Button>
       </div>
 

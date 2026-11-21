@@ -1,7 +1,7 @@
 // Demonstrações animadas de cada função, usadas na página inicial (só ilustração).
 import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
-import { BadgeCheck, CalendarDays, Check, CheckCheck, Copy, FileText, Film, Flame, LoaderCircle, MousePointer2, Palette, Pause, PenTool, Rocket, Send, Sparkles, TrendingUp, Wand2 } from 'lucide-react'
+import { BadgeCheck, CalendarDays, Check, CheckCheck, Copy, FileText, Film, Flame, LoaderCircle, MousePointer2, Palette, Pause, PenTool, Rocket, Send, Zap, TrendingUp, Wand2 } from 'lucide-react'
 import { ModuleIcon } from './Module'
 import { on, typed, useLoop } from './StepDemos'
 import { cx } from './ui'
@@ -530,7 +530,7 @@ export function DemoBiblioteca({ className }: { className?: string }) {
     { k: 'Imagem', tone: 'from-[#38bdf8] to-[#5b8cff]', icon: Palette },
     { k: 'Copy', tone: 'from-[#facc15] to-[#ff8a3d]', icon: FileText },
     { k: 'Corte', tone: 'from-[#f472b6] to-[#ff5d5d]', icon: Film },
-    { k: 'Personagem', tone: 'from-[#34d399] to-[#10b981]', icon: Sparkles },
+    { k: 'Personagem', tone: 'from-[#34d399] to-[#10b981]', icon: Zap },
   ]
   return (
     <Frame innerRef={ref} className={cx('flex flex-col gap-3 p-4', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
@@ -659,7 +659,7 @@ export function DemoLogo({ className }: { className?: string }) {
   return (
     <Frame innerRef={ref} className={cx('flex flex-col gap-3.5 p-4 sm:p-5', className)} style={{ opacity: fadeOut(t, TOTAL) }}>
       <div className="flex items-center gap-2">
-        <Sparkles size={17} className="text-[#c4b5fd]" />
+        <Zap size={17} className="text-[#c4b5fd]" />
         <span className="text-[14px] font-bold">Criar logo com IA</span>
       </div>
       <div className={cx('rounded-xl border border-line-strong bg-bg/70 px-3.5 py-2.5 text-[14px]', name.length < 12 && t < 1600 && 'caret')}>{name || <span className="text-subtle">Nome do negócio</span>}</div>
@@ -871,7 +871,7 @@ export function DemoCalendario({ className }: { className?: string }) {
           <CalendarDays size={17} className="text-[#9db8ff]" /> Seu mês
         </span>
         <span className="flex items-center gap-1.5 text-[12px] font-semibold text-[#c4b5fd]">
-          {planning ? <LoaderCircle size={14} className="animate-spin" /> : <Sparkles size={14} />} {planning ? 'Mentor planejando…' : `${shown.length} posts planejados`}
+          {planning ? <LoaderCircle size={14} className="animate-spin" /> : <Zap size={14} />} {planning ? 'Mentor planejando…' : `${shown.length} posts planejados`}
         </span>
       </div>
       <div className="relative grid grid-cols-7 gap-1">

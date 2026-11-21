@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Clapperboard, Coins, Film, Megaphone, Minus, Plus, RefreshCw, Sparkles, Wand, Zap } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Clapperboard, Coins, Film, Megaphone, Minus, Plus, RefreshCw, Wand, Zap } from 'lucide-react'
 import { ideas } from '../data/mock'
 import { AppShell } from '../components/AppShell'
 import { Scene, Toon } from '../components/art'
@@ -383,7 +383,7 @@ export function NewStory() {
             <span className="text-[13px] font-medium text-muted">Como o Diretor escreve</span>
             <div className="grid gap-2 sm:grid-cols-2">
               {([
-                { id: 'caprichado', title: 'Caprichado', sub: 'História mais criativa e bem amarrada', Icon: Sparkles },
+                { id: 'caprichado', title: 'Caprichado', sub: 'História mais criativa e bem amarrada', Icon: Zap },
                 { id: 'rapido', title: 'Rápido', sub: 'Sai em segundos, mais direto', Icon: Zap },
               ] as const).map((o) => (
                 <button

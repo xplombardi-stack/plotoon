@@ -1,22 +1,63 @@
 // Atendente WhatsApp na vitrine: conversa animada de verdade (áudio, conta, taxa do bairro)
 // e a comparação com o robô de menu "digite 1, 2 ou 3".
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Bell, Check, CheckCheck, Ear, GraduationCap, Hand, MessageCircle, Mic, Play, Receipt, ShieldCheck, X } from 'lucide-react'
 import { on, typed, useLoop } from './StepDemos'
 import { cx } from './ui'
 
 type Linha = { who: 'cliente' | 'ia'; at: number; text?: string; audio?: { dur: string; fala: string; ouviu: number } }
 
-const CONVERSA: Linha[] = [
-  { who: 'cliente', at: 400, text: 'boa noite! vcs entregam no jardim américa?' },
-  { who: 'ia', at: 2600, text: 'Boa noite! Entregamos sim 😊' },
-  { who: 'ia', at: 3900, text: 'Pro Jardim América a taxa é R$ 8 e chega em uns 50 min.' },
-  { who: 'cliente', at: 6200, audio: { dur: '0:06', fala: 'quero uma grande meio calabresa meio quatro queijos com borda de catupiry', ouviu: 7300 } },
-  { who: 'ia', at: 9700, text: 'Anotado! Grande meio calabresa, meio quatro queijos, borda de catupiry.' },
-  { who: 'ia', at: 11200, text: 'Fica R$ 69,90 + R$ 8 da entrega = R$ 77,90. Quer um refri 2L junto?' },
-  { who: 'cliente', at: 14200, text: 'manda uma coca. pago no pix' },
-  { who: 'ia', at: 16500, text: 'Fechou! Total de R$ 91,90 no Pix.' },
-  { who: 'ia', at: 17800, text: 'Vou verificar aqui e já te mando a chave, só um minuto 🙏' },
+type Roteiro = { nome: string; emoji: string; fim: string; linhas: Linha[] }
+// três ramos diferentes, um por volta: mostra que serve pra qualquer negócio
+const ROTEIROS: Roteiro[] = [
+  {
+    nome: 'Use Mila',
+    emoji: '👗',
+    fim: 'Pedido pronto · te avisou',
+    linhas: [
+      { who: 'cliente', at: 400, text: 'oi! a jaqueta jeans ainda tem no M?' },
+      { who: 'ia', at: 2600, text: 'Oi! Tem sim, é a última no M 🙌' },
+      { who: 'ia', at: 3900, text: 'Ela sai R$ 189,90 e o frete pra sua cidade fica R$ 18.' },
+      { who: 'cliente', at: 6200, audio: { dur: '0:05', fala: 'quero sim, pode mandar pro meu endereço de sempre que eu pago no pix', ouviu: 7300 } },
+      { who: 'ia', at: 9700, text: 'Perfeito! Jaqueta jeans M + frete: R$ 207,90.' },
+      { who: 'ia', at: 11200, text: 'Vou separar a sua e já te mando a chave do Pix 😉' },
+      { who: 'cliente', at: 14200, text: 'fechou, obrigada!' },
+      { who: 'ia', at: 16500, text: 'Eu que agradeço! Separei aqui pra você ✅' },
+      { who: 'ia', at: 17800, text: 'Só um minuto que já te mando a chave.' },
+    ],
+  },
+  {
+    nome: 'Barbearia Navalha',
+    emoji: '💈',
+    fim: 'Horário marcado na agenda',
+    linhas: [
+      { who: 'cliente', at: 400, text: 'fala! tem horário amanhã pra corte e barba?' },
+      { who: 'ia', at: 2600, text: 'Fala! Tem sim 😎' },
+      { who: 'ia', at: 3900, text: 'Amanhã tenho 10h, 14h30 e 17h. Corte + barba sai R$ 70.' },
+      { who: 'cliente', at: 6200, audio: { dur: '0:04', fala: 'pode ser às cinco da tarde, meu nome é Rafael', ouviu: 7300 } },
+      { who: 'ia', at: 9700, text: 'Fechado, Rafael! Amanhã às 17h, corte + barba.' },
+      { who: 'ia', at: 11200, text: 'Já deixei reservado. Se precisar remarcar é só chamar.' },
+      { who: 'cliente', at: 14200, text: 'valeu, até amanhã' },
+      { who: 'ia', at: 16500, text: 'Até amanhã! 💈' },
+      { who: 'ia', at: 17800, text: 'Te mando um lembrete umas horas antes.' },
+    ],
+  },
+  {
+    nome: 'Forno da Vila',
+    emoji: '🍕',
+    fim: 'Pedido pronto · te avisou',
+    linhas: [
+      { who: 'cliente', at: 400, text: 'boa noite! vcs entregam no jardim américa?' },
+      { who: 'ia', at: 2600, text: 'Boa noite! Entregamos sim 😊' },
+      { who: 'ia', at: 3900, text: 'Pro Jardim América a taxa é R$ 8 e chega em uns 50 min.' },
+      { who: 'cliente', at: 6200, audio: { dur: '0:06', fala: 'quero uma grande meio calabresa meio quatro queijos com borda de catupiry', ouviu: 7300 } },
+      { who: 'ia', at: 9700, text: 'Anotado! Grande meio calabresa, meio quatro queijos, borda de catupiry.' },
+      { who: 'ia', at: 11200, text: 'Fica R$ 69,90 + R$ 8 da entrega = R$ 77,90. Quer um refri 2L junto?' },
+      { who: 'cliente', at: 14200, text: 'manda uma coca. pago no pix' },
+      { who: 'ia', at: 16500, text: 'Fechou! Total de R$ 91,90 no Pix.' },
+      { who: 'ia', at: 17800, text: 'Vou verificar aqui e já te mando a chave, só um minuto 🙏' },
+    ],
+  },
 ]
 const DIGITANDO: Array<[number, number]> = [
   [1300, 2600],
@@ -39,6 +80,14 @@ function Onda({ tocando }: { tocando: boolean }) {
 export function DemoAtendente({ className, compact }: { className?: string; compact?: boolean }) {
   const TOTAL = 23000
   const { ref, t } = useLoop(TOTAL, 20500)
+  const [idx, setIdx] = useState(0)
+  const antes = useRef(0)
+  useEffect(() => {
+    if (t < antes.current) setIdx((i) => (i + 1) % ROTEIROS.length)
+    antes.current = t
+  }, [t])
+  const R = ROTEIROS[idx]
+  const CONVERSA = R.linhas
   const digitando = DIGITANDO.some(([a, b]) => t > a && t < b)
   const ouviu = on(t, 7400) && t < 12500
   const avisou = on(t, 19000)
@@ -48,9 +97,9 @@ export function DemoAtendente({ className, compact }: { className?: string; comp
     <div ref={ref} aria-hidden className={cx('relative mx-auto w-full max-w-[340px]', className)} style={{ opacity: fade }}>
       <div className="relative overflow-hidden rounded-[40px] border-[7px] border-[#1f2430] bg-[#0b141a] shadow-[0_40px_90px_-30px_#000]">
         <div className="flex items-center gap-2.5 bg-[#1f2c33] px-4 pb-2.5 pt-4">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#ff8a3d] to-[#ff5d5d] text-[17px]">🍕</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2a3942] text-[17px]">{R.emoji}</span>
           <span className="flex min-w-0 flex-col leading-tight">
-            <span className="text-[14px] font-bold text-white">Forno da Vila</span>
+            <span className="text-[14px] font-bold text-white">{R.nome}</span>
             <span className="text-[11.5px] text-[#8fd1a0]">{digitando ? 'digitando…' : 'online'}</span>
           </span>
         </div>
@@ -100,7 +149,7 @@ export function DemoAtendente({ className, compact }: { className?: string; comp
         <Ear size={16} /> Ouviu o áudio
       </div>
       <div className={cx('absolute -right-3 bottom-20 flex items-center gap-2 rounded-xl border border-[#34d39966] bg-[#0c1a14] px-3 py-2 text-[12.5px] font-bold text-[#6ee7b7] shadow-xl transition-all duration-500 [transition-timing-function:var(--ease-spring)] sm:-right-12', avisou ? 'scale-100 opacity-100' : 'scale-75 opacity-0')}>
-        <Bell size={16} /> Pedido pronto · te avisou
+        <Bell size={16} /> {R.fim}
       </div>
     </div>
   )

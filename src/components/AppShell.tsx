@@ -33,10 +33,10 @@ function NavItem({ id, on, onPick }: { id: ModuleId; on: boolean; onPick?: () =>
         aria-current={on ? 'page' : undefined}
         className={cx(
           'group relative flex min-h-[58px] items-center gap-3 rounded-[14px] border px-2.5 py-2 no-underline transition-all duration-300',
-          on ? 'border-accent-line bg-gradient-to-r from-[#ff8a3d26] to-[#ff8a3d08] text-ink' : 'border-line bg-surface/60 text-ink hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface',
+          on ? 'border-accent-line bg-[#ff8a3d12] text-ink' : 'border-line bg-surface/60 text-ink hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface',
         )}
       >
-        {on && <span aria-hidden className="absolute -left-3 top-3 bottom-3 w-1 rounded-r-full bg-accent shadow-[0_0_12px_#ff8a3d]" />}
+        {on && <span aria-hidden className="absolute -left-3 top-3 bottom-3 w-1 rounded-r-full bg-accent" />}
         <ModuleIcon id={id} size="sm" className="!h-9 !w-9 transition-transform duration-300 group-hover:scale-105" />
         <span className="flex min-w-0 flex-1 flex-col leading-tight">
           <span className="truncate text-[14.5px] font-bold">{m.name}</span>
@@ -52,10 +52,10 @@ function NavItem({ id, on, onPick }: { id: ModuleId; on: boolean; onPick?: () =>
       aria-current={on ? 'page' : undefined}
       className={cx(
         'group relative flex min-h-10 items-center gap-3 rounded-[11px] px-3 text-[14.5px] no-underline transition-all duration-300',
-        on ? 'bg-gradient-to-r from-[#ff8a3d26] to-transparent font-semibold text-ink shadow-[inset_0_0_0_1px_#ff8a3d40]' : 'font-medium text-muted hover:translate-x-1 hover:bg-surface hover:text-ink',
+        on ? 'bg-[#ff8a3d12] font-semibold text-ink shadow-[inset_0_0_0_1px_#ff8a3d33]' : 'font-medium text-muted hover:translate-x-1 hover:bg-surface hover:text-ink',
       )}
     >
-      {on && <span aria-hidden className="absolute -left-3 top-2 bottom-2 w-1 rounded-r-full bg-accent shadow-[0_0_12px_#ff8a3d]" />}
+      {on && <span aria-hidden className="absolute -left-3 top-2 bottom-2 w-1 rounded-r-full bg-accent" />}
       <Icon size={19} strokeWidth={1.9} className={cx('shrink-0 transition-transform duration-300 group-hover:scale-110', on && 'text-accent')} aria-hidden />
       <span className="min-w-0 flex-1 truncate">{m.name}</span>
       {!m.ready && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#a78bfa]/60" title="Em breve" />}
@@ -111,7 +111,7 @@ function AccountLink({ onPick }: { onPick?: () => void }) {
       {business.logo ? (
         <img src={business.logo} alt="" className="h-8 w-8 rounded-full border border-line-strong bg-white object-contain p-0.5" />
       ) : (
-        <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent to-[#ff5da2] text-[13px] font-bold text-accent-ink">
+        <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-[13px] font-bold text-accent-ink">
           {(business.name || name || 'V').charAt(0).toUpperCase()}
         </span>
       )}
@@ -195,7 +195,7 @@ function BottomBar({ activeId, onCreate, onMore, moreOpen }: { activeId?: Module
             onClick={onCreate}
             aria-label="Criar"
             className={cx(
-              'press -mt-6 flex h-[60px] w-[60px] cursor-pointer flex-col items-center justify-center rounded-[20px] bg-gradient-to-br from-accent to-[#ff5da2] text-accent-ink shadow-[0_10px_30px_-6px_#ff8a3dcc] ring-4 ring-bg',
+              'press -mt-6 flex h-[60px] w-[60px] cursor-pointer flex-col items-center justify-center rounded-[18px] bg-accent text-accent-ink ring-4 ring-bg',
               createOn && 'ring-accent/40',
             )}
           >

@@ -1,10 +1,12 @@
-import { ArrowRight, Check, ChevronDown, Play, Sparkles, TrendingDown, X } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Play, TrendingDown, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { ModuleIcon } from '../components/Module'
 import { MentorIcon } from '../components/MentorIcon'
-import { Badge, LinkButton, Logo, cx } from '../components/ui'
+import { LinkButton, Logo, cx } from '../components/ui'
 import { MODULES, type ModuleId } from '../lib/modules'
 import { DemoAtendente } from '../components/WhatsAppShowcase'
+import { DemoApps } from '../components/FeatureDemos'
+import { StoryReel } from '../components/StoryReel'
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -39,16 +41,16 @@ function HeroVisual() {
     <div className="relative mx-auto w-full max-w-[460px] py-4">
       <DemoAtendente compact className="max-w-[300px]" />
       <Flutuante className="-left-1 top-[24%] max-w-[200px] sm:-left-10">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a78bfa] to-[#5b8cff] text-white">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#a78bfa44] bg-[#a78bfa14] text-[#c4b5fd]">
           <MentorIcon size={16} />
         </span>
         <span className="flex flex-col leading-tight">
           <span className="text-[11px] font-bold text-[#c4b5fd]">Mentor</span>
-          <span className="text-[12.5px] text-ink">Terça tá fraca? Faça a "Terça em dobro".</span>
+          <span className="text-[12.5px] text-ink">Segunda fraca? Crie um combo só pra ela.</span>
         </span>
       </Flutuante>
       <Flutuante className="-right-1 top-[56%] sm:-right-10">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff8a3d] to-[#ff5d5d] text-white">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#ff8a3d44] bg-[#ff8a3d14] text-[#fdba74]">
           <Play size={14} fill="currentColor" />
         </span>
         <span className="flex flex-col leading-tight">
@@ -57,7 +59,7 @@ function HeroVisual() {
         </span>
       </Flutuante>
       <Flutuante className="-left-1 bottom-[7%] sm:-left-12">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#38bdf8] to-[#34d399] text-white">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#38bdf844] bg-[#38bdf814] text-[#7dd3fc]">
           <TrendingDown size={15} />
         </span>
         <span className="flex flex-col leading-tight">
@@ -125,11 +127,11 @@ export function Landing() {
           <div className="aurora"><span /></div>
           <div className="relative mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-8 px-5 pb-12 pt-10 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pb-14 lg:pt-12">
             <div className="flex flex-col gap-5">
-              <Badge tone="accent" className="rise self-start">
-                <Sparkles size={13} aria-hidden /> Atendimento, marketing e vendas com IA
-              </Badge>
+              <span className="rise tag-mono flex items-center gap-2 self-start rounded-full border border-line-strong bg-surface px-3 py-1.5 text-soft">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#34d399]" /> Plataforma de vendas para negócios
+              </span>
               <h1 className="rise rise-1 text-balance m-0 font-display text-[36px] font-extrabold leading-[1.05] tracking-[-0.04em] sm:text-[52px]">
-                Atenda, divulgue e <span className="text-accent text-glow">venda mais</span>. Tudo com IA, num lugar só.
+                Atenda, divulgue e <span className="text-accent">venda mais</span>. Tudo com IA, num lugar só.
               </h1>
               <p className="rise rise-2 m-0 max-w-[520px] text-[16.5px] leading-relaxed text-muted sm:text-[18px]">
                 Um atendente que responde seus clientes no WhatsApp, um estrategista de marketing que te diz o que fazer, e imagens, vídeos e anúncios prontos. Pra quem vende sozinho ou tem empresa.
@@ -150,7 +152,7 @@ export function Landing() {
         {/* DESTAQUES */}
         <section id="destaques" className="scroll-mt-20 border-y border-line bg-side">
           <div className="mx-auto grid max-w-[1120px] gap-4 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:py-16">
-            <article className="neon-border flex flex-col gap-4 rounded-[24px] bg-[#0f1713] p-5 sm:p-6">
+            <article className="flex flex-col gap-4 rounded-[20px] border border-[#34d39944] bg-surface p-5 sm:p-6">
               <span className="flex items-center gap-3">
                 <ModuleIcon id="whatsapp" />
                 <span className="flex flex-col leading-tight">
@@ -163,21 +165,21 @@ export function Landing() {
                   <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#f87171]">
                     <X size={12} strokeWidth={3} /> Robô comum
                   </span>
-                  <Bolha de="cliente">quanto ta a calabresa?</Bolha>
+                  <Bolha de="cliente">tem a jaqueta preta no M?</Bolha>
                   <Bolha de="outro" ruim>Opção inválida. Digite 1, 2 ou 3.</Bolha>
                 </div>
                 <div className="flex flex-col gap-1.5 rounded-2xl bg-[#0b141a] p-2.5">
                   <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#6ee7b7]">
                     <Check size={12} strokeWidth={3} /> Plotoon
                   </span>
-                  <Bolha de="cliente">quanto ta a calabresa?</Bolha>
-                  <Bolha de="outro">A grande sai R$ 52,90 🍕 Inteira ou meio a meio?</Bolha>
+                  <Bolha de="cliente">tem a jaqueta preta no M?</Bolha>
+                  <Bolha de="outro">Tem sim! Sai R$ 189,90. Quer que eu separe pra você?</Bolha>
                 </div>
               </div>
-              <p className="m-0 text-[14.5px] text-soft">Ouve áudio, fecha o pedido com a taxa de entrega e te avisa quando precisa de você.</p>
+              <p className="m-0 text-[14.5px] text-soft">Ouve áudio, fecha pedido, marca horário na agenda e te avisa quando precisa de você.</p>
             </article>
 
-            <article className="flex flex-col gap-4 rounded-[24px] border border-[#a78bfa55] bg-[#13111c] p-5 sm:p-6">
+            <article className="flex flex-col gap-4 rounded-[20px] border border-[#a78bfa44] bg-surface p-5 sm:p-6">
               <span className="flex items-center gap-3">
                 <ModuleIcon id="mentor" />
                 <span className="flex flex-col leading-tight">
@@ -186,14 +188,32 @@ export function Landing() {
                 </span>
               </span>
               <div className="flex flex-col gap-2 rounded-2xl bg-[#0d0c14] p-3">
-                <span className="self-end rounded-2xl rounded-br-md bg-accent px-3 py-2 text-[13px] font-medium text-accent-ink">Terça é dia fraco na pizzaria. O que eu faço?</span>
+                <span className="self-end rounded-2xl rounded-br-md bg-accent px-3 py-2 text-[13px] font-medium text-accent-ink">Minha agenda fica vazia na segunda. O que eu faço?</span>
                 <span className="flex flex-col gap-1 self-start text-[13px] leading-snug text-soft">
-                  <span>Crie a <b className="text-ink">Terça em dobro</b>: 2ª pizza com 30% off só no WhatsApp.</span>
-                  <span>1. Poste hoje um vídeo de 15s da pizza saindo do forno.</span>
-                  <span>2. Mande a promo pra quem pediu no último mês.</span>
+                  <span>Crie o <b className="text-ink">Combo segunda</b>: um serviço extra de brinde só nesse dia.</span>
+                  <span>1. Poste hoje um Reels de 15s mostrando o antes e depois.</span>
+                  <span>2. Mande a oferta pra quem não volta há mais de 30 dias.</span>
                 </span>
               </div>
               <p className="m-0 text-[14.5px] text-soft">Ele já conhece o seu negócio e responde como alguém do seu ramo.</p>
+            </article>
+          </div>
+        </section>
+
+        {/* E AINDA */}
+        <section className="border-b border-line">
+          <div className="mx-auto grid max-w-[1120px] gap-4 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:py-16">
+            <article className="flex flex-col gap-4 overflow-hidden rounded-[20px] border border-line bg-surface p-5 sm:p-6">
+              <span className="tag-mono text-accent-text">Vídeos de historinha</span>
+              <h3 className="m-0 font-display text-[22px] font-bold leading-tight tracking-[-0.02em]">Um personagem 3D da sua marca contando histórias que vendem</h3>
+              <p className="m-0 text-[14.5px] text-muted">Você cria o boneco uma vez e ele aparece em vídeos curtos pro Reels e TikTok, sempre com o mesmo rosto.</p>
+              <StoryReel size="md" className="-mx-5 mt-auto sm:-mx-6" />
+            </article>
+            <article className="flex flex-col gap-4 overflow-hidden rounded-[20px] border border-line bg-surface p-5 sm:p-6">
+              <span className="tag-mono text-[#67e8f9]">Criador de apps</span>
+              <h3 className="m-0 font-display text-[22px] font-bold leading-tight tracking-[-0.02em]">O site ou app do seu negócio, criado numa conversa</h3>
+              <p className="m-0 text-[14.5px] text-muted">Cardápio digital, página de agendamento, catálogo. Você descreve, ele monta e publica.</p>
+              <DemoApps className="mx-auto w-full max-w-[460px]" />
             </article>
           </div>
         </section>
@@ -207,7 +227,7 @@ export function Landing() {
             </div>
             <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
               {DENTRO.map((x, i) => (
-                <article key={x.id} className={cx('flex flex-col gap-2.5 rounded-[18px] border p-3.5', i < 2 ? 'border-accent-line bg-[#16110d]' : 'border-line bg-surface')}>
+                <article key={x.id} className={cx('flex flex-col gap-2.5 rounded-[18px] border p-3.5', i < 2 ? 'border-accent-line bg-surface' : 'border-line bg-surface')}>
                   <span className="flex items-center gap-2.5">
                     <ModuleIcon id={x.id} size="sm" />
                     <span className="text-[14.5px] font-bold leading-tight">{MODULES[x.id].short ?? MODULES[x.id].name}</span>

@@ -7,12 +7,12 @@ import { cx } from './ui'
 export function ModuleIcon({ id, size = 'md', className }: { id: ModuleId; size?: 'sm' | 'md' | 'lg'; className?: string }) {
   const m = MODULES[id]
   const Icon = m.icon
-  const box = size === 'lg' ? 'h-14 w-14 rounded-[18px]' : size === 'sm' ? 'h-8 w-8 rounded-[10px]' : 'h-11 w-11 rounded-[14px]'
-  const ic = size === 'lg' ? 26 : size === 'sm' ? 16 : 21
+  const cor = m.color.match(/#[0-9a-fA-F]{6}/)?.[0] ?? '#ff8a3d'
+  const box = size === 'lg' ? 'h-14 w-14 rounded-[14px]' : size === 'sm' ? 'h-8 w-8 rounded-[9px]' : 'h-11 w-11 rounded-[12px]'
+  const ic = size === 'lg' ? 25 : size === 'sm' ? 16 : 20
   return (
-    <span aria-hidden className={cx('relative flex shrink-0 items-center justify-center bg-gradient-to-br text-white shadow-[0_8px_24px_-10px_currentColor]', m.color, box, className)}>
-      <span className="absolute inset-0 rounded-[inherit] bg-gradient-to-b from-white/25 to-transparent" />
-      <Icon size={ic} strokeWidth={2.1} className="relative" />
+    <span aria-hidden className={cx('relative flex shrink-0 items-center justify-center border', box, className)} style={{ color: cor, background: `${cor}14`, borderColor: `${cor}33` }}>
+      <Icon size={ic} strokeWidth={1.9} />
     </span>
   )
 }

@@ -15,8 +15,8 @@ import { runAction } from '../lib/actions'
 
 const MORE: ModuleId[] = ['calendario', 'anuncios', 'apps']
 const TOP: Array<{ id: ModuleId; cta: string; bg: string; glow: string }> = [
-  { id: 'whatsapp', cta: 'Abrir atendente', bg: 'from-[#0f2a20] via-surface to-surface', glow: 'bg-[#34d39933]' },
-  { id: 'mentor', cta: 'Falar com o Mentor', bg: 'from-[#1c1930] via-surface to-surface', glow: 'bg-[#a78bfa33]' },
+  { id: 'whatsapp', cta: 'Abrir atendente', bg: 'border-[#34d39944]', glow: '' },
+  { id: 'mentor', cta: 'Falar com o Mentor', bg: 'border-[#a78bfa44]', glow: '' },
 ]
 
 export function Home() {
@@ -70,8 +70,7 @@ export function Home() {
         {TOP.map((x, i) => {
           const m = MODULES[x.id]
           return (
-            <a key={x.id} href={`#${x.id}`} className={cx('rise lift relative flex flex-col gap-4 overflow-hidden rounded-[24px] border border-line-strong bg-gradient-to-br p-5 text-ink no-underline sm:p-6', x.bg, `rise-${i + 1}`)}>
-              <span aria-hidden className={cx('pointer-events-none absolute -right-14 -top-14 h-48 w-48 rounded-full blur-3xl', x.glow)} />
+            <a key={x.id} href={`#${x.id}`} className={cx('rise lift relative flex flex-col gap-4 overflow-hidden rounded-[20px] border bg-surface p-5 text-ink no-underline sm:p-6', x.bg, `rise-${i + 1}`)}>
               <span className="relative flex items-center gap-3.5">
                 <ModuleIcon id={x.id} size="lg" />
                 <span className="flex min-w-0 flex-col gap-0.5">
