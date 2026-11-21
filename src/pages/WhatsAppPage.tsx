@@ -1,6 +1,6 @@
 // Atendente WhatsApp: conectar pelo QR code, treinar, testar no simulador e acompanhar as conversas.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { AlertTriangle, ArrowLeft, Bot, Briefcase, Camera, Check, CheckCheck, GraduationCap, Lightbulb, LoaderCircle, Lock, MapPin, MessageCircle, Pause, Pencil, Play, Plus, Power, QrCode, RotateCcw, Send, Smartphone, Store, Trash2, Truck, UserRound, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Bot, Briefcase, CalendarClock, Camera, ClipboardList, Check, CheckCheck, GraduationCap, Lightbulb, LoaderCircle, Lock, MapPin, MessageCircle, Pause, Pencil, Play, Plus, Power, QrCode, RotateCcw, Send, Smartphone, Store, Trash2, Truck, UserRound, X } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Badge, Button, cx, useToast } from '../components/ui'
@@ -9,8 +9,9 @@ import { useBusiness } from '../lib/business'
 import { useStore } from '../lib/store'
 import { DEMO, supabase } from '../lib/supabase'
 import { NICHOS, nichoPor } from '../lib/nichos'
+import { Pedidos, usePedidos } from '../components/WhatsAppPedidos'
 
-type Aba = 'conectar' | 'treinar' | 'testar' | 'conversas'
+type Aba = 'conectar' | 'treinar' | 'testar' | 'conversas' | 'pedidos'
 type Entrega = { local: string; taxa: string; prazo: string }
 type Licao = { cliente: string; certo: string }
 type Treino = {
@@ -26,6 +27,7 @@ type Treino = {
   nicho_outro: string
   frete: string
   extras: Record<string, string>
+  agenda_modo: string
   endereco: string
   referencia: string
   mapa: string
@@ -51,6 +53,7 @@ const TREINO_VAZIO: Treino = {
   nicho_outro: '',
   frete: '',
   extras: {},
+  agenda_modo: 'manual',
   endereco: '',
   referencia: '',
   mapa: '',
@@ -355,6 +358,28 @@ function Treinar({ treino, onChange, onSave, salvando, live }: { treino: Treino;
             </Secao>
           )}
 
+          {nicho.id === 'servicos' && (
+            <Secao icon={CalendarClock} titulo="Agenda" dica="Quando o cliente quiser marcar horário pelo WhatsApp, o que o atendente faz?">
+              <div role="radiogroup" aria-label="Tipo de agenda" className="grid gap-2.5 md:grid-cols-2">
+                {[
+                  { id: 'manual', t: 'Manual: eu confirmo', d: 'Ele anota o horário que o cliente quer, diz que vai verificar e manda pra aba Agenda. Você confere na sua agenda (papel, caderno, outro app) e confirma com um toque.' },
+                  { id: 'automatica', t: 'Automática: ele agenda sozinho', d: 'O Plotoon cria a sua agenda. Ele só oferece horários livres dentro do seu horário de atendimento, já confirma com o cliente e lança na agenda.' },
+                ].map((o) => {
+                  const on = (treino.agenda_modo || 'manual') === o.id
+                  return (
+                    <button key={o.id} type="button" role="radio" aria-checked={on} onClick={() => onChange({ ...treino, agenda_modo: o.id })} className={cx('press flex cursor-pointer flex-col items-start gap-1.5 rounded-2xl border p-4 text-left', on ? 'border-accent bg-[#ff8a3d14] shadow-[0_0_0_1px_#ff8a3d]' : 'border-line-strong bg-bg hover:border-[#ff8a3d80]')}>
+                      <span className="flex w-full items-center gap-2 text-[15px] font-bold text-ink">
+                        {o.t} {on && <Check size={16} className="ml-auto text-accent" />}
+                      </span>
+                      <span className="text-[13px] leading-snug text-muted">{o.d}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              {treino.agenda_modo === 'automatica' && <p className="m-0 rounded-xl bg-[#facc1512] px-3.5 py-2.5 text-[13px] text-[#fde68a]">Preencha bem o horário de atendimento e a duração de cada serviço (ex.: "Corte: R$ 45 (40 min)"). É com isso que ele monta os horários livres.</p>}
+            </Secao>
+          )}
+
           {(nicho.endereco !== 'nao' || nicho.entregaBairros || nicho.frete) && (
             <Secao icon={MapPin} titulo={tituloLocal} dica={nicho.entregaBairros ? 'Pra ele explicar onde fica e cobrar a taxa certa de cada lugar.' : 'Pra ele explicar onde fica e como o cliente recebe.'}>
               {nicho.endereco !== 'nao' && (
@@ -466,6 +491,7 @@ function Testar({ treino, nome, live, onLicao }: { treino: Treino; nome: string;
   const [txt, setTxt] = useState('')
   const [digitando, setDigitando] = useState(false)
   const [chamou, setChamou] = useState(false)
+  const [registro, setRegistro] = useState<{ tipo: string; dados: Record<string, unknown> } | null>(null)
   const fim = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const box = fim.current?.parentElement
@@ -481,10 +507,12 @@ function Testar({ treino, nome, live, onLicao }: { treino: Treino; nome: string;
     setDigitando(true)
     let partes: string[] = []
     let chamar = false
+    let reg: { tipo: string; dados: Record<string, unknown> } | null = null
     if (live && supabase) {
       const { data } = await supabase.functions.invoke('whatsapp', { body: { acao: 'simular', historico: hist, treino } })
       partes = data?.partes ?? []
       chamar = !!data?.chamar
+      reg = data?.registro ?? null
     } else {
       await new Promise((r) => setTimeout(r, 900))
       partes = DEMO_RESP
@@ -496,6 +524,7 @@ function Testar({ treino, nome, live, onLicao }: { treino: Treino; nome: string;
     }
     setDigitando(false)
     if (chamar) setChamou(true)
+    if (reg) setRegistro(reg)
   }
 
   return (
@@ -509,7 +538,7 @@ function Testar({ treino, nome, live, onLicao }: { treino: Treino; nome: string;
             <span className="truncate text-[15px] font-semibold text-white">{treino.nome_atendente || nome || 'Seu atendente'}</span>
             <span className="text-[12px] text-[#9fb5ad]">{digitando ? 'digitando…' : 'simulador · não envia pro WhatsApp'}</span>
           </span>
-          <button type="button" onClick={() => (setMsgs([]), setChamou(false), setCorrigidas([]), setCorrigindo(null))} aria-label="Recomeçar conversa" className="press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[#9fb5ad] hover:bg-white/5">
+          <button type="button" onClick={() => (setMsgs([]), setChamou(false), setRegistro(null), setCorrigidas([]), setCorrigindo(null))} aria-label="Recomeçar conversa" className="press flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[#9fb5ad] hover:bg-white/5">
             <RotateCcw size={18} />
           </button>
         </div>
@@ -558,6 +587,21 @@ function Testar({ treino, nome, live, onLicao }: { treino: Treino; nome: string;
             </div>
           )}
           {chamou && <p className="pop mx-auto mt-2 rounded-full bg-[#facc1522] px-3 py-1 text-center text-[12px] font-semibold text-[#fde68a]">Aqui você receberia o aviso pra assumir a conversa</p>}
+          {registro && (
+            <div className="pop mx-auto mt-2 flex max-w-[92%] flex-col gap-1 rounded-2xl border border-[#34d39955] bg-[#0f2a20] px-3.5 py-2.5 text-[12.5px] text-[#a7f3d0]">
+              <span className="font-bold">{registro.tipo === 'AGENDAR' ? 'Aqui o horário iria pra aba Agenda' : 'Aqui o pedido iria pra aba Pedidos'}</span>
+              {registro.tipo === 'AGENDAR' ? (
+                <span>
+                  {String(registro.dados.servico ?? '')} · {String(registro.dados.quando ?? '').replace('T', ' às ')}
+                </span>
+              ) : (
+                <span>
+                  {(Array.isArray(registro.dados.itens) ? registro.dados.itens : []).map((i) => `${(i as { qtd?: number }).qtd ?? 1}x ${(i as { item?: string }).item ?? ''}`).join(' · ')}
+                  {registro.dados.total ? ` · Total ${String(registro.dados.total)}` : ''}
+                </span>
+              )}
+            </div>
+          )}
           <div ref={fim} />
         </div>
         <form onSubmit={(e) => (e.preventDefault(), enviar())} className="flex items-center gap-2 border-t border-white/5 bg-[#111c18] p-2.5">
@@ -593,10 +637,10 @@ const DEMO_MSGS: Msg[] = [
   { id: 'm4', de: 'cliente', texto: 'Tem no tamanho M?', created_at: new Date().toISOString() },
 ]
 
-function Conversas({ uid, live }: { uid: string; live: boolean }) {
+function Conversas({ uid, live, inicial }: { uid: string; live: boolean; inicial?: string | null }) {
   const toast = useToast()
   const [convs, setConvs] = useState<Conversa[] | null>(live ? null : DEMO_CONVS)
-  const [aberta, setAberta] = useState<string | null>(null)
+  const [aberta, setAberta] = useState<string | null>(inicial ?? null)
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [txt, setTxt] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -757,6 +801,9 @@ export function WhatsAppPage() {
   const [bot, setBot] = useState<Bot | null>(null)
   const [treino, setTreino] = useState<Treino>(TREINO_VAZIO)
   const [salvando, setSalvando] = useState(false)
+  const [convInicial, setConvInicial] = useState<string | null>(null)
+  const pedidos = usePedidos(uid, live)
+  const servicos = treino.nicho === 'servicos'
   const instance = useMemo(() => (uid ? `pl${uid.replace(/-/g, '').slice(0, 22)}` : ''), [uid])
 
   useEffect(() => {
@@ -813,6 +860,7 @@ export function WhatsAppPage() {
     { id: 'treinar', t: 'Treinar', icon: GraduationCap },
     { id: 'testar', t: 'Testar', icon: Bot },
     { id: 'conversas', t: 'Conversas', icon: MessageCircle },
+    { id: 'pedidos', t: servicos ? 'Agenda' : 'Pedidos', icon: servicos ? CalendarClock : ClipboardList },
   ]
 
   return (
@@ -822,6 +870,7 @@ export function WhatsAppPage() {
         {abas.map((a) => (
           <button key={a.id} type="button" role="tab" aria-selected={a.id === aba} onClick={() => setAba(a.id)} className={cx('press flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-4 text-[14px] font-semibold', a.id === aba ? 'border-accent bg-[#ff8a3d1a] text-ink' : 'border-line text-muted hover:text-ink')}>
             <a.icon size={16} /> {a.t}
+            {a.id === 'pedidos' && pedidos.abertos > 0 && <span className="rounded-full bg-accent px-1.5 text-[11.5px] font-bold text-accent-ink">{pedidos.abertos}</span>}
           </button>
         ))}
       </div>
@@ -829,7 +878,8 @@ export function WhatsAppPage() {
         {aba === 'conectar' && <Conectar bot={bot} onBot={onBot} live={live} />}
         {aba === 'treinar' && <Treinar treino={treino} onChange={setTreino} onSave={() => salvarTreino()} salvando={salvando} live={live} />}
         {aba === 'testar' && <Testar treino={treino} nome={business.name} live={live} onLicao={ensinar} />}
-        {aba === 'conversas' && <Conversas uid={uid} live={live} />}
+        {aba === 'conversas' && <Conversas uid={uid} live={live} inicial={convInicial} />}
+        {aba === 'pedidos' && <Pedidos uid={uid} live={live} negocio={business.name} servicos={servicos} agendaAuto={servicos && treino.agenda_modo === 'automatica'} dados={pedidos} onConversa={(id) => (setConvInicial(id), setAba('conversas'))} />}
       </div>
     </AppShell>
   )

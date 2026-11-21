@@ -48,7 +48,17 @@ type Treino = {
   observacoes?: string; endereco?: string; referencia?: string; mapa?: string; fora_area?: string;
   entregas?: Array<{ local?: string; taxa?: string; prazo?: string }>;
   licoes?: Array<{ cliente?: string; certo?: string }>;
-  nicho?: string; nicho_outro?: string; frete?: string; extras?: Record<string, string>;
+  nicho?: string; nicho_outro?: string; frete?: string; extras?: Record<string, string>; agenda_modo?: string;
+};
+type Modo = "pedido" | "orcamento" | "agenda_manual" | "agenda_auto";
+const modoDe = (t: Treino): Modo =>
+  t.nicho === "servicos" ? (t.agenda_modo === "automatica" ? "agenda_auto" : "agenda_manual") : t.nicho === "alimentacao" || t.nicho === "varejo" ? "pedido" : "orcamento";
+
+const FECHAR: Record<Modo, string> = {
+  pedido: `Quando o cliente fechar a compra: confirme os itens, se é entrega ou retirada (com endereço completo e bairro se for entrega) e a forma de pagamento. Repita o pedido com o total. Quando ele concordar, diga que recebeu o pedido, que vai conferir e já confirma, e no FINAL da resposta, numa linha só, coloque:\n[PEDIDO]{"itens":[{"qtd":1,"item":"nome e detalhes","preco":"R$ 0,00"}],"total":"R$ 0,00","entrega":"entrega ou retirada","endereco":"","pagamento":"","observacao":"","nome":"nome do cliente se souber"}[/PEDIDO]\nUse [PEDIDO] uma vez só, e só depois que o cliente confirmar. Nesse caso não use [CHAMAR_DONO].`,
+  orcamento: `Quando o cliente quiser fechar ou pedir orçamento: junte o que ele quer (produtos, quantidades, tamanhos ou modelos, personalização, prazo que precisa, cidade). Depois diga que vai verificar e já passa o orçamento certinho, só um minuto, e no FINAL da resposta, numa linha só, coloque:\n[PEDIDO]{"itens":[{"qtd":1,"item":"nome e detalhes","preco":""}],"total":"","entrega":"","endereco":"","pagamento":"","observacao":"tudo que ajuda a montar o orçamento","nome":"nome do cliente se souber"}[/PEDIDO] [CHAMAR_DONO]`,
+  agenda_manual: `Quando o cliente quiser marcar horário: descubra o serviço, o dia e o horário que ele prefere e o nome dele. Diga que vai verificar a agenda e já confirma, só um minuto. NUNCA confirme o horário você mesmo. No FINAL da resposta, numa linha só, coloque:\n[AGENDAR]{"servico":"","quando":"AAAA-MM-DDTHH:MM","duracao_min":60,"nome":"","observacao":""}[/AGENDAR]\n("quando" no horário de Brasília, calculado a partir da data de agora).`,
+  agenda_auto: `Você cuida da agenda. Use o horário de atendimento e a lista de horários ocupados: só ofereça horários livres em que caiba a duração do serviço. Quando o cliente escolher um horário livre e confirmar, diga que ficou agendado (serviço, dia e hora) e no FINAL da resposta, numa linha só, coloque:\n[AGENDAR]{"servico":"","quando":"AAAA-MM-DDTHH:MM","duracao_min":60,"nome":"","observacao":""}[/AGENDAR]\n("quando" no horário de Brasília). Se o cliente quiser cancelar ou trocar um horário já marcado, diga que vai verificar, só um minuto, e termine com [CHAMAR_DONO].`,
 };
 const NICHO_NOME: Record<string, string> = {
   alimentacao: "alimentação e delivery",
@@ -92,14 +102,54 @@ ${t.apresentacao ? `Apresentação: ${t.apresentacao}\n\n` : ""}${bloco("Produto
 - Quando somar um pedido, confira a conta com cuidado e inclua a taxa de entrega do lugar do cliente.
 - Se o cliente falar um bairro ou lugar que não está na lista de entrega, não chute a taxa: use a regra de fora da área, ou diga que vai verificar.
 - NUNCA invente preço, prazo, estoque, desconto, taxa ou informação que não está acima. Se não souber, diga algo como "vou verificar aqui, só um minuto" e termine com [CHAMAR_DONO].
-- Se o cliente quiser fechar o pedido, pagar, reclamar, ou estiver irritado: responda com cuidado, diga que vai verificar/confirmar e que é só um minutinho, e termine com [CHAMAR_DONO].
+- Se o cliente reclamar, estiver irritado ou pedir algo que você não consegue resolver: responda com cuidado, diga que vai verificar e que é só um minutinho, e termine com [CHAMAR_DONO].
+${FECHAR[modoDe(t)]}
 - NUNCA diga "vou falar com a equipe", "vou chamar alguém", "vou passar pro responsável", "um atendente vai te responder" ou parecido. Fale sempre em primeira pessoa: "vou verificar", "já confirmo pra você", "só um minuto".
 - Não diga que é uma IA, a menos que perguntem diretamente; se perguntarem, seja honesto e diga que é o atendente virtual da ${empresa}.
 - Nunca fale de assuntos fora do negócio por muito tempo; traga a conversa de volta com gentileza.`;
 }
 
+const TZ = "America/Sao_Paulo";
+const fmtData = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleString("pt-BR", { timeZone: TZ, ...o });
+// "2026-11-22T15:00" (Brasília) -> Date
+function dataBrasilia(q: string): Date | null {
+  const m = q.trim().match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/);
+  if (!m) return null;
+  const d = new Date(`${m[1]}T${m[2]}:00-03:00`);
+  return isNaN(d.getTime()) ? null : d;
+}
+type Ocupado = { quando: string; duracao_min: number | null; servico: string | null };
+async function ocupados(db: SupabaseClient, uid: string): Promise<Ocupado[]> {
+  const { data } = await db
+    .from("whatsapp_pedidos")
+    .select("quando, duracao_min, servico")
+    .eq("user_id", uid)
+    .eq("tipo", "agendamento")
+    .neq("status", "cancelado")
+    .gte("quando", new Date(Date.now() - 3 * 3600e3).toISOString())
+    .lte("quando", new Date(Date.now() + 21 * 86400e3).toISOString())
+    .order("quando")
+    .limit(300);
+  return (data ?? []) as Ocupado[];
+}
+// parte que muda a cada mensagem (fica fora do cache)
+function contexto(t: Treino, ocup: Ocupado[]) {
+  const agora = new Date();
+  let txt = `Agora: ${fmtData(agora, { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} (horário de Brasília).`;
+  if (modoDe(t) === "agenda_auto") {
+    const linhas = ocup.map((o) => {
+      const ini = new Date(o.quando);
+      const fim = new Date(ini.getTime() + (o.duracao_min ?? 60) * 60e3);
+      return `${fmtData(ini, { weekday: "short", day: "2-digit", month: "2-digit" })} das ${fmtData(ini, { hour: "2-digit", minute: "2-digit" })} às ${fmtData(fim, { hour: "2-digit", minute: "2-digit" })}`;
+    });
+    txt += `\nHorários já ocupados na agenda (não ofereça esses):\n${linhas.length ? linhas.join("\n") : "nenhum, a agenda está livre"}`;
+  }
+  return txt;
+}
+
+type Registro = { tipo: "PEDIDO" | "AGENDAR"; dados: J };
 type Hist = Array<{ de: string; texto: string }>;
-async function responder(neg: J | null, t: Treino, hist: Hist, imagem?: { b64: string; mime: string } | null) {
+async function responder(neg: J | null, t: Treino, hist: Hist, imagem?: { b64: string; mime: string } | null, extra = "") {
   const key = Deno.env.get("ANTHROPIC_API_KEY");
   if (!key) throw new Error("sem_chave");
   const msgs: Array<{ role: string; content: unknown }> = [];
@@ -119,16 +169,42 @@ async function responder(neg: J | null, t: Treino, hist: Hist, imagem?: { b64: s
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: MODEL, max_tokens: 3000, output_config: { effort: "low" }, system: sistema(neg, t), messages: msgs }),
+    // o treino fica em cache (sai ~10x mais barato nas próximas mensagens); data e agenda vão à parte
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 3000,
+      output_config: { effort: "low" },
+      system: [
+        { type: "text", text: sistema(neg, t), cache_control: { type: "ephemeral" } },
+        { type: "text", text: extra || contexto(t, []) },
+      ],
+      messages: msgs,
+    }),
   });
   if (!res.ok) throw new Error(`anthropic_${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const text = ((data.content ?? []) as J[]).filter((b) => b.type === "text").map((b) => String(b.text)).join("\n").trim();
-  const custo = Number(data.usage?.input_tokens ?? 0) * USD_IN + Number(data.usage?.output_tokens ?? 0) * USD_OUT;
+  const u = data.usage ?? {};
+  const iNovo = Number(u.input_tokens ?? 0), iGrava = Number(u.cache_creation_input_tokens ?? 0), iLe = Number(u.cache_read_input_tokens ?? 0), o = Number(u.output_tokens ?? 0);
+  const custo = iNovo * USD_IN + iGrava * USD_IN * 1.25 + iLe * USD_IN * 0.1 + o * USD_OUT;
   const chamar = /\[CHAMAR_DONO\]/.test(text);
-  const limpo = text.replace(/\[CHAMAR_DONO\]/g, "").replace(/\*\*/g, "").trim();
+  let registro: Registro | null = null;
+  const mk = text.match(/\[(PEDIDO|AGENDAR)\]\s*([\s\S]*?)\s*\[\/\1\]/);
+  if (mk) {
+    try {
+      registro = { tipo: mk[1] as Registro["tipo"], dados: obj(JSON.parse(mk[2])) };
+    } catch {
+      console.error(`marcador invalido: ${mk[2].slice(0, 200)}`);
+    }
+  }
+  const limpo = text
+    .replace(/\[(PEDIDO|AGENDAR)\][\s\S]*?\[\/\1\]/g, "")
+    .replace(/\[(PEDIDO|AGENDAR)\][\s\S]*$/g, "")
+    .replace(/\[CHAMAR_DONO\]/g, "")
+    .replace(/\*\*/g, "")
+    .trim();
   const partes = limpo.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean).slice(0, 3);
-  return { partes, chamar, custo, i: Number(data.usage?.input_tokens ?? 0), o: Number(data.usage?.output_tokens ?? 0) };
+  return { partes, chamar, registro, custo, i: iNovo + iGrava + iLe, o };
 }
 
 async function transcrever(b64: string, mime: string) {
@@ -183,6 +259,31 @@ async function midia(instance: string, d: J, m: J) {
     console.error(`midia: erro ${e}`);
     return "";
   }
+}
+
+// grava o pedido/agendamento que a IA fechou. Devolve se precisa do dono (conflito na agenda).
+async function registrar(db: SupabaseClient, uid: string, t: Treino, conv: { id: string; nome?: string | null }, jid: string, reg: Registro) {
+  const d = reg.dados;
+  const modo = modoDe(t);
+  const numero = jid.endsWith("@s.whatsapp.net") ? jid.split("@")[0] : null;
+  const base = { user_id: uid, conversa_id: conv.id, cliente_nome: str(d.nome).trim() || conv.nome || null, cliente_numero: numero, observacao: str(d.observacao).trim() || null };
+  if (reg.tipo === "AGENDAR") {
+    const quando = dataBrasilia(str(d.quando));
+    const dur = Math.max(5, Math.min(600, Number(d.duracao_min) || 60));
+    let conflito = false;
+    if (quando && modo === "agenda_auto") {
+      const fim = quando.getTime() + dur * 60e3;
+      conflito = (await ocupados(db, uid)).some((o) => {
+        const ini = new Date(o.quando).getTime();
+        return ini < fim && ini + (o.duracao_min ?? 60) * 60e3 > quando.getTime();
+      });
+    }
+    await db.from("whatsapp_pedidos").insert({ ...base, tipo: "agendamento", servico: str(d.servico).trim() || null, quando: quando?.toISOString() ?? null, duracao_min: dur, confirmado: modo === "agenda_auto" && !!quando && !conflito });
+    return conflito || !quando || modo === "agenda_manual";
+  }
+  const itens = (Array.isArray(d.itens) ? d.itens : []).slice(0, 60).map((x) => ({ qtd: Number(obj(x).qtd) || 1, item: str(obj(x).item).slice(0, 300), preco: str(obj(x).preco).slice(0, 40) }));
+  await db.from("whatsapp_pedidos").insert({ ...base, tipo: modo === "orcamento" ? "orcamento" : "pedido", itens, total: str(d.total) || null, entrega: str(d.entrega) || null, endereco: str(d.endereco) || null, pagamento: str(d.pagamento) || null });
+  return modo === "orcamento";
 }
 
 /* ---------------- avisos da Evolution ---------------- */
@@ -241,7 +342,7 @@ async function aviso(db: SupabaseClient, body: J, instance: string) {
   const { data: conv } = await db
     .from("whatsapp_conversas")
     .upsert({ user_id: uid, jid, ...(nome ? { nome } : {}), ultima_msg: texto.slice(0, 160), ultima_em: new Date().toISOString() }, { onConflict: "user_id,jid" })
-    .select("id, ia_pausada, nao_lidas")
+    .select("id, nome, ia_pausada, nao_lidas")
     .single();
   if (!conv) return;
 
@@ -278,7 +379,9 @@ async function aviso(db: SupabaseClient, body: J, instance: string) {
   try {
     const { data: hist } = await db.from("whatsapp_mensagens").select("de, texto, created_at").eq("conversa_id", conv.id).order("created_at", { ascending: false }).limit(24);
     const { data: neg } = await db.from("business_profiles").select("name, niche, sells, audience, tone").eq("user_id", uid).maybeSingle();
-    const r = await responder(neg, obj(bot.treino) as Treino, (hist ?? []).reverse(), imagem);
+    const treino = obj(bot.treino) as Treino;
+    const ocup = modoDe(treino) === "agenda_auto" ? await ocupados(db, uid) : [];
+    const r = await responder(neg, treino, (hist ?? []).reverse(), imagem, contexto(treino, ocup));
     if (!r || !r.partes.length) throw new Error("sem_resposta");
     for (const parte of r.partes) {
       const espera = Math.min(6000, 900 + parte.length * 45); // tempo de "digitando…" de gente
@@ -288,7 +391,16 @@ async function aviso(db: SupabaseClient, body: J, instance: string) {
       const id = str(obj(obj(env.data).key).id);
       await db.from("whatsapp_mensagens").insert({ conversa_id: conv.id, user_id: uid, de: "ia", texto: parte, wa_id: id || null });
     }
-    await db.from("whatsapp_conversas").update({ ultima_msg: r.partes[r.partes.length - 1].slice(0, 160), ultima_em: new Date().toISOString(), ...(r.chamar ? { precisa_dono: true, ia_pausada: true } : {}) }).eq("id", conv.id);
+    let precisa = r.chamar;
+    if (r.registro) {
+      try {
+        precisa = (await registrar(db, uid, treino, conv, jid, r.registro)) || precisa;
+      } catch (e) {
+        console.error(`registrar: ${e}`);
+        precisa = true;
+      }
+    }
+    await db.from("whatsapp_conversas").update({ ultima_msg: r.partes[r.partes.length - 1].slice(0, 160), ultima_em: new Date().toISOString(), ...(precisa ? { precisa_dono: true, ia_pausada: true } : {}) }).eq("id", conv.id);
     await db.from("ai_usage").insert({ user_id: uid, modulo: "whatsapp", ref: conv.id, input_tokens: r.i, output_tokens: r.o, custo_usd: r.custo, creditos: custoCred });
   } catch (e) {
     console.error(e);
@@ -340,9 +452,10 @@ Deno.serve(async (req) => {
       const hist = (Array.isArray(body.historico) ? body.historico : []).slice(-20).map((h) => ({ de: str(obj(h).de) === "cliente" ? "cliente" : "ia", texto: str(obj(h).texto).slice(0, 1500) }));
       const { data: neg } = await db.from("business_profiles").select("name, niche, sells, audience, tone").eq("user_id", user.id).maybeSingle();
       const treino = (obj(body.treino) as Treino) ?? {};
-      const r = await responder(neg, treino, hist);
+      const ocup = modoDe(treino) === "agenda_auto" ? await ocupados(db, user.id) : [];
+      const r = await responder(neg, treino, hist, null, contexto(treino, ocup));
       if (r) await db.from("ai_usage").insert({ user_id: user.id, modulo: "whatsapp_teste", ref: "simulador", input_tokens: r.i, output_tokens: r.o, custo_usd: r.custo, creditos: 0 });
-      return json({ partes: r?.partes ?? [], chamar: r?.chamar ?? false });
+      return json({ partes: r?.partes ?? [], chamar: r?.chamar ?? false, registro: r?.registro ?? null });
     }
 
     if (acao === "ler_cardapio") {
