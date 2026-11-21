@@ -1,6 +1,9 @@
 // Tipos de negócio do Atendente WhatsApp: cada um mostra os campos e exemplos que fazem sentido pra ele.
 export type NichoId = 'alimentacao' | 'varejo' | 'fabrica' | 'servicos' | 'digital' | 'outro'
 
+export type Gatilho = 'pos_pedido' | 'sem_resposta' | 'voltar'
+export type RemarketingPreset = { titulo: string; quando: string; espera_h: number; instrucao: string }
+
 export type CampoExtra = { label: string; dica?: string; placeholder: string }
 
 export type Nicho = {
@@ -19,6 +22,7 @@ export type Nicho = {
   perguntasPlaceholder: string
   regrasPlaceholder: string
   observacoesPlaceholder: string
+  remarketing: Record<Gatilho, RemarketingPreset>
 }
 
 export const NICHOS: Nicho[] = [
@@ -37,6 +41,11 @@ export const NICHOS: Nicho[] = [
     perguntasPlaceholder: 'Pode meio a meio? Pode, cobra o sabor mais caro.\nAceita cartão na entrega? Sim, levamos a maquininha.',
     regrasPlaceholder: 'Pra fechar pedido, pegue sabores, endereço e forma de pagamento, repita o pedido com o total e me chame.\nSe reclamarem de atraso, me chame na hora.',
     observacoesPlaceholder: 'Sexta e sábado o movimento é grande, avisa que pode atrasar uns 15 min.\nSempre ofereça bebida se o cliente não pedir.',
+    remarketing: {
+      pos_pedido: { titulo: 'Depois do pedido', quando: 'depois que o pedido foi fechado', espera_h: 2, instrucao: 'Pergunte se a comida chegou bem e quentinha, se gostou, se tem alguma observação ou reclamação, e agradeça pelo pedido.' },
+      sem_resposta: { titulo: 'Quem conversou e não pediu', quando: 'depois da última mensagem, se ele sumiu sem pedir', espera_h: 1, instrucao: 'Retome com leveza, sem pressão: pergunte se ficou alguma dúvida do cardápio e lembre que dá tempo de pedir.' },
+      voltar: { titulo: 'Chamar de volta', quando: 'depois do último pedido', espera_h: 168, instrucao: 'Diga que faz tempo que ele não pede, lembre do que ele pediu da última vez e convide pra pedir de novo. Se tiver promoção do dia, mencione.' },
+    },
   },
   {
     id: 'varejo',
@@ -54,6 +63,11 @@ export const NICHOS: Nicho[] = [
     perguntasPlaceholder: 'Parcela? Sim, em até 3x sem juros no cartão.\nÉ original? Sim, todos com nota fiscal.',
     regrasPlaceholder: 'Não dar desconto além do Pix sem falar comigo.\nSe pedirem troca, me chame.',
     observacoesPlaceholder: 'A forma é pequena, sempre sugira um número acima.\nFoto real do produto eu mando quando o cliente pedir.',
+    remarketing: {
+      pos_pedido: { titulo: 'Depois da compra', quando: 'depois que a compra foi fechada', espera_h: 72, instrucao: 'Pergunte se o produto chegou certinho, se serviu ou se gostou, e se precisa de ajuda com troca. Agradeça pela compra.' },
+      sem_resposta: { titulo: 'Quem conversou e não comprou', quando: 'depois da última mensagem, se ele sumiu sem comprar', espera_h: 3, instrucao: 'Retome com leveza: pergunte se ficou alguma dúvida de tamanho, cor ou frete e se quer que separe o produto.' },
+      voltar: { titulo: 'Chamar de volta', quando: 'depois da última compra', espera_h: 720, instrucao: 'Conte que chegaram novidades parecidas com o que ele comprou e convide pra dar uma olhada.' },
+    },
   },
   {
     id: 'fabrica',
@@ -76,6 +90,11 @@ export const NICHOS: Nicho[] = [
     perguntasPlaceholder: 'Tem amostra? Temos mostruário na fábrica, pode agendar uma visita.\nTem tabela de medidas? Tem, eu mando por aqui.',
     regrasPlaceholder: 'Orçamento fechado: pegue quantidade, modelo, tamanhos e prazo desejado, e me chame.\nNunca prometa prazo menor que o de produção.',
     observacoesPlaceholder: 'Empresa grande costuma pedir nota fiscal, a gente emite.\nPra escola, o pico é janeiro e fevereiro, avisar que o prazo aumenta.',
+    remarketing: {
+      pos_pedido: { titulo: 'Depois do orçamento', quando: 'depois que o pedido de orçamento foi feito', espera_h: 24, instrucao: 'Pergunte se ele conseguiu ver o orçamento, se ficou alguma dúvida de prazo, modelo ou valor, e se quer seguir com o pedido.' },
+      sem_resposta: { titulo: 'Quem conversou e não pediu orçamento', quando: 'depois da última mensagem, se ele sumiu', espera_h: 24, instrucao: 'Retome com profissionalismo: pergunte se ainda precisa das peças e se quer que monte um orçamento.' },
+      voltar: { titulo: 'Chamar de volta', quando: 'depois do último pedido', espera_h: 2160, instrucao: 'Pergunte se vai precisar repor as peças ou fazer um novo lote, e lembre que você já tem a arte e as medidas dele.' },
+    },
   },
   {
     id: 'servicos',
@@ -95,6 +114,11 @@ export const NICHOS: Nicho[] = [
     perguntasPlaceholder: 'Tem estacionamento? Tem, na frente do salão.\nAtende sem agendar? Atende se tiver horário livre, mas o ideal é marcar.',
     regrasPlaceholder: 'Nunca confirme horário sem eu ver a agenda: diga que vai verificar e me chame.\nNão dar desconto em pacote sem falar comigo.',
     observacoesPlaceholder: 'Sábado lota rápido, ofereça sexta à tarde.\nCliente novo ganha 10% no primeiro corte.',
+    remarketing: {
+      pos_pedido: { titulo: 'Depois do atendimento', quando: 'depois do horário marcado', espera_h: 3, instrucao: 'Pergunte como foi, se gostou do resultado e agradeça pela visita. Se ele gostou, peça uma avaliação.' },
+      sem_resposta: { titulo: 'Quem conversou e não marcou', quando: 'depois da última mensagem, se ele sumiu sem marcar', espera_h: 2, instrucao: 'Retome com leveza: pergunte se quer que reserve um horário e ofereça uma opção de dia.' },
+      voltar: { titulo: 'Chamar de volta', quando: 'depois do último atendimento', espera_h: 504, instrucao: 'Lembre que já faz umas semanas desde o último atendimento e ofereça um horário essa semana.' },
+    },
   },
   {
     id: 'digital',
@@ -114,6 +138,11 @@ export const NICHOS: Nicho[] = [
     perguntasPlaceholder: 'Serve pra iniciante? Sim, começa do zero.\nTem certificado? Tem, ao terminar as aulas.',
     regrasPlaceholder: 'Não prometa resultado garantido de faturamento.\nSe a pessoa quiser falar de proposta pra empresa, me chame.',
     observacoesPlaceholder: 'Quem pergunta preço sem contexto, primeiro entenda o momento dela antes de mandar o link.\nTem bônus de aula ao vivo até sexta.',
+    remarketing: {
+      pos_pedido: { titulo: 'Depois da compra', quando: 'depois que a compra foi fechada', espera_h: 24, instrucao: 'Pergunte se ele conseguiu acessar, se está tudo certo e se precisa de ajuda pra começar. Agradeça pela confiança.' },
+      sem_resposta: { titulo: 'Quem conversou e não comprou', quando: 'depois da última mensagem, se ele sumiu sem comprar', espera_h: 2, instrucao: 'Retome com leveza: pergunte o que ficou faltando pra ele decidir e responda a principal dúvida. Lembre da garantia.' },
+      voltar: { titulo: 'Chamar de volta', quando: 'depois da última compra', espera_h: 720, instrucao: 'Pergunte como estão os resultados e apresente o próximo passo (outro curso, mentoria ou renovação).' },
+    },
   },
   {
     id: 'outro',
@@ -131,7 +160,29 @@ export const NICHOS: Nicho[] = [
     perguntasPlaceholder: 'Pergunta? Resposta, do jeito que você responderia.',
     regrasPlaceholder: 'O que ele nunca deve fazer e quando deve chamar você.',
     observacoesPlaceholder: 'Qualquer coisa que um funcionário novo precisaria saber.',
+    remarketing: {
+      pos_pedido: { titulo: 'Depois do pedido', quando: 'depois que o pedido foi fechado', espera_h: 24, instrucao: 'Pergunte se deu tudo certo, se gostou e se tem alguma observação. Agradeça.' },
+      sem_resposta: { titulo: 'Quem conversou e não fechou', quando: 'depois da última mensagem, se ele sumiu', espera_h: 3, instrucao: 'Retome com leveza: pergunte se ficou alguma dúvida e se pode ajudar.' },
+      voltar: { titulo: 'Chamar de volta', quando: 'depois do último pedido', espera_h: 720, instrucao: 'Diga que faz tempo e convide pra voltar.' },
+    },
   },
 ]
 
 export const nichoPor = (id: string) => NICHOS.find((n) => n.id === id) ?? null
+
+export const ESPERAS: Array<{ h: number; t: string }> = [
+  { h: 1, t: '1 hora' },
+  { h: 2, t: '2 horas' },
+  { h: 3, t: '3 horas' },
+  { h: 6, t: '6 horas' },
+  { h: 12, t: '12 horas' },
+  { h: 24, t: '1 dia' },
+  { h: 48, t: '2 dias' },
+  { h: 72, t: '3 dias' },
+  { h: 168, t: '1 semana' },
+  { h: 336, t: '2 semanas' },
+  { h: 504, t: '3 semanas' },
+  { h: 720, t: '1 mês' },
+  { h: 1440, t: '2 meses' },
+  { h: 2160, t: '3 meses' },
+]

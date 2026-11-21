@@ -1,6 +1,6 @@
 // Atendente WhatsApp: conectar pelo QR code, treinar, testar no simulador e acompanhar as conversas.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { AlertTriangle, ArrowLeft, Bot, Briefcase, CalendarClock, Camera, ClipboardList, Check, CheckCheck, GraduationCap, Lightbulb, LoaderCircle, Lock, MapPin, MessageCircle, Pause, Pencil, Play, Plus, Power, QrCode, RotateCcw, Send, Smartphone, Store, Trash2, Truck, UserRound, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Bot, Briefcase, CalendarClock, Camera, ClipboardList, Check, CheckCheck, GraduationCap, Lightbulb, LoaderCircle, Lock, MapPin, MessageCircle, Pause, Pencil, Play, Plus, Power, QrCode, Repeat, RotateCcw, Send, Smartphone, Store, Trash2, Truck, UserRound, X } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Badge, Button, cx, useToast } from '../components/ui'
@@ -8,11 +8,12 @@ import { useAuth } from '../lib/auth'
 import { useBusiness } from '../lib/business'
 import { useStore } from '../lib/store'
 import { DEMO, supabase } from '../lib/supabase'
-import { NICHOS, nichoPor } from '../lib/nichos'
+import { ESPERAS, NICHOS, nichoPor, type Gatilho } from '../lib/nichos'
 import { Pedidos, usePedidos } from '../components/WhatsAppPedidos'
 
 type Aba = 'conectar' | 'treinar' | 'testar' | 'conversas' | 'pedidos'
 type Entrega = { local: string; taxa: string; prazo: string }
+type Remarketing = { ativo: boolean; espera_h: number; instrucao: string }
 type Licao = { cliente: string; certo: string }
 type Treino = {
   nome_atendente: string
@@ -28,6 +29,7 @@ type Treino = {
   frete: string
   extras: Record<string, string>
   agenda_modo: string
+  remarketing: Partial<Record<Gatilho, Remarketing>>
   endereco: string
   referencia: string
   mapa: string
@@ -54,6 +56,7 @@ const TREINO_VAZIO: Treino = {
   frete: '',
   extras: {},
   agenda_modo: 'manual',
+  remarketing: {},
   endereco: '',
   referencia: '',
   mapa: '',
@@ -434,6 +437,51 @@ function Treinar({ treino, onChange, onSave, salvando, live }: { treino: Treino;
             </div>
             <Campo label="Perguntas que os clientes sempre fazem" dica="Pergunta e resposta, do jeito que você responderia." rows={6} value={treino.perguntas} onChange={set('perguntas')} placeholder={nicho.perguntasPlaceholder} />
             <Campo label="Regras importantes" dica="O que ele nunca deve fazer, quando chamar você, promoções do momento." rows={3} value={treino.regras} onChange={set('regras')} placeholder={nicho.regrasPlaceholder} />
+          </Secao>
+
+          <Secao icon={Repeat} titulo="Remarketing" dica="Mensagens que ele manda sozinho depois, pra trazer o cliente de volta. Cada uma é escrita na hora, com o nome e o que a pessoa pediu.">
+            <div className="flex flex-col gap-2.5">
+              {(['pos_pedido', 'sem_resposta', 'voltar'] as Gatilho[]).map((g) => {
+                const pre = nicho.remarketing[g]
+                const rm = treino.remarketing[g]
+                const on = !!rm?.ativo
+                const espera = rm?.espera_h ?? pre.espera_h
+                const setRm = (patch: Partial<Remarketing>) => onChange({ ...treino, remarketing: { ...treino.remarketing, [g]: { ativo: on, espera_h: espera, instrucao: rm?.instrucao ?? pre.instrucao, ...patch } } })
+                const esperaTxt = ESPERAS.find((x) => x.h === espera)?.t ?? `${espera}h`
+                return (
+                  <div key={g} className={cx('flex flex-col gap-3 rounded-2xl border p-3.5', on ? 'border-[#34d39955] bg-[#0f1a15]' : 'border-line-strong bg-bg')}>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="text-[15px] font-bold text-ink">{pre.titulo}</span>
+                        <span className="text-[13px] text-muted">
+                          {on ? `Manda ${esperaTxt} ${pre.quando}` : 'Desligado'}
+                        </span>
+                      </span>
+                      <input type="checkbox" role="switch" aria-label={pre.titulo} checked={on} onChange={(e) => setRm({ ativo: e.target.checked })} className="h-6 w-11 shrink-0 cursor-pointer appearance-none rounded-full bg-surface-2 transition-colors before:block before:h-5 before:w-5 before:translate-x-0.5 before:rounded-full before:bg-white before:transition-transform checked:bg-[#34d399] checked:before:translate-x-[22px]" />
+                    </label>
+                    {on && (
+                      <div className="grid gap-3 md:grid-cols-[170px_1fr]">
+                        <label className="flex flex-col gap-1.5">
+                          <span className="text-[13px] font-semibold text-ink">Quanto tempo depois</span>
+                          <select value={espera} onChange={(e) => setRm({ espera_h: Number(e.target.value) })} className="h-12 rounded-xl border border-line-strong bg-surface px-3 text-[15px] text-ink outline-none focus:border-accent">
+                            {ESPERAS.map((x) => (
+                              <option key={x.h} value={x.h}>
+                                {x.t}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="flex flex-col gap-1.5">
+                          <span className="text-[13px] font-semibold text-ink">O que ele deve falar</span>
+                          <textarea value={rm?.instrucao ?? pre.instrucao} onChange={(e) => setRm({ instrucao: e.target.value })} rows={2} placeholder={pre.instrucao} className="resize-y rounded-xl border border-line-strong bg-surface px-3 py-2.5 text-[14.5px] leading-relaxed text-ink outline-none placeholder:text-subtle focus:border-accent" />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <p className="m-0 text-[12.5px] text-muted">Só envia entre 9h e 21h, uma vez por cliente, e nunca pra quem pediu pra não receber. Cada mensagem gasta 1 crédito.</p>
           </Secao>
 
           <Secao icon={Lightbulb} titulo="Observações" dica="Escreva do seu jeito, como se estivesse explicando pra um funcionário novo. Vale qualquer coisa.">

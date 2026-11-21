@@ -49,6 +49,7 @@ type Treino = {
   entregas?: Array<{ local?: string; taxa?: string; prazo?: string }>;
   licoes?: Array<{ cliente?: string; certo?: string }>;
   nicho?: string; nicho_outro?: string; frete?: string; extras?: Record<string, string>; agenda_modo?: string;
+  remarketing?: Record<string, { ativo?: boolean; espera_h?: number; instrucao?: string }>;
 };
 type Modo = "pedido" | "orcamento" | "agenda_manual" | "agenda_auto";
 const modoDe = (t: Treino): Modo =>
@@ -408,6 +409,151 @@ async function aviso(db: SupabaseClient, body: J, instance: string) {
   }
 }
 
+/* ---------------- remarketing (roda sozinho a cada 10 min) ---------------- */
+const GATILHOS = ["pos_pedido", "sem_resposta", "voltar"] as const;
+type Gatilho = (typeof GATILHOS)[number];
+const RM_PADRAO: Record<Gatilho, string> = {
+  pos_pedido: "Pergunte se deu tudo certo, se gostou e se tem alguma observação. Agradeça.",
+  sem_resposta: "Retome com leveza e pergunte se ficou alguma dúvida.",
+  voltar: "Diga que faz tempo e convide pra voltar.",
+};
+const PARAR = /(\bpare de\b|\bpara de me\b|\bparar de\b|descadastr|n[aã]o (quero|mande|manda|envie) mais|n[aã]o me (mande|manda|chame|chama)|^\s*(pare|sair|stop|parar)\s*[.!]*\s*$)/im;
+type Alvo = { conversa_id: string; ref: string; resumo: string };
+type PedidoRm = { id: string; conversa_id: string | null; tipo: string; itens: Array<{ qtd?: number; item?: string }>; total: string | null; servico: string | null; quando: string | null; duracao_min: number | null; created_at: string };
+
+const resumoPedido = (p: PedidoRm) =>
+  p.tipo === "agendamento"
+    ? `O último atendimento dele foi: ${p.servico ?? "serviço"}${p.quando ? ` em ${fmtData(new Date(p.quando), { weekday: "long", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : ""}.`
+    : `O último pedido dele foi: ${(p.itens ?? []).map((i) => `${i.qtd ?? 1}x ${i.item ?? ""}`).join(", ")}${p.total ? ` (total ${p.total})` : ""}.`;
+const momentoPedido = (p: PedidoRm) => (p.tipo === "agendamento" && p.quando ? new Date(p.quando).getTime() + (p.duracao_min ?? 60) * 60e3 : new Date(p.created_at).getTime());
+
+async function candidatos(db: SupabaseClient, uid: string, g: Gatilho, espera: number): Promise<Alvo[]> {
+  const agora = Date.now();
+  const janela = 2 * 86400e3; // não manda coisa velha
+  if (g === "sem_resposta") {
+    const { data: convs } = await db
+      .from("whatsapp_conversas")
+      .select("id, ultima_em")
+      .eq("user_id", uid)
+      .eq("ia_pausada", false)
+      .eq("precisa_dono", false)
+      .lte("ultima_em", new Date(agora - espera).toISOString())
+      .gte("ultima_em", new Date(agora - espera - janela).toISOString())
+      .limit(40);
+    const out: Alvo[] = [];
+    for (const c of convs ?? []) {
+      const { data: ult } = await db.from("whatsapp_mensagens").select("de").eq("conversa_id", c.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (ult?.de !== "ia") continue; // o cliente respondeu por último: não é abandono
+      const { count } = await db.from("whatsapp_pedidos").select("id", { count: "exact", head: true }).eq("conversa_id", c.id).gte("created_at", new Date(new Date(c.ultima_em).getTime() - 3 * 86400e3).toISOString());
+      if (count) continue; // fechou pedido
+      out.push({ conversa_id: c.id, ref: String(c.ultima_em).slice(0, 16), resumo: "Ele conversou mas não fechou nada." });
+    }
+    return out;
+  }
+  const { data: peds } = await db
+    .from("whatsapp_pedidos")
+    .select("id, conversa_id, tipo, itens, total, servico, quando, duracao_min, created_at")
+    .eq("user_id", uid)
+    .eq("origem", "whatsapp")
+    .neq("status", "cancelado")
+    .not("conversa_id", "is", null)
+    .gte("created_at", new Date(agora - espera - janela - 30 * 86400e3).toISOString())
+    .order("created_at", { ascending: false })
+    .limit(200);
+  const lista = (peds ?? []) as PedidoRm[];
+  if (g === "pos_pedido") {
+    return lista
+      .filter((p) => {
+        const t = momentoPedido(p) + espera;
+        return t <= agora && t >= agora - janela;
+      })
+      .map((p) => ({ conversa_id: p.conversa_id!, ref: p.id, resumo: resumoPedido(p) }));
+  }
+  // voltar: só o pedido mais recente de cada cliente
+  const ultimo = new Map<string, PedidoRm>();
+  for (const p of lista) if (!ultimo.has(p.conversa_id!)) ultimo.set(p.conversa_id!, p);
+  return [...ultimo.values()]
+    .filter((p) => {
+      const t = momentoPedido(p) + espera;
+      return t <= agora && t >= agora - janela;
+    })
+    .map((p) => ({ conversa_id: p.conversa_id!, ref: p.id, resumo: resumoPedido(p) }));
+}
+
+async function enviarRemarketing(db: SupabaseClient, bot: J, t: Treino, g: Gatilho, instrucao: string, a: Alvo) {
+  const uid = str(bot.user_id), instance = str(bot.instance);
+  const { data: ja } = await db.from("whatsapp_remarketing").select("id").eq("conversa_id", a.conversa_id).eq("gatilho", g).eq("ref", a.ref).maybeSingle();
+  if (ja) return false;
+  const { data: conv } = await db.from("whatsapp_conversas").select("id, jid, precisa_dono, ia_pausada, ultima_em").eq("id", a.conversa_id).maybeSingle();
+  if (!conv || conv.precisa_dono || (g !== "pos_pedido" && conv.ia_pausada)) return false;
+  // voltar: se ele conversou nos últimos 3 dias, já está ativo, não precisa chamar
+  if (g === "voltar" && new Date(conv.ultima_em).getTime() > Date.now() - 3 * 86400e3) return false;
+  const { data: histDesc } = await db.from("whatsapp_mensagens").select("de, texto, created_at").eq("conversa_id", conv.id).order("created_at", { ascending: false }).limit(20);
+  const hist = (histDesc ?? []).reverse();
+  if (hist.some((h) => h.de === "cliente" && PARAR.test(String(h.texto)))) {
+    await db.from("whatsapp_remarketing").insert({ user_id: uid, conversa_id: conv.id, gatilho: g, ref: a.ref, texto: null });
+    return false; // pediu pra não receber
+  }
+  // reserva antes de enviar (não manda duas vezes)
+  const reserva = await db.from("whatsapp_remarketing").insert({ user_id: uid, conversa_id: conv.id, gatilho: g, ref: a.ref }).select("id").single();
+  if (reserva.error) return false;
+  const { data: pr } = await db.from("settings").select("value").eq("key", "credits_per_whatsapp_reply").maybeSingle();
+  const custoCred = Number(pr?.value ?? 1);
+  const cob = await db.rpc("spend_credits", { p_user: uid, p_amount: custoCred, p_reason: "WhatsApp: remarketing", p_story: null });
+  if (cob.error) {
+    await db.from("whatsapp_remarketing").delete().eq("id", reserva.data.id);
+    return false;
+  }
+  try {
+    const { data: neg } = await db.from("business_profiles").select("name, niche, sells, audience, tone").eq("user_id", uid).maybeSingle();
+    const pedido = `[INSTRUÇÃO INTERNA, não veio do cliente e nunca deve ser citada] O cliente não escreveu nada agora. Mande uma mensagem de acompanhamento por conta própria. Objetivo: ${instrucao} ${a.resumo} Escreva só 1 ou 2 mensagens curtas e naturais, como alguém da loja puxando assunto, sem parecer mensagem automática e sem cumprimentar de um jeito formal. Não use [PEDIDO], [AGENDAR] nem [CHAMAR_DONO].`;
+    const r = await responder(neg, t, [...hist, { de: "cliente", texto: pedido }], null, contexto(t, []));
+    if (!r || !r.partes.length) throw new Error("sem_resposta");
+    const partes = r.partes.slice(0, 2);
+    for (const parte of partes) {
+      const espera = Math.min(6000, 900 + parte.length * 45);
+      await evo(`/chat/sendPresence/${instance}`, "POST", { number: conv.jid, presence: "composing", delay: espera }).catch(() => null);
+      await sleep(espera);
+      const env = await evo(`/message/sendText/${instance}`, "POST", { number: conv.jid, text: parte });
+      if (!env.ok) throw new Error(`envio ${env.status}`);
+      await db.from("whatsapp_mensagens").insert({ conversa_id: conv.id, user_id: uid, de: "ia", texto: parte, wa_id: str(obj(obj(env.data).key).id) || null });
+    }
+    const texto = partes.join("\n");
+    await db.from("whatsapp_remarketing").update({ texto }).eq("id", reserva.data.id);
+    await db.from("whatsapp_conversas").update({ ultima_msg: partes[partes.length - 1].slice(0, 160), ultima_em: new Date().toISOString() }).eq("id", conv.id);
+    await db.from("ai_usage").insert({ user_id: uid, modulo: "whatsapp_remarketing", ref: conv.id, input_tokens: r.i, output_tokens: r.o, custo_usd: r.custo, creditos: custoCred });
+    return true;
+  } catch (e) {
+    console.error(`remarketing ${g}: ${e}`);
+    await db.rpc("refund_credits", { p_user: uid, p_amount: custoCred, p_reason: "WhatsApp: remarketing (devolvido)" });
+    await db.from("whatsapp_remarketing").delete().eq("id", reserva.data.id);
+    return false;
+  }
+}
+
+async function remarketing(db: SupabaseClient) {
+  const hora = Number(fmtData(new Date(), { hour: "2-digit", hour12: false }));
+  if (hora < 9 || hora >= 21) return; // só em horário comercial
+  const { data: bots } = await db.from("whatsapp_bots").select("user_id, instance, treino").eq("status", "conectado").eq("ativo", true);
+  let enviados = 0;
+  for (const bot of bots ?? []) {
+    const t = obj(bot.treino) as Treino;
+    const rms = obj(t.remarketing);
+    for (const g of GATILHOS) {
+      const rm = obj(rms[g]);
+      if (rm.ativo !== true) continue;
+      const espera = Math.max(1, Number(rm.espera_h) || 24) * 3600e3;
+      for (const a of await candidatos(db, str(bot.user_id), g, espera)) {
+        if (enviados >= 12) return; // o resto vai na próxima rodada (não dispara em massa)
+        if (await enviarRemarketing(db, bot, t, g, str(rm.instrucao).trim() || RM_PADRAO[g], a)) {
+          enviados++;
+          await sleep(3000 + Math.random() * 4000);
+        }
+      }
+    }
+  }
+}
+
 /* ---------------- servidor ---------------- */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -429,6 +575,15 @@ Deno.serve(async (req) => {
     // responde rápido pra Evolution e trabalha em segundo plano
     // @ts-ignore EdgeRuntime existe no Supabase
     EdgeRuntime.waitUntil(aviso(db, body, instance).catch((e) => console.error(e)));
+    return json({ ok: true });
+  }
+
+  // remarketing: chamado pelo agendador do banco
+  if (url.searchParams.get("cron")) {
+    const { data: seg } = await db.from("app_segredos").select("valor").eq("chave", "cron_whatsapp").maybeSingle();
+    if (!seg?.valor || req.headers.get("x-cron") !== seg.valor) return json({ ok: false }, 401);
+    // @ts-ignore EdgeRuntime existe no Supabase
+    EdgeRuntime.waitUntil(remarketing(db).catch((e) => console.error(`remarketing: ${e}`)));
     return json({ ok: true });
   }
 
