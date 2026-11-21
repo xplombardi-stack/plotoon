@@ -34,7 +34,7 @@ export type ModuleInfo = {
 
 export const MODULES: Record<ModuleId, ModuleInfo> = {
   inicio: { id: 'inicio', name: 'Início', phrase: 'Seu painel: créditos, atalhos e o que você criou por último.', icon: House, color: 'from-[#ff8a3d] to-[#ff5da2]', ready: true },
-  mentor: { id: 'mentor', name: 'Mentor', phrase: 'Converse sobre vendas, ideias e estratégia. Ele conhece o seu negócio.', icon: MentorIcon, color: 'from-[#a78bfa] to-[#5b8cff]', ready: true },
+  mentor: { id: 'mentor', name: 'Mentor', phrase: 'Seu consultor de vendas com IA. Pergunte qualquer coisa.', icon: MentorIcon, color: 'from-[#a78bfa] to-[#5b8cff]', ready: true },
   'estudio-video': {
     id: 'estudio-video',
     name: 'Estúdio de Vídeo',

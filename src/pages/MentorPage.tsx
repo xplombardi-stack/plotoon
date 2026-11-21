@@ -17,7 +17,7 @@ type Diag = { nota: number; itens: Array<{ area: string; status: 'bom' | 'melhor
 type Msg = { id: string; role: 'user' | 'assistant'; text: string; images: string[]; actions: MentorAction[]; diag?: Diag | null; at: number }
 type Thread = { id: string; title: string; at: number }
 
-const SUGESTOES = ['Tô perdido no meu negócio. Por onde eu começo?', 'O que eu posto essa semana pra vender mais?', 'Quanto eu devo cobrar pelo meu produto?', 'Meu produto é bom mas não vende. O que eu faço?']
+const SUGESTOES = ['Como eu vendo mais essa semana?', 'Me dá 5 ideias de post que vendem', 'Cliente disse que tá caro. O que eu respondo?', 'Quanto eu devo cobrar?', 'Como fazer o cliente voltar a comprar?']
 
 /* ---------- texto com listas e negrito, sem HTML ---------- */
 function Inline({ text }: { text: string }) {
@@ -167,7 +167,7 @@ function Bubble({ m, onInstagram }: { m: Msg; onInstagram: () => void }) {
     <div className="rise flex gap-3">
       <ModuleIcon id="mentor" size="sm" className="mt-0.5" />
       <div className="flex min-w-0 max-w-[92%] flex-1 flex-col gap-3">
-        <div className="rounded-[18px] rounded-tl-md border border-line bg-surface px-4 py-3 text-[15px] leading-relaxed text-soft">
+        <div className="pt-1 text-[15.5px] leading-relaxed text-soft">
           <Rich text={m.text} />
         </div>
         {m.diag && m.diag.itens?.length > 0 && <DiagnosticCard d={m.diag} />}
@@ -514,41 +514,42 @@ export function MentorPage() {
 
   return (
     <AppShell active="mentor">
-      <ModuleHeader
-        id="mentor"
-        actions={
-          <button type="button" onClick={() => setListOpen(true)} className="press flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-line-strong px-3.5 text-[14px] font-semibold text-soft hover:text-ink lg:hidden">
-            <History size={16} /> Conversas
-          </button>
-        }
-      />
+      <div className="hidden lg:block">
+        <ModuleHeader id="mentor" />
+      </div>
+      <div className="-mb-4 flex items-center gap-3 lg:hidden">
+        <ModuleIcon id="mentor" size="sm" className="!h-10 !w-10" />
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className="font-display text-[20px] font-extrabold">Mentor</span>
+          <span className="truncate text-[12.5px] text-muted">Seu consultor de vendas com IA</span>
+        </span>
+        <button type="button" onClick={() => setListOpen(true)} aria-label="Conversas anteriores" className="press flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-line-strong text-soft hover:text-ink">
+          <History size={18} />
+        </button>
+        <button type="button" onClick={newThread} aria-label="Nova conversa" className="press flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-line-strong text-soft hover:text-ink">
+          <MessageSquarePlus size={18} />
+        </button>
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-[250px_1fr]">
         <aside className="hidden lg:block">{threadList}</aside>
 
-        <section className="flex h-[calc(100dvh-270px)] min-h-[460px] flex-col overflow-hidden rounded-[24px] border border-line bg-[#0f1218] lg:h-[calc(100vh-190px)]">
-          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
+        <section className="-mx-4 flex h-[calc(100dvh-212px)] min-h-[440px] flex-col overflow-hidden border-y border-line bg-[#0f1218] sm:mx-0 sm:rounded-[24px] sm:border lg:h-[calc(100vh-180px)]">
+          <div className="mx-auto flex min-h-0 w-full max-w-[860px] flex-1 flex-col gap-6 overflow-y-auto p-4 [&>*:first-child]:mt-auto sm:p-6">
             {msgs.length === 0 && !loadingThread && (
-              <div className="m-auto flex w-full max-w-[560px] flex-col items-center gap-5 py-6 text-center">
-                <ModuleIcon id="mentor" size="lg" />
-                <div className="flex flex-col gap-1.5">
-                  <h2 className="m-0 font-display text-[24px] font-extrabold">Oi! Me conta o que tá travando{business.name ? ` no ${business.name}` : ''}.</h2>
-                  <p className="m-0 text-[14.5px] text-muted">Venda parada, preço, o que postar, como anunciar. Eu conheço o seu negócio e te digo o próximo passo.</p>
+              <div className="my-auto flex w-full flex-col items-center gap-6 py-2 text-center">
+                <div className="flex flex-col items-center gap-3">
+                  <ModuleIcon id="mentor" size="lg" className="hidden sm:flex" />
+                  <h2 className="text-balance m-0 font-display text-[24px] font-extrabold leading-tight sm:text-[28px]">Como eu te ajudo a vender mais hoje?</h2>
+                  <p className="m-0 max-w-[460px] text-[14.5px] text-muted">É como um ChatGPT, só que treinado pra vendas, marketing e atendimento{business.name ? <>, e já conhece o <strong className="font-semibold text-soft">{business.name}</strong></> : ''}.</p>
                 </div>
-                <button type="button" onClick={() => setIgOpen(true)} className="press group flex w-full cursor-pointer items-center gap-3.5 rounded-[20px] border border-[#d6297655] bg-gradient-to-r from-[#d629761a] via-[#4f5bd512] to-transparent p-3.5 text-left hover:border-[#d62976aa]">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-gradient-to-br from-[#feda75] via-[#d62976] to-[#4f5bd5] text-white">
-                    <Camera size={24} />
-                  </span>
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-[15.5px] font-bold text-ink">Comece pelo seu Instagram</span>
-                    <span className="text-[13px] text-muted">Manda 3 prints e o Mentor te dá uma nota e diz o que está faltando pra vender.</span>
-                  </span>
-                  <ArrowRight size={18} className="shrink-0 text-muted transition-transform group-hover:translate-x-1" />
-                </button>
-                <div className="grid w-full gap-2 sm:grid-cols-2">
-                  {SUGESTOES.map((s) => (
-                    <button key={s} type="button" onClick={() => send(s)} className="press min-h-12 cursor-pointer rounded-2xl border border-line-strong bg-surface px-4 py-3 text-left text-[14px] font-medium text-soft hover:border-[#a78bfa80] hover:text-ink">
-                      {s}
+                <div className="flex w-full flex-wrap justify-center gap-2 max-sm:[&>*:nth-child(n+5)]:hidden">
+                  <button type="button" onClick={() => setIgOpen(true)} className="press flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[#d6297666] bg-[#d629761a] px-4 text-[14px] font-semibold text-ink hover:border-[#d62976]">
+                    <Camera size={16} className="text-[#f472b6]" /> Analisar meu Instagram
+                  </button>
+                  {SUGESTOES.map((sug) => (
+                    <button key={sug} type="button" onClick={() => send(sug)} className="press flex min-h-11 cursor-pointer items-center rounded-full border border-line-strong bg-surface px-4 text-left text-[14px] font-medium text-soft hover:border-[#a78bfa80] hover:text-ink">
+                      {sug}
                     </button>
                   ))}
                 </div>
@@ -569,7 +570,7 @@ export function MentorPage() {
             <div ref={end} />
           </div>
 
-          <div className="border-t border-line bg-side/80 p-3 sm:p-4">
+          <div className="mx-auto w-full max-w-[860px] p-3 sm:p-4">
             {imgs.length > 0 && (
               <div className="mb-2.5 flex gap-2">
                 {imgs.map((src, i) => (
@@ -582,7 +583,7 @@ export function MentorPage() {
                 ))}
               </div>
             )}
-            <div className="flex items-end gap-2 rounded-[18px] border border-line-strong bg-bg/70 p-1.5 focus-within:border-[#a78bfa]">
+            <div className="flex items-end gap-2 rounded-[24px] border border-line-strong bg-surface p-1.5 shadow-[0_10px_30px_-15px_#000] focus-within:border-[#a78bfa]">
               <button type="button" onClick={() => file.current?.click()} disabled={imgs.length >= 4} aria-label="Anexar prints" className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl text-muted hover:bg-surface hover:text-ink disabled:opacity-40">
                 <ImagePlus size={20} />
               </button>
@@ -601,7 +602,7 @@ export function MentorPage() {
                     send()
                   }
                 }}
-                placeholder="Pergunte ao Mentor…"
+                placeholder="Pergunte qualquer coisa…"
                 className="max-h-36 min-h-11 min-w-0 flex-1 resize-none bg-transparent py-2.5 text-[16px] text-ink outline-none placeholder:text-subtle [field-sizing:content]"
               />
               <button type="button" onClick={() => send()} disabled={busy || (!text.trim() && !imgs.length)} aria-label="Enviar" className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-accent text-accent-ink disabled:opacity-40">
@@ -609,7 +610,7 @@ export function MentorPage() {
               </button>
             </div>
             <p className="m-0 mt-2 text-center text-[12px] text-subtle">
-              {custo} crédito{custo > 1 ? 's' : ''} por mensagem{imgs.length ? ' com prints' : ''} · Enter envia
+              {custo} crédito{custo > 1 ? 's' : ''} por mensagem{imgs.length ? ' com prints' : ''}
             </p>
             <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" multiple className="sr-only" tabIndex={-1} onChange={(e) => (pickImages(e.target.files), (e.target.value = ''))} />
           </div>
