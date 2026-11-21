@@ -27,8 +27,6 @@ import { CopyPage } from './pages/CopyPage'
 import { useBusiness } from './lib/business'
 
 const publicRoutes: Route[] = ['site', 'entrar', 'criar-conta', 'publico']
-// telas que dá pra abrir antes de terminar o cadastro do negócio
-const beforeSetup: Route[] = ['comecar', 'novo-personagem', 'conta', 'planos']
 
 function Screen() {
   const route = useRoute()
@@ -36,7 +34,6 @@ function Screen() {
   const loggedIn = DEMO || !!session
   const isPublic = publicRoutes.includes(route)
   const { business, loaded: bizLoaded } = useBusiness()
-  const needsSetup = loggedIn && bizLoaded && !business.completed
 
   useEffect(() => {
     if (!ready || DEMO) return
@@ -44,12 +41,20 @@ function Screen() {
     if (loggedIn && (route === 'entrar' || route === 'criar-conta')) go('inicio')
   }, [ready, loggedIn, isPublic, route])
 
-  // primeiro acesso: cadastro do negócio antes de tudo
+  // a pessoa entra direto; o nome da empresa (opcional) que veio do cadastro vai pro perfil
+  const { saveBusiness } = useBusiness()
   useEffect(() => {
-    if (!ready || isPublic) return
-    if (needsSetup && !beforeSetup.includes(route)) go('comecar')
-    if (loggedIn && bizLoaded && business.completed && route === 'comecar') go('inicio')
-  }, [ready, isPublic, needsSetup, route, loggedIn, bizLoaded, business.completed])
+    if (!ready || !loggedIn || !bizLoaded) return
+    let pendente = ''
+    try {
+      pendente = localStorage.getItem('plotoon:empresa-pendente') ?? ''
+      localStorage.removeItem('plotoon:empresa-pendente')
+    } catch {
+      /* sem armazenamento */
+    }
+    if (pendente && !business.name) saveBusiness({ name: pendente })
+    if (route === 'comecar') go('inicio')
+  }, [ready, loggedIn, bizLoaded, route]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!ready) {
     return (

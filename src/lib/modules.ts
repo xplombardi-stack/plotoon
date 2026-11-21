@@ -34,7 +34,7 @@ export type ModuleInfo = {
 
 export const MODULES: Record<ModuleId, ModuleInfo> = {
   inicio: { id: 'inicio', name: 'Início', phrase: 'Seu painel: créditos, atalhos e o que você criou por último.', icon: House, color: 'from-[#ff8a3d] to-[#ff5da2]', ready: true },
-  mentor: { id: 'mentor', name: 'Mentor', phrase: 'Seu consultor de vendas com IA. Pergunte qualquer coisa.', icon: MentorIcon, color: 'from-[#a78bfa] to-[#5b8cff]', ready: true },
+  mentor: { id: 'mentor', name: 'Mentor', phrase: 'Seu estrategista de marketing. Conta o que quer resolver no negócio.', icon: MentorIcon, color: 'from-[#a78bfa] to-[#5b8cff]', ready: true },
   'estudio-video': {
     id: 'estudio-video',
     name: 'Estúdio de Vídeo',
@@ -56,8 +56,9 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
   aulas: { id: 'aulas', name: 'Aulas', phrase: 'Passo a passo pra criar, postar e vender mais.', icon: BookOpen, color: 'from-[#a78bfa] to-[#f472b6]', ready: false },
   'meu-negocio': {
     id: 'meu-negocio',
-    name: 'Meu Negócio',
-    phrase: 'O perfil que todos os módulos usam: marca, público, tom e elenco.',
+    name: 'Perfil do negócio',
+    short: 'Perfil',
+    phrase: 'O que a IA sabe do seu negócio. Tudo que você preencher aqui vale pro app inteiro.',
     icon: Store,
     color: 'from-[#ff8a3d] to-[#5b8cff]',
     ready: true,
@@ -70,7 +71,7 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
 // Os carros-chefe: aparecem em destaque no menu, no início e na vitrine
 export const FEATURED: Partial<Record<ModuleId, string>> = {
   whatsapp: 'Vende 24h por você',
-  mentor: 'Seu consultor de vendas',
+  mentor: 'Estrategista de marketing',
 }
 
 // Menu do computador, agrupado (na ordem de importância)

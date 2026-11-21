@@ -6,7 +6,7 @@ import { MentorIcon } from '../components/MentorIcon'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader, ModuleIcon } from '../components/Module'
 import { Button, cx, useToast } from '../components/ui'
-import { ACTION_BUTTON, ACTION_MODULE, runAction, type MentorAction } from '../lib/actions'
+import { ACTION_MODULE, runAction, type MentorAction } from '../lib/actions'
 import { useBusiness } from '../lib/business'
 import { CREDITS_PER_MENTOR, CREDITS_PER_MENTOR_IMAGES } from '../lib/pricing'
 import { shrinkImage, timeAgo, useStore } from '../lib/store'
@@ -17,7 +17,7 @@ type Diag = { nota: number; itens: Array<{ area: string; status: 'bom' | 'melhor
 type Msg = { id: string; role: 'user' | 'assistant'; text: string; images: string[]; actions: MentorAction[]; diag?: Diag | null; at: number }
 type Thread = { id: string; title: string; at: number }
 
-const SUGESTOES = ['Como eu vendo mais essa semana?', 'Me dá 5 ideias de post que vendem', 'Cliente disse que tá caro. O que eu respondo?', 'Quanto eu devo cobrar?', 'Como fazer o cliente voltar a comprar?']
+const SUGESTOES = ['Como atraio mais clientes?', 'Me ajuda a montar uma promoção', 'Por que não estou vendendo?']
 
 /* ---------- texto com listas e negrito, sem HTML ---------- */
 function Inline({ text }: { text: string }) {
@@ -82,22 +82,13 @@ function Rich({ text }: { text: string }) {
 function ActionCards({ actions, onInstagram }: { actions: MentorAction[]; onInstagram: () => void }) {
   if (!actions.length) return null
   return (
-    <div className="flex flex-col gap-2 rounded-[16px] border border-accent-line bg-[#ff8a3d0d] p-3">
-      <span className="text-[11px] font-bold uppercase tracking-[0.1em] text-accent-text">Faça agora</span>
-      {actions.map((a, i) => (
-        <div key={i} className="pop flex flex-wrap items-center gap-3 rounded-xl bg-bg/60 p-2.5" style={{ animationDelay: `${i * 80}ms` }}>
-          <ModuleIcon id={ACTION_MODULE[a.tipo]} size="sm" />
-          <span className="flex min-w-0 flex-1 basis-[160px] flex-col">
-            <span className="text-[14px] font-semibold leading-snug text-ink">{a.titulo}</span>
-            <span className="line-clamp-2 text-[12.5px] text-muted">
-              {a.tipo === 'video' && (a.formato === 'produto' || a.formato === 'historinha') && <strong className="font-semibold text-soft">{a.formato === 'produto' ? 'Vídeo do produto · ' : 'Historinha com boneco · '}</strong>}
-              {a.detalhe}
-            </span>
-          </span>
-          <Button size="sm" onClick={() => (a.tipo === 'instagram' ? onInstagram() : runAction(a))} className="w-full shrink-0 sm:w-auto">
-            {ACTION_BUTTON[a.tipo]} <ArrowRight size={14} />
-          </Button>
-        </div>
+    <div className="flex flex-wrap gap-2">
+      {actions.slice(0, 2).map((a, i) => (
+        <button key={i} type="button" onClick={() => (a.tipo === 'instagram' ? onInstagram() : runAction(a))} title={a.detalhe} className="press flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-line-strong bg-surface px-3.5 text-[13.5px] font-semibold text-soft hover:border-accent hover:text-ink">
+          <ModuleIcon id={ACTION_MODULE[a.tipo]} size="sm" className="!h-6 !w-6 !rounded-lg" />
+          {a.titulo}
+          <ArrowRight size={14} className="text-accent" />
+        </button>
       ))}
     </div>
   )
@@ -521,7 +512,7 @@ export function MentorPage() {
         <ModuleIcon id="mentor" size="sm" className="!h-10 !w-10" />
         <span className="flex min-w-0 flex-1 flex-col leading-tight">
           <span className="font-display text-[20px] font-extrabold">Mentor</span>
-          <span className="truncate text-[12.5px] text-muted">Seu consultor de vendas com IA</span>
+          <span className="truncate text-[12.5px] text-muted">Seu estrategista de marketing</span>
         </span>
         <button type="button" onClick={() => setListOpen(true)} aria-label="Conversas anteriores" className="press flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-line-strong text-soft hover:text-ink">
           <History size={18} />
@@ -537,18 +528,14 @@ export function MentorPage() {
         <section className="-mx-4 flex h-[calc(100dvh-212px)] min-h-[440px] flex-col overflow-hidden border-y border-line bg-[#0f1218] sm:mx-0 sm:rounded-[24px] sm:border lg:h-[calc(100vh-180px)]">
           <div className="mx-auto flex min-h-0 w-full max-w-[860px] flex-1 flex-col gap-6 overflow-y-auto p-4 [&>*:first-child]:mt-auto sm:p-6">
             {msgs.length === 0 && !loadingThread && (
-              <div className="my-auto flex w-full flex-col items-center gap-6 py-2 text-center">
-                <div className="flex flex-col items-center gap-3">
-                  <ModuleIcon id="mentor" size="lg" className="hidden sm:flex" />
-                  <h2 className="text-balance m-0 font-display text-[24px] font-extrabold leading-tight sm:text-[28px]">Como eu te ajudo a vender mais hoje?</h2>
-                  <p className="m-0 max-w-[460px] text-[14.5px] text-muted">É como um ChatGPT, só que treinado pra vendas, marketing e atendimento{business.name ? <>, e já conhece o <strong className="font-semibold text-soft">{business.name}</strong></> : ''}.</p>
+              <div className="my-auto flex w-full flex-col items-center gap-5 py-2 text-center">
+                <div className="flex flex-col items-center gap-2.5">
+                  <h2 className="text-balance m-0 font-display text-[24px] font-extrabold leading-tight sm:text-[28px]">Seu estrategista de marketing</h2>
+                  <p className="m-0 max-w-[440px] text-[14.5px] text-muted">Conta o que você quer resolver{business.name ? ` no ${business.name}` : ' no seu negócio'}. Ele pensa a estratégia com você e te diz o próximo passo.</p>
                 </div>
-                <div className="flex w-full flex-wrap justify-center gap-2 max-sm:[&>*:nth-child(n+5)]:hidden">
-                  <button type="button" onClick={() => setIgOpen(true)} className="press flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-[#d6297666] bg-[#d629761a] px-4 text-[14px] font-semibold text-ink hover:border-[#d62976]">
-                    <Camera size={16} className="text-[#f472b6]" /> Analisar meu Instagram
-                  </button>
+                <div className="flex flex-col items-center gap-1">
                   {SUGESTOES.map((sug) => (
-                    <button key={sug} type="button" onClick={() => send(sug)} className="press flex min-h-11 cursor-pointer items-center rounded-full border border-line-strong bg-surface px-4 text-left text-[14px] font-medium text-soft hover:border-[#a78bfa80] hover:text-ink">
+                    <button key={sug} type="button" onClick={() => send(sug)} className="press min-h-10 cursor-pointer rounded-xl px-3 text-[14px] text-soft underline-offset-4 hover:text-ink hover:underline">
                       {sug}
                     </button>
                   ))}
@@ -602,7 +589,7 @@ export function MentorPage() {
                     send()
                   }
                 }}
-                placeholder="Pergunte qualquer coisa…"
+                placeholder="O que você quer resolver?"
                 className="max-h-36 min-h-11 min-w-0 flex-1 resize-none bg-transparent py-2.5 text-[16px] text-ink outline-none placeholder:text-subtle [field-sizing:content]"
               />
               <button type="button" onClick={() => send()} disabled={busy || (!text.trim() && !imgs.length)} aria-label="Enviar" className="press flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-accent text-accent-ink disabled:opacity-40">

@@ -20,6 +20,7 @@ export type Business = {
   colors: string[]
   socials: Socials
   completed: boolean
+  tipo?: string // tipo de negócio, igual ao do Atendente WhatsApp
 }
 
 export type LibraryKind = 'video' | 'historinha' | 'imagem' | 'corte' | 'copy' | 'personagem' | 'avatar'
@@ -159,7 +160,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
   const load = useCallback(async () => {
     if (!supabase || !userId) return
     const [biz, lib] = await Promise.all([
-      supabase.from('business_profiles').select('name, niche, sells, audience, tone, logo_path, colors, socials, completed_at').eq('user_id', userId).maybeSingle(),
+      supabase.from('business_profiles').select('name, niche, sells, audience, tone, logo_path, colors, socials, completed_at, tipo').eq('user_id', userId).maybeSingle(),
       supabase.from('library_items').select('id, kind, module, title, preview_path, file_path, body, meta, created_at').order('created_at', { ascending: false }).limit(200),
     ])
     const paths = [biz.data?.logo_path, ...(lib.data ?? []).flatMap((i) => [i.preview_path, i.file_path])].filter(Boolean) as string[]
@@ -184,6 +185,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
             colors: b.colors ?? [],
             socials: (b.socials as Socials) ?? {},
             completed: !!b.completed_at,
+            tipo: b.tipo ?? undefined,
           }
         : emptyBusiness,
     )
@@ -231,6 +233,7 @@ export function BusinessProvider({ children }: { children: ReactNode }) {
         colors: next.colors.slice(0, 6),
         socials: next.socials,
         completed_at: next.completed ? new Date().toISOString() : null,
+        ...(next.tipo ? { tipo: next.tipo } : {}),
       })
       return !error
     },

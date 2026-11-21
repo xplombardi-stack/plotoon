@@ -6,6 +6,7 @@ import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Toon } from '../components/art'
 import { Button, Logo, cx, go, useToast } from '../components/ui'
+import { NICHOS } from '../lib/nichos'
 import { BRAND_COLORS, LOGO_STYLES, NICHES, TONES, useBusiness, type Business, type LogoStyle, type Socials } from '../lib/business'
 import { CREDITS_PER_LOGO, formatCredits } from '../lib/pricing'
 import { useStore } from '../lib/store'
@@ -570,7 +571,6 @@ export function MyBusiness() {
   const set = (patch: Partial<Business>) => setDraft((d) => ({ ...d, ...patch }))
 
   async function save() {
-    if (draft.name.trim().length < 2) return toast.show('Coloque o nome do negócio.')
     setSaving(true)
     const ok = await saveBusiness({ ...draft, completed: true })
     setSaving(false)
@@ -588,6 +588,22 @@ export function MyBusiness() {
       <ModuleHeader id="meu-negocio" actions={<span className="hidden lg:block">{saveBtn}</span>} />
 
       <div className="grid gap-5 lg:grid-cols-2">
+        <Section title="Tipo de negócio">
+          <p className="-mt-2 m-0 text-[14px] text-muted">É o mesmo do Atendente WhatsApp. O Mentor, os vídeos, as imagens e os textos usam isso pra falar do seu ramo.</p>
+          <div role="radiogroup" aria-label="Tipo de negócio" className="grid grid-cols-2 gap-2">
+            {NICHOS.map((n) => {
+              const on = draft.tipo === n.id
+              return (
+                <button key={n.id} type="button" role="radio" aria-checked={on} onClick={() => set({ tipo: n.id })} className={cx('press flex min-h-12 cursor-pointer items-center gap-2 rounded-xl border px-3 text-left text-[14px] font-semibold', on ? 'border-accent bg-[#ff8a3d14] text-ink' : 'border-line-strong bg-bg text-soft hover:border-[#ff8a3d80]')}>
+                  <span className="text-[17px]">{n.emoji}</span>
+                  <span className="min-w-0 flex-1 leading-tight">{n.nome}</span>
+                  {on && <Check size={15} className="shrink-0 text-accent" />}
+                </button>
+              )
+            })}
+          </div>
+        </Section>
+
         <Section title="Identidade">
           <Field id="neg-nome" label="Nome do negócio">
             <input id="neg-nome" value={draft.name} maxLength={80} onChange={(e) => set({ name: e.target.value })} className={inputCls} />

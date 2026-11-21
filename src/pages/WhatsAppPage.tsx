@@ -323,7 +323,7 @@ function Treinar({ treino, onChange, onSave, salvando, live }: { treino: Treino;
         </div>
       ) : (
         <>
-          <Secao icon={GraduationCap} titulo="O básico" dica="Ele já usa o que está em Meu Negócio. Aqui você ensina o resto.">
+          <Secao icon={GraduationCap} titulo="O básico" dica="Ele já usa o que está no Perfil do negócio. Aqui você ensina o resto.">
             <div className="grid gap-4 md:grid-cols-2">
               <Campo label="Nome do atendente" rows={1} value={treino.nome_atendente} onChange={set('nome_atendente')} placeholder="Ex.: Ana" />
               <label className="flex flex-col gap-1.5">
@@ -851,6 +851,10 @@ export function WhatsAppPage() {
   const [salvando, setSalvando] = useState(false)
   const [convInicial, setConvInicial] = useState<string | null>(null)
   const pedidos = usePedidos(uid, live)
+  // o tipo de negócio do Perfil já vem marcado no treino
+  useEffect(() => {
+    if (business.tipo) setTreino((t) => (t.nicho ? t : { ...t, nicho: business.tipo! }))
+  }, [business.tipo])
   const servicos = treino.nicho === 'servicos'
   const instance = useMemo(() => (uid ? `pl${uid.replace(/-/g, '').slice(0, 22)}` : ''), [uid])
 
@@ -867,7 +871,7 @@ export function WhatsAppPage() {
       .then(({ data }) => {
         const b = (data as Bot | null) ?? { status: 'desconectado', numero: null, nome_perfil: null, qr: null, ativo: true, treino: {} }
         setBot(b)
-        setTreino({ ...TREINO_VAZIO, ...(b.treino ?? {}) })
+        setTreino((t) => ({ ...TREINO_VAZIO, ...(b.treino ?? {}), nicho: (b.treino as Partial<Treino> | undefined)?.nicho || t.nicho }))
         if (b.status === 'conectado') setAba('conversas')
       })
     // QR e conexão chegam em tempo real

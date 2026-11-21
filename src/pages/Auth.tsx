@@ -188,6 +188,7 @@ export function Signup() {
   const { signUp } = useAuth()
   const { setName: saveName, reset } = useStore()
   const [name, setName] = useState('')
+  const [empresa, setEmpresa] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -196,6 +197,11 @@ export function Signup() {
 
   async function submit(e: FormEvent) {
     e.preventDefault()
+    try {
+      if (empresa.trim()) localStorage.setItem('plotoon:empresa-pendente', empresa.trim().slice(0, 80))
+    } catch {
+      /* sem armazenamento */
+    }
     if (DEMO) {
       reset()
       saveName(name.trim())
@@ -237,6 +243,12 @@ export function Signup() {
       <Divider />
       <form onSubmit={submit} className="flex flex-col gap-4">
         <Field id="nome" label="Seu nome" value={name} onChange={setName} placeholder="Como você quer ser chamado" autoComplete="name" />
+        <div className="flex flex-col gap-2">
+          <label htmlFor="empresa" className="text-[14px] font-medium">
+            Nome da empresa <span className="font-normal text-subtle">(opcional)</span>
+          </label>
+          <input id="empresa" value={empresa} onChange={(e) => setEmpresa(e.target.value)} placeholder="Ex.: Forno da Vila" autoComplete="organization" maxLength={80} className="min-h-12 rounded-[10px] border border-line-strong bg-[#0f1218] px-3.5 text-[15px] text-ink outline-none focus:border-accent" />
+        </div>
         <Field id="email-c" label="E-mail" type="email" value={email} onChange={setEmail} placeholder="voce@email.com" autoComplete="email" />
         <Field id="senha-c" label="Senha" type="password" value={password} onChange={setPassword} placeholder="Mínimo de 6 caracteres" autoComplete="new-password" />
         {error && <ErrorText>{error}</ErrorText>}

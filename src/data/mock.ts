@@ -47,7 +47,7 @@ export type PlanInfo = {
 export const plans: PlanInfo[] = [
   {
     id: 'start', name: 'Start', tagline: 'Pra começar a postar', price: 'Em breve', credits: 'Créditos todo mês',
-    features: ['Todos os estúdios: vídeo, imagem, logo, copy e cortes', 'Mentor de vendas com IA', 'Meu Negócio e Biblioteca', 'Créditos pra começar a postar'],
+    features: ['Todos os estúdios: vídeo, imagem, logo, copy e cortes', 'Mentor de vendas com IA', 'Perfil do negócio e Biblioteca', 'Créditos pra começar a postar'],
   },
   {
     id: 'estudio', name: 'Estúdio', tagline: 'Pra postar toda semana', price: 'Em breve', credits: 'Mais créditos todo mês', highlight: true,

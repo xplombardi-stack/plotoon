@@ -29,31 +29,56 @@ function fromBase64(b64: string) {
   return out;
 }
 
-function regras(neg: Record<string, unknown> | null) {
+type Contexto = { treino: Record<string, unknown> | null; zap: { conversas: number; pedidos: number } | null; anuncios: Record<string, unknown> | null };
+const TIPO_NOME: Record<string, string> = {
+  alimentacao: "alimentação e delivery",
+  varejo: "loja e varejo",
+  fabrica: "fábrica e produção sob encomenda",
+  servicos: "serviços com horário marcado",
+  digital: "produtos digitais e serviços online",
+};
+
+function regras(neg: Record<string, unknown> | null, ctx: Contexto) {
   const p = neg ?? {};
+  const t = ctx.treino ?? {};
   const redes = Object.entries((p.socials as Record<string, string>) ?? {})
     .filter(([, v]) => v)
     .map(([k, v]) => `${k}: ${v}`)
     .join(", ");
-  return `Você é o Mentor do Plotoon, um mentor de vendas e marketing pra pequenos negócios no Brasil.
-Seu jeito: direto, prático e próximo, como um empresário experiente que já vendeu muito com tráfego pago, conteúdo e WhatsApp. Fala português do Brasil informal, sem enrolação e sem jargão. Nada de respostas genéricas: tudo pensado pro negócio da pessoa.
+  const tipo = p.tipo === "outro" ? String(t.nicho_outro ?? "") : TIPO_NOME[String(p.tipo ?? t.nicho ?? "")] ?? "";
+  const corta = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n);
+  const extras = [
+    corta(t.produtos, 1500) && `- Produtos e preços:\n${corta(t.produtos, 1500)}`,
+    corta(t.horario, 120) && `- Horário: ${corta(t.horario, 120)}`,
+    corta(t.endereco, 160) && `- Endereço: ${corta(t.endereco, 160)}`,
+    corta(t.observacoes, 600) && `- Observações do dono: ${corta(t.observacoes, 600)}`,
+  ].filter(Boolean).join("\n");
+  const zap = ctx.zap && (ctx.zap.conversas || ctx.zap.pedidos) ? `- WhatsApp nos últimos 30 dias (atendente do Plotoon): ${ctx.zap.conversas} conversas e ${ctx.zap.pedidos} pedidos/agendamentos fechados.` : "";
+  const ads = ctx.anuncios ? `- Última análise de anúncios: ${corta(ctx.anuncios.resumo, 300)}` : "";
 
-O negócio de quem está falando com você:
+  return `Você é o Mentor do Plotoon: o estrategista de marketing e de soluções do negócio dessa pessoa. Pensa como um dono de agência experiente que já fez muito pequeno negócio vender: com conteúdo, anúncios, WhatsApp, oferta, preço, atendimento e pós-venda (fazer o cliente voltar).
+Seu trabalho é entender o problema e entregar a estratégia certa pra ESSE negócio, não conselho genérico. Português do Brasil, direto, próximo e sem jargão.
+
+O negócio (cada conta é um negócio diferente: use SÓ estes dados e exemplos do ramo dele, nunca de outro ramo):
 - Nome: ${p.name || "não informado"}
+- Tipo de negócio: ${tipo || "não informado"}
 - Nicho: ${p.niche || "não informado"}
 - O que vende: ${p.sells || "não informado"}
 - Público: ${p.audience || "não informado"}
 - Tom da marca: ${TONS[String(p.tone)] ?? "não informado"}
 - Redes: ${redes || "não informadas"}
+${extras}
+${zap}
+${ads}
 
 Como responder:
-- Respostas curtas e escaneáveis (até ~180 palavras), com listas quando ajudar. Plano completo só quando pedirem ou fizer sentido.
-- Se faltar informação importante pra uma boa resposta (cidade, preço, ticket, canal), faça 1 ou 2 perguntas antes.
-- Instagram: você não consegue abrir links nem entrar no Instagram de ninguém, então analisa pelos prints. ${redes.includes("instagram") ? "" : "Você ainda não sabe o @ do Instagram dessa pessoa. "}Quando a pessoa pedir ajuda pra vender, divulgar ou crescer e você ainda não viu o Instagram dela nessa conversa, peça uma vez o @ e 3 prints (1. o perfil com a bio e os destaques, 2. o feed rolando, 3. um post ou Reels com as curtidas aparecendo) e inclua a ação "instagram" (titulo "Analisar meu Instagram"), que abre um passo a passo pra mandar os prints.
-- Quando vierem prints do Instagram, analise de verdade e preencha "diagnostico": nota de 0 a 10 e de 6 a 9 itens (foto de perfil, nome e bio, link e chamada pra ação, destaques, visual do feed, vídeos/Reels, prova social, frequência de posts, oferta e preço visíveis). Cada item com status bom, melhorar, falta ou nao_vi (quando o print não mostra) e uma dica prática de 1 frase. No texto, diga as 3 coisas mais urgentes e o primeiro passo. Só julgue o que aparece nos prints.
-- Sempre termine com o próximo passo claro.
-- Quando sugerir algo que o Plotoon faz, inclua uma ação (até 3): video (vídeo curto; no formato diga "produto" pra vídeo mostrando o produto com texto animado e música, rápido e barato, ou "historinha" pra historinha com o boneco 3D da pessoa, que prende e viraliza), copy (legenda, gancho, anúncio ou mensagem de venda), imagem (foto de produto, post, banner, capa), calendario (planejar posts), whatsapp (atendimento), anuncios (análise de campanhas). No detalhe da ação, escreva o pedido já pronto pra ferramenta (ex.: a ideia do vídeo em uma frase, ou o tema da legenda).
-- Nada de promessas de resultado garantido, conteúdo adulto, apostas ou cassino.`;
+- Curto e limpo: no máximo uns 150 palavras. Sem textão, sem lista enorme. Fale como numa conversa.
+- Pense como estrategista: 1) o que está acontecendo (o diagnóstico em 1 frase), 2) a estratégia (2 a 4 passos práticos, do mais importante pro menos), 3) o primeiro passo pra fazer hoje.
+- Se faltar uma informação que muda a estratégia (ticket médio, cidade, de onde vêm os clientes, quanto investe em anúncio), faça UMA pergunta antes, curta.
+- Use números e exemplos concretos do ramo dele (ex.: barbearia fala de horário vago e pacote; pizzaria fala de combo, terça fraca e taxa de entrega).
+- Instagram: você não abre links. Se a pessoa quiser análise do perfil, peça o @ e 3 prints (perfil com bio, feed, um post com curtidas) e use a ação "instagram". Quando vierem os prints, preencha "diagnostico" (nota de 0 a 10 e 6 a 9 itens com status bom, melhorar, falta ou nao_vi e uma dica de 1 frase) e no texto diga só as 3 coisas mais urgentes.
+- Ações: no máximo 2, e só quando a pessoa puder fazer agora no Plotoon: video (formato "produto" ou "historinha"), copy, imagem, calendario, whatsapp, anuncios. No detalhe, escreva o pedido já pronto pra ferramenta.
+- Nada de promessa de resultado garantido, conteúdo adulto, apostas ou cassino.`;
 }
 
 const TOOL = {
@@ -65,7 +90,7 @@ const TOOL = {
       texto: { type: "string", description: "Resposta pra pessoa, em português do Brasil. Pode usar listas com '- ' e **negrito**." },
       acoes: {
         type: "array",
-        maxItems: 3,
+        maxItems: 2,
         items: {
           type: "object",
           properties: {
@@ -163,10 +188,20 @@ Deno.serve(async (req) => {
       if (!up.error) paths.push(path);
     }
 
-    const [{ data: neg }, { data: antigas }] = await Promise.all([
-      admin.from("business_profiles").select("name, niche, sells, audience, tone, socials").eq("user_id", user.id).maybeSingle(),
+    const desde = new Date(Date.now() - 30 * 86400e3).toISOString();
+    const [{ data: neg }, { data: antigas }, { data: bot }, conversas, pedidos, { data: ad }] = await Promise.all([
+      admin.from("business_profiles").select("name, niche, sells, audience, tone, socials, tipo").eq("user_id", user.id).maybeSingle(),
       admin.from("mentor_messages").select("role, content").eq("thread_id", threadId).order("created_at", { ascending: false }).limit(16),
+      admin.from("whatsapp_bots").select("treino").eq("user_id", user.id).maybeSingle(),
+      admin.from("whatsapp_conversas").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("ultima_em", desde),
+      admin.from("whatsapp_pedidos").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("origem", "whatsapp").gte("created_at", desde),
+      admin.from("anuncios_analises").select("resultado").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
+    const ctx: Contexto = {
+      treino: (bot?.treino as Record<string, unknown>) ?? null,
+      zap: { conversas: conversas.count ?? 0, pedidos: pedidos.count ?? 0 },
+      anuncios: (ad?.resultado as Record<string, unknown>) ?? null,
+    };
 
     await admin.from("mentor_messages").insert({ thread_id: threadId, user_id: user.id, role: "user", content: mensagem, images: paths });
 
@@ -186,7 +221,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 2500,
-        system: regras(neg),
+        system: regras(neg, ctx),
         tools: [TOOL],
         tool_choice: { type: "auto" },
         messages: [...historico, { role: "user", content: atual }],
@@ -200,7 +235,7 @@ Deno.serve(async (req) => {
     if (!texto) throw new Error("sem_resposta");
     const acoes = (tool?.acoes ?? [])
       .filter((a) => TIPOS.includes(a.tipo))
-      .slice(0, 3)
+      .slice(0, 2)
       .map((a) => ({ tipo: a.tipo, titulo: String(a.titulo ?? "").slice(0, 80), detalhe: String(a.detalhe ?? "").slice(0, 600), formato: a.formato ? String(a.formato).slice(0, 20) : undefined }));
 
     const dg = tool?.diagnostico;

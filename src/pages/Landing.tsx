@@ -354,7 +354,7 @@ export function Landing() {
               <div className="lift flex flex-col gap-4 rounded-[24px] border border-line bg-surface p-6">
                 <span className="flex items-center gap-3">
                   <ModuleIcon id="meu-negocio" />
-                  <span className="text-[18px] font-bold">Meu Negócio</span>
+                  <span className="text-[18px] font-bold">Perfil do negócio</span>
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {['Nome', 'Nicho', 'O que vende', 'Público', 'Tom de voz', 'Logo', 'Cores', 'Redes sociais', 'Elenco 3D'].map((c, k) => (
