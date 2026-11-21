@@ -67,17 +67,21 @@ export const MODULES: Record<ModuleId, ModuleInfo> = {
   planos: { id: 'planos', name: 'Créditos e planos', short: 'Créditos', phrase: 'Seu saldo, quanto custa cada coisa e os planos.', icon: Coins, color: 'from-[#ff8a3d] to-[#facc15]', ready: true },
 }
 
-// Menu do computador, agrupado
+// Os carros-chefe: aparecem em destaque no menu, no início e na vitrine
+export const FEATURED: Partial<Record<ModuleId, string>> = {
+  whatsapp: 'Vende 24h por você',
+  mentor: 'Seu consultor de vendas',
+}
+
+// Menu do computador, agrupado (na ordem de importância)
 export const NAV_GROUPS: Array<{ title?: string; items: ModuleId[] }> = [
-  { items: ['inicio', 'mentor'] },
-  { title: 'Criar', items: ['estudio-video', 'estudio-imagem', 'apps', 'cortes', 'copy'] },
-  { title: 'Vender', items: ['whatsapp'] },
-  { title: 'Planejar', items: ['calendario'] },
-  { title: 'Analisar', items: ['anuncios'] },
+  { items: ['inicio'] },
+  { title: 'Principais', items: ['whatsapp', 'mentor', 'estudio-imagem', 'estudio-video'] },
+  { title: 'Mais ferramentas', items: ['apps', 'copy', 'cortes', 'calendario', 'anuncios'] },
   { items: ['biblioteca', 'aulas', 'meu-negocio'] },
 ]
 
-export const CREATE_MODULES: ModuleId[] = ['estudio-video', 'estudio-imagem', 'apps', 'copy', 'cortes']
+export const CREATE_MODULES: ModuleId[] = ['estudio-imagem', 'estudio-video', 'apps', 'copy', 'cortes']
 
 export function moduleFor(route: Route): ModuleInfo | undefined {
   return Object.values(MODULES).find((m) => m.id === route || m.match?.includes(route))

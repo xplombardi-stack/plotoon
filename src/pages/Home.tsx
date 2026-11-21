@@ -7,13 +7,17 @@ import { ModuleIcon, SoonPill } from '../components/Module'
 import { StoryReel } from '../components/StoryReel'
 import { Button, SectionTitle, TextLink, cx } from '../components/ui'
 import { tipOfTheDay, useBusiness } from '../lib/business'
-import { CREATE_MODULES, MODULES, type ModuleId } from '../lib/modules'
+import { CREATE_MODULES, FEATURED, MODULES, type ModuleId } from '../lib/modules'
 import { formatCredits, partCost } from '../lib/pricing'
 import { useStore } from '../lib/store'
 import { MentorIcon } from '../components/MentorIcon'
 import { runAction } from '../lib/actions'
 
-const MORE: ModuleId[] = ['whatsapp', 'calendario', 'anuncios']
+const MORE: ModuleId[] = ['calendario', 'anuncios', 'apps']
+const TOP: Array<{ id: ModuleId; cta: string; bg: string; glow: string }> = [
+  { id: 'whatsapp', cta: 'Abrir atendente', bg: 'from-[#0f2a20] via-surface to-surface', glow: 'bg-[#34d39933]' },
+  { id: 'mentor', cta: 'Falar com o Mentor', bg: 'from-[#1c1930] via-surface to-surface', glow: 'bg-[#a78bfa33]' },
+]
 
 export function Home() {
   const name = useDisplayName()
@@ -47,7 +51,7 @@ export function Home() {
           </div>
         </div>
 
-        <a href="#planos" className="rise rise-1 neon-border lift flex flex-col justify-between gap-4 rounded-[24px] bg-surface p-5 text-ink no-underline sm:p-6">
+        <a href="#planos" className="rise rise-1 neon-border lift hidden flex-col lg:flex justify-between gap-4 rounded-[24px] bg-surface p-5 text-ink no-underline sm:p-6">
           <span className="flex items-center gap-2 text-[14px] font-semibold text-muted">
             <Coins size={18} className="text-accent" aria-hidden /> Seus créditos
           </span>
@@ -59,6 +63,29 @@ export function Home() {
             Comprar créditos <ArrowRight size={16} aria-hidden />
           </span>
         </a>
+      </section>
+
+      {/* carros-chefe */}
+      <section className="grid gap-4 md:grid-cols-2">
+        {TOP.map((x, i) => {
+          const m = MODULES[x.id]
+          return (
+            <a key={x.id} href={`#${x.id}`} className={cx('rise lift relative flex flex-col gap-4 overflow-hidden rounded-[24px] border border-line-strong bg-gradient-to-br p-5 text-ink no-underline sm:p-6', x.bg, `rise-${i + 1}`)}>
+              <span aria-hidden className={cx('pointer-events-none absolute -right-14 -top-14 h-48 w-48 rounded-full blur-3xl', x.glow)} />
+              <span className="relative flex items-center gap-3.5">
+                <ModuleIcon id={x.id} size="lg" />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="font-display text-[21px] font-bold leading-tight">{m.name}</span>
+                  <span className="text-[13.5px] font-semibold text-soft">{FEATURED[x.id]}</span>
+                </span>
+              </span>
+              <span className="relative text-[14.5px] leading-relaxed text-muted">{m.phrase}</span>
+              <span className="relative inline-flex items-center gap-1.5 self-start rounded-xl bg-accent px-4 py-2.5 text-[14px] font-bold text-accent-ink">
+                {x.cta} <ArrowRight size={16} aria-hidden />
+              </span>
+            </a>
+          )
+        })}
       </section>
 
       {/* atalhos pra criar */}
@@ -126,7 +153,7 @@ export function Home() {
 
       {/* vender, planejar, analisar */}
       <section className="flex flex-col gap-4">
-        <SectionTitle>Vender e crescer</SectionTitle>
+        <SectionTitle>Mais ferramentas</SectionTitle>
         <div className="grid gap-3 sm:grid-cols-3">
           {MORE.map((id, i) => {
             const m = MODULES[id]

@@ -48,12 +48,26 @@ type Treino = {
   observacoes?: string; endereco?: string; referencia?: string; mapa?: string; fora_area?: string;
   entregas?: Array<{ local?: string; taxa?: string; prazo?: string }>;
   licoes?: Array<{ cliente?: string; certo?: string }>;
+  nicho?: string; nicho_outro?: string; frete?: string; extras?: Record<string, string>;
+};
+const NICHO_NOME: Record<string, string> = {
+  alimentacao: "alimentação e delivery",
+  varejo: "loja e varejo",
+  fabrica: "fábrica e produção sob encomenda",
+  servicos: "serviços com horário marcado",
+  digital: "produtos digitais e serviços online",
 };
 const bloco = (titulo: string, txt?: string) => (txt && txt.trim() ? `${titulo}\n${txt.trim().slice(0, 6000)}\n\n` : "");
 
 function sistema(neg: J | null, t: Treino) {
   const n = neg ?? {};
   const empresa = String(n.name || "empresa");
+  const ramo = t.nicho === "outro" ? str(t.nicho_outro).trim() : NICHO_NOME[str(t.nicho)] ?? "";
+  const extras = Object.entries(obj(t.extras))
+    .filter(([, v]) => str(v).trim())
+    .slice(0, 12)
+    .map(([k, v]) => `${k}: ${str(v).trim().slice(0, 1500)}`)
+    .join("\n");
   const entregas = (Array.isArray(t.entregas) ? t.entregas : [])
     .filter((e) => str(e?.local).trim())
     .slice(0, 80)
@@ -68,9 +82,9 @@ function sistema(neg: J | null, t: Treino) {
 
   return `Você é ${t.nome_atendente || "a pessoa do atendimento"} da ${empresa} respondendo clientes no WhatsApp. Você conversa como uma pessoa de verdade da loja, nunca como robô.
 
-Sobre o negócio: ${empresa}${n.niche ? ` (${n.niche})` : ""}. Vende: ${n.sells || "ver produtos abaixo"}. Público: ${n.audience || "geral"}.
+Sobre o negócio: ${empresa}${n.niche ? ` (${n.niche})` : ""}. Vende: ${n.sells || "ver produtos abaixo"}. Público: ${n.audience || "geral"}.${ramo ? `\nTipo de negócio: ${ramo}. Atenda como uma pessoa experiente desse ramo atenderia.` : ""}
 
-${t.apresentacao ? `Apresentação: ${t.apresentacao}\n\n` : ""}${bloco("Produtos, cardápio e preços (a única fonte de preço que vale):", t.produtos)}${bloco("Perguntas frequentes e respostas:", t.perguntas)}${t.horario ? `Horário de atendimento: ${t.horario}\n\n` : ""}${bloco("Onde fica a loja:", loja)}${bloco("Lugares de entrega, taxa e prazo de cada um (use a taxa do lugar do cliente e some no total):", entregas)}${t.fora_area ? `Se o cliente estiver fora desses lugares: ${t.fora_area}\n\n` : ""}${bloco("Regras do dono (siga sempre):", t.regras)}${bloco("Observações do dono (leve tudo em conta):", t.observacoes)}${bloco("Correções do dono. Em situações parecidas, responda desse jeito, que vale mais que qualquer outra instrução acima:", licoes)}Jeito de escrever: ${t.tom || "simpático, próximo e direto"}. Português do Brasil, natural de WhatsApp.
+${t.apresentacao ? `Apresentação: ${t.apresentacao}\n\n` : ""}${bloco("Produtos, cardápio e preços (a única fonte de preço que vale):", t.produtos)}${bloco("Como funciona o negócio:", extras)}${bloco("Perguntas frequentes e respostas:", t.perguntas)}${t.horario ? `Horário de atendimento: ${t.horario}\n\n` : ""}${bloco("Onde fica a loja:", loja)}${bloco("Lugares de entrega, taxa e prazo de cada um (use a taxa do lugar do cliente e some no total):", entregas)}${t.fora_area ? `Se o cliente estiver fora desses lugares: ${t.fora_area}\n\n` : ""}${bloco("Entrega, envio e frete:", t.frete)}${bloco("Regras do dono (siga sempre):", t.regras)}${bloco("Observações do dono (leve tudo em conta):", t.observacoes)}${bloco("Correções do dono. Em situações parecidas, responda desse jeito, que vale mais que qualquer outra instrução acima:", licoes)}Jeito de escrever: ${t.tom || "simpático, próximo e direto"}. Português do Brasil, natural de WhatsApp.
 - Mensagens curtas, como gente digita: 1 a 3 frases. Se precisar falar mais, separe em até 3 mensagens com uma linha em branco entre elas.
 - Sem markdown, sem listas com hífen, sem negrito. No máximo 1 emoji quando fizer sentido.
 - Use o nome do cliente às vezes, não em toda mensagem. Não repita saudação se já cumprimentou.
@@ -124,23 +138,33 @@ async function transcrever(b64: string, mime: string) {
     return "";
   }
   const tipo = (mime.split(";")[0] || "audio/ogg").trim();
-  for (const model of ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"]) {
-    try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
-        body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: tipo, data: b64 } }, { text: "Transcreva exatamente o que a pessoa fala neste áudio, em português. Responda só com a transcrição, sem comentários." }] }] }),
-      });
-      if (!r.ok) {
-        console.error(`audio: gemini ${model} ${r.status} ${(await r.text()).slice(0, 200)}`);
-        continue;
+  // modelo atual primeiro; se estiver ocupado (503/429), espera um pouco e tenta de novo
+  for (const model of ["gemini-3.8-flash", "gemini-flash-latest", "gemini-flash-lite-latest"]) {
+    for (let tentativa = 0; tentativa < 3; tentativa++) {
+      try {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+          body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: tipo, data: b64 } }, { text: "Transcreva exatamente o que a pessoa fala neste áudio, em português. Responda só com a transcrição, sem comentários." }] }] }),
+        });
+        if (r.status === 503 || r.status === 429 || r.status >= 500) {
+          console.error(`audio: gemini ${model} ${r.status} (tentativa ${tentativa + 1})`);
+          await sleep(1200 * (tentativa + 1));
+          continue;
+        }
+        if (!r.ok) {
+          console.error(`audio: gemini ${model} ${r.status} ${(await r.text()).slice(0, 160)}`);
+          break;
+        }
+        const d = await r.json();
+        const t = String(d?.candidates?.[0]?.content?.parts?.map((p: J) => p.text ?? "").join("") ?? "").trim();
+        if (t) return t;
+        console.error(`audio: gemini ${model} voltou vazio`);
+        break;
+      } catch (e) {
+        console.error(`audio: gemini ${model} erro ${e}`);
+        break;
       }
-      const d = await r.json();
-      const t = String(d?.candidates?.[0]?.content?.parts?.map((p: J) => p.text ?? "").join("") ?? "").trim();
-      if (t) return t;
-      console.error(`audio: gemini ${model} voltou vazio`);
-    } catch (e) {
-      console.error(`audio: gemini ${model} erro ${e}`);
     }
   }
   return "";

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { MailCheck } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
-import { DemoHub } from '../components/FeatureDemos'
+import { DemoAtendente } from '../components/WhatsAppShowcase'
 import { DEMO } from '../lib/supabase'
 import { Button, CheckDot, Logo, TextLink, go } from '../components/ui'
 
@@ -76,11 +76,13 @@ function Layout({ children }: { children: ReactNode }) {
         <div className="flex flex-1 items-center justify-center py-12">
           <div className="rise flex w-full max-w-[392px] flex-col gap-6">{children}</div>
         </div>
-        <div className="-mx-6 mb-6 flex flex-col gap-3 sm:-mx-12 lg:hidden">
-          <p className="m-0 px-6 text-[14px] font-semibold text-muted sm:px-12">Tudo isso num lugar só</p>
-          <div className="px-6 sm:px-12">
-            <DemoHub className="aspect-[4/5] w-full" />
+        <div className="mb-8 flex flex-col items-center gap-5 lg:hidden">
+          <div className="flex flex-col gap-2 text-center">
+            <span className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#6ee7b7]">Atendente no WhatsApp com IA</span>
+            <h2 className="text-balance m-0 font-display text-[26px] font-extrabold leading-[1.1] tracking-[-0.03em]">Não é robô de "digite 1". Conversa como gente e vende por você.</h2>
           </div>
+          <DemoAtendente />
+          <p className="m-0 max-w-[340px] text-center text-[14px] text-muted">Ouve áudio, fecha a conta com a taxa do bairro e te chama quando precisa. Junto com o Mentor, imagens e vídeos.</p>
         </div>
         <div className="flex flex-wrap gap-5 text-[13px] text-subtle">
           <span>© Plotoon</span>
@@ -89,21 +91,24 @@ function Layout({ children }: { children: ReactNode }) {
         </div>
       </section>
 
-      <section aria-hidden className="relative hidden min-h-screen min-w-0 flex-[1.1_1_520px] overflow-hidden border-l border-line bg-side lg:block">
-        <div className="absolute inset-x-10 top-10 bottom-[260px]">
-          <DemoHub className="h-full w-full" />
-        </div>
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-6 p-12">
-          <h2 className="text-balance m-0 max-w-[480px] font-display text-[36px] font-extrabold leading-[1.1] tracking-[-0.03em]">
-            Seu estúdio de marketing com IA, num lugar só.
-          </h2>
-          <div className="flex flex-col gap-3">
-            {['Vídeo, imagem, logo, copy e cortes', 'Mentor de vendas e atendente no WhatsApp', 'Você vê o custo antes de gerar'].map((t) => (
-              <span key={t} className="flex items-center gap-3 text-[15px] text-soft">
-                <CheckDot /> {t}
-              </span>
-            ))}
+      <section aria-hidden className="relative hidden min-h-screen min-w-0 flex-[1.1_1_520px] items-center overflow-hidden border-l border-line bg-side lg:flex">
+        <span className="pointer-events-none absolute -right-24 top-10 h-80 w-80 rounded-full bg-[#34d39922] blur-3xl" />
+        <span className="pointer-events-none absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-[#ff8a3d1a] blur-3xl" />
+        <div className="relative mx-auto flex w-full max-w-[920px] flex-col items-center gap-9 px-12 py-12 2xl:grid 2xl:grid-cols-[1fr_auto] 2xl:gap-12">
+          <div className="flex max-w-[520px] flex-col gap-5">
+            <span className="self-start rounded-full border border-[#34d39955] bg-[#34d39914] px-3 py-1 text-[12px] font-bold uppercase tracking-[0.1em] text-[#6ee7b7]">Atendente no WhatsApp com IA</span>
+            <h2 className="text-balance m-0 font-display text-[34px] font-extrabold leading-[1.08] tracking-[-0.03em] 2xl:text-[38px]">
+              Não é robô de "digite 1".<br />Conversa como gente e <span className="text-accent">vende por você.</span>
+            </h2>
+            <div className="flex flex-col gap-3">
+              {['Responde na hora, 24h, do jeito da sua loja', 'Ouve áudio, vê foto e fecha a conta com a taxa do bairro', 'E ainda: Mentor de vendas, imagens e vídeos com IA'].map((t) => (
+                <span key={t} className="flex items-center gap-3 text-[15px] text-soft">
+                  <CheckDot /> {t}
+                </span>
+              ))}
+            </div>
           </div>
+          <DemoAtendente className="w-[320px]" compact />
         </div>
       </section>
     </div>

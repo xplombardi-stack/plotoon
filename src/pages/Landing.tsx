@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
-import { ArrowRight, Check, ChevronDown, FolderOpen, Play, Sparkles, Store } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, FolderOpen, MessageCircle, Play, Store } from 'lucide-react'
 import { plans } from '../data/mock'
-import { DemoAnuncios, DemoApps, DemoCalendario, DemoChaos, DemoCopy, DemoCortes, DemoHub, DemoImagem, DemoLogo, DemoMentor, DemoVideo, DemoWhatsApp } from '../components/FeatureDemos'
+import { DemoAnuncios, DemoApps, DemoCalendario, DemoChaos, DemoCopy, DemoCortes, DemoImagem, DemoLogo, DemoMentor, DemoVideo, DemoWhatsApp } from '../components/FeatureDemos'
 import { ModuleIcon, SoonPill } from '../components/Module'
 import { ImageShowcase } from '../components/BeforeAfter'
 import { ShowcaseVideos } from '../components/Exemplos'
@@ -10,14 +10,24 @@ import { Badge, LinkButton, Logo, cx } from '../components/ui'
 import { MODULES, type ModuleId } from '../lib/modules'
 import { CREDITS_PER_CHARACTER, CREDITS_PER_COPY, CREDITS_PER_IMAGE, CREDITS_PER_LOGO, CREDITS_PER_MENTOR, CREDITS_PER_PLAN, CREDITS_PER_APP, CREDITS_PER_PRODUCT_VIDEO, partCost } from '../lib/pricing'
 import { MentorIcon } from '../components/MentorIcon'
+import { DemoAtendente, Diferenciais, RoboVsAtendente } from '../components/WhatsAppShowcase'
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-type Feature = { id: string; module: ModuleId; name?: string; title: string; text: string; bullets: string[]; demo: ReactNode; extra?: ReactNode; soon?: boolean; highlight?: boolean }
+type Feature = { id: string; module: ModuleId; name?: string; title: string; text: string; bullets: string[]; demo: ReactNode; extra?: ReactNode; soon?: boolean; highlight?: boolean; top?: boolean }
 
 const FEATURES: Feature[] = [
+  {
+    id: 'whatsapp',
+    module: 'whatsapp',
+    top: true,
+    title: 'Um atendente que conversa como gente, 24 horas',
+    text: 'Conecte o seu WhatsApp pelo QR code e a IA responde preço, entrega e dúvidas do seu jeito, ouve áudio e fecha o pedido. Nada de menu com "digite 1".',
+    bullets: ['Responde no tom da sua marca, a qualquer hora', 'Ouve áudio, vê foto e soma a taxa de entrega do bairro', 'Te avisa quando o cliente quer fechar e você assume'],
+    demo: <DemoWhatsApp className="py-4" />,
+  },
   {
     id: 'mentor',
     module: 'mentor',
@@ -26,6 +36,15 @@ const FEATURES: Feature[] = [
     text: 'Conte o que está travando: venda parada, preço, o que postar. Ele pede o seu Instagram, analisa o perfil e entrega um plano feito pro seu negócio, com o botão pra fazer cada passo.',
     bullets: ['Analisa o seu Instagram e mostra o que está travando as vendas', 'Ajuda com preço, oferta, ideia de post e estratégia', 'Cada sugestão vira um botão: gerar o vídeo, a imagem, o texto ou agendar'],
     demo: <DemoMentor className="h-[500px]" />,
+  },
+  {
+    id: 'imagem',
+    module: 'estudio-imagem',
+    title: 'Foto de estúdio a partir da foto do celular',
+    text: 'Mande a foto do produto do jeito que estiver. A IA limpa o fundo, monta a cena e arruma a luz, já no tamanho de cada rede.',
+    bullets: ['Foto de produto, post, story, banner e capa', 'Com as cores da sua marca', 'Sem fotógrafo e sem app de design'],
+    demo: <DemoImagem className="mx-auto w-full max-w-[460px]" />,
+    extra: <ImageShowcase />,
   },
   {
     id: 'video',
@@ -49,15 +68,6 @@ const FEATURES: Feature[] = [
     text: 'Cardápio digital, catálogo, agendamento, link na bio, página de vendas. Você conta o que quer, a IA monta o app inteiro com a sua marca, você ajusta pelo chat e publica com um link.',
     bullets: ['Sem programar e sem contratar ninguém', 'Pedidos, agendamentos e orçamentos chegam no seu WhatsApp', 'Ajuste qualquer coisa só pedindo: cor, texto, preço, seção nova'],
     demo: <DemoApps className="mx-auto w-full max-w-[520px]" />,
-  },
-  {
-    id: 'imagem',
-    module: 'estudio-imagem',
-    title: 'Foto de estúdio a partir da foto do celular',
-    text: 'Mande a foto do produto do jeito que estiver. A IA limpa o fundo, monta a cena e arruma a luz, já no tamanho de cada rede.',
-    bullets: ['Foto de produto, post, story, banner e capa', 'Com as cores da sua marca', 'Sem fotógrafo e sem app de design'],
-    demo: <DemoImagem className="mx-auto w-full max-w-[460px]" />,
-    extra: <ImageShowcase />,
   },
   {
     id: 'logo',
@@ -85,14 +95,6 @@ const FEATURES: Feature[] = [
     demo: <DemoCortes className="mx-auto w-full max-w-[460px]" />,
   },
   {
-    id: 'whatsapp',
-    module: 'whatsapp',
-    title: 'Um atendente que responde na hora, 24 horas',
-    text: 'Conecte o seu WhatsApp e a IA responde preço, estoque e dúvidas do seu jeito. Ela separa quem quer comprar pra você não perder venda.',
-    bullets: ['Responde no tom da sua marca, a qualquer hora', 'Marca os clientes quentes, prontos pra comprar', 'Conecta por QR code ou pela API oficial da Meta'],
-    demo: <DemoWhatsApp className="py-4" />,
-  },
-  {
     id: 'calendario',
     module: 'calendario',
     title: 'O mês planejado em um clique',
@@ -111,11 +113,13 @@ const FEATURES: Feature[] = [
 ]
 
 const faq = [
+  { q: 'O atendente do WhatsApp é aquele robô de menu?', a: 'Não. Ele não manda lista de opções nem pede pra digitar número. Ele lê o que o cliente escreveu (ou ouve o áudio), responde curto e natural, como uma pessoa da sua loja, e só usa os preços e regras que você ensinou. Quando o cliente quer fechar ou reclamar, ele diz que vai verificar e te avisa pra você assumir.' },
+  { q: 'Como conecto o meu WhatsApp?', a: 'Pelo QR code, igual no WhatsApp Web: leva 1 minuto. Recomendamos usar um número só pro atendimento.' },
   { q: 'O que é o Plotoon?', a: 'Um estúdio de marketing com IA pra pequenos negócios. Em vez de usar um app de vídeo, um de design, um de texto, vários chats de IA e planilhas, você cria, vende e planeja tudo aqui: vídeos, imagens, textos, até o app do seu negócio, com um Mentor que conhece você.' },
   { q: 'Preciso saber editar ou mexer com design?', a: 'Não. Você conta o que quer e a IA faz: o vídeo, a imagem, a logo ou o texto. Você só escolhe e posta.' },
   { q: 'Preciso assinar outras ferramentas?', a: 'Não. Tudo é gerado aqui dentro do Plotoon e usa os mesmos créditos.' },
   { q: 'Como funcionam os créditos?', a: `Cada coisa que você gera gasta créditos, e você vê o valor antes de apertar o botão. Uma parte de vídeo de 10 segundos gasta ${partCost(10)} créditos, um boneco 3D gasta ${CREDITS_PER_CHARACTER} e uma logo gasta ${CREDITS_PER_LOGO}.` },
-  { q: 'Tudo já está funcionando?', a: 'O Mentor, o Criador de Apps, a Copy, o Calendário, o Estúdio de Imagem, a logo com IA, o boneco 3D, as historinhas, o perfil do negócio e a Biblioteca já estão no ar. As funções marcadas como "Em breve" estão sendo ligadas uma a uma, e você usa todas com a mesma conta.' },
+  { q: 'Tudo já está funcionando?', a: 'O Atendente no WhatsApp, o Mentor, o Criador de Apps, a Copy, o Calendário, o Estúdio de Imagem, a logo com IA, o boneco 3D, as historinhas, o perfil do negócio e a Biblioteca já estão no ar. As funções marcadas como "Em breve" estão sendo ligadas uma a uma, e você usa todas com a mesma conta.' },
   { q: 'Funciona no celular?', a: 'Sim. É só abrir pelo navegador do celular. Foi feito pensando no celular primeiro.' },
 ]
 
@@ -161,8 +165,9 @@ export function Landing() {
           </a>
           <nav aria-label="Seções" className="hidden items-center gap-1 md:flex">
             {[
-              ['funcoes', 'Funções'],
+              ['whatsapp', 'Atendente'],
               ['mentor', 'Mentor'],
+              ['funcoes', 'Funções'],
               ['precos', 'Planos'],
               ['duvidas', 'Dúvidas'],
             ].map(([id, label]) => (
@@ -188,26 +193,46 @@ export function Landing() {
           <div className="aurora"><span /></div>
           <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-5 pb-16 pt-12 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:pb-20 lg:pt-16">
             <div className="flex flex-col gap-6">
-              <Badge tone="accent" className="rise self-start !bg-accent-soft !text-accent-text shadow-[0_0_0_1px_#ff8a3d55]">
-                <Sparkles size={13} aria-hidden /> Estúdio de marketing com IA
+              <Badge tone="accent" className="rise self-start !border-[#34d39955] !bg-[#34d39914] !text-[#6ee7b7]">
+                <MessageCircle size={13} aria-hidden /> Atendente no WhatsApp com IA
               </Badge>
-              <h1 className="rise rise-1 text-balance m-0 font-display text-[40px] font-extrabold leading-[1.03] tracking-[-0.04em] sm:text-[58px]">
-                Tudo que o seu negócio precisa pra <span className="text-accent text-glow">vender</span>, num lugar só.
+              <h1 className="rise rise-1 text-balance m-0 font-display text-[38px] font-extrabold leading-[1.04] tracking-[-0.04em] sm:text-[56px]">
+                Um atendente no WhatsApp que conversa como gente e <span className="text-accent text-glow">vende</span> por você.
               </h1>
-              <p className="rise rise-2 m-0 max-w-[540px] text-[17px] leading-relaxed text-muted sm:text-[19px]">
-                Um <strong className="font-semibold text-ink">Mentor de IA</strong> que conhece o seu negócio te diz o que fazer. O estúdio faz: <strong className="font-semibold text-ink">vídeos</strong>, imagens, logo e textos. E ainda atende no WhatsApp, planeja o mês e analisa seus anúncios.
+              <p className="rise rise-2 m-0 max-w-[560px] text-[17px] leading-relaxed text-muted sm:text-[19px]">
+                Nada de robô com <strong className="font-semibold text-ink">"digite 1, 2 ou 3"</strong>. Ele entende o que o cliente escreve, ouve áudio, fecha a conta com a taxa de entrega e te chama quando precisa. E junto vem um <strong className="font-semibold text-ink">Mentor de vendas</strong>, imagens e vídeos com IA.
               </p>
               <div className="rise rise-3 flex flex-wrap gap-3">
                 <LinkButton to="criar-conta" size="lg" className="pulse">
                   Criar minha conta <ArrowRight size={18} />
                 </LinkButton>
-                <button type="button" onClick={() => scrollTo('funcoes')} className="press inline-flex min-h-13 cursor-pointer items-center gap-2 rounded-xl border border-line-strong bg-bg/40 px-6 text-[15px] font-semibold text-ink backdrop-blur hover:border-accent-line">
-                  <Play size={16} fill="currentColor" /> Ver como funciona
+                <button type="button" onClick={() => scrollTo('whatsapp')} className="press inline-flex min-h-13 cursor-pointer items-center gap-2 rounded-xl border border-line-strong bg-bg/40 px-6 text-[15px] font-semibold text-ink backdrop-blur hover:border-accent-line">
+                  <Play size={16} fill="currentColor" /> Ver ele atendendo
                 </button>
               </div>
-              <p className="rise rise-4 m-0 text-[14px] text-subtle">Troque 5 apps e 30 abas por um só.</p>
+              <p className="rise rise-4 m-0 text-[14px] text-subtle">Conecta pelo QR code em 1 minuto. Você ensina, ele atende.</p>
             </div>
-            <DemoHub className="rise rise-2 aspect-[4/5] w-full sm:aspect-[4/3.6]" />
+            <DemoAtendente className="rise rise-2" />
+          </div>
+        </section>
+
+        {/* ATENDENTE: ROBÔ X GENTE */}
+        <section id="whatsapp" className="scroll-mt-20 border-y border-line bg-side">
+          <div className="mx-auto flex max-w-[1100px] flex-col gap-10 px-5 py-16 sm:px-8 sm:py-20">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <Badge tone="accent" className="self-center !border-[#34d39955] !bg-[#34d39914] !text-[#6ee7b7]">
+                <MessageCircle size={13} aria-hidden /> O principal do Plotoon
+              </Badge>
+              <h2 className="text-balance m-0 max-w-[780px] font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[44px]">Robô de menu afasta cliente. Atendimento de verdade vende.</h2>
+              <p className="m-0 max-w-[640px] text-[16px] text-muted sm:text-[17px]">A mesma pergunta, dois jeitos de responder. O seu cliente percebe a diferença na primeira mensagem.</p>
+            </div>
+            <RoboVsAtendente />
+            <Diferenciais />
+            <div className="flex justify-center">
+              <LinkButton to="criar-conta" size="lg">
+                Quero esse atendente <ArrowRight size={18} />
+              </LinkButton>
+            </div>
           </div>
         </section>
 
@@ -288,8 +313,8 @@ export function Landing() {
               {FEATURES.map((f, i) => {
                 const m = MODULES[f.module]
                 return (
-                  <button key={f.id} type="button" onClick={() => scrollTo(f.id)} className={cx('rise lift relative flex cursor-pointer flex-col items-start gap-3 rounded-[20px] p-4 text-left', f.highlight ? 'neon-border bg-[#16110d]' : 'border border-line bg-surface', `rise-${(i % 4) + 1}`)}>
-                    {f.highlight && <span className="absolute right-3 top-3 rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold text-accent-ink">Destaque</span>}
+                  <button key={f.id} type="button" onClick={() => scrollTo(f.id)} className={cx('rise lift relative flex cursor-pointer flex-col items-start gap-3 rounded-[20px] p-4 text-left', f.highlight || f.top ? 'neon-border bg-[#16110d]' : 'border border-line bg-surface', `rise-${(i % 4) + 1}`)}>
+                    {(f.top || f.module === 'mentor') && <span className="absolute right-3 top-3 rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold text-accent-ink">Destaque</span>}
                     <ModuleIcon id={f.module} />
                     <span className="flex flex-col gap-0.5">
                       <span className="text-[15px] font-bold text-ink">{f.name ?? m.short ?? m.name}</span>
@@ -312,7 +337,7 @@ export function Landing() {
         {/* CADA FUNÇÃO EM AÇÃO */}
         <section>
           <div className="mx-auto flex max-w-[1200px] flex-col gap-24 px-5 py-16 sm:px-8 sm:py-20 lg:gap-32">
-            {FEATURES.filter((f) => !f.highlight).map((f, i) => (
+            {FEATURES.filter((f) => !f.highlight && !f.top).map((f, i) => (
               <FeatureRow key={f.id} f={f} flip={i % 2 === 1} />
             ))}
           </div>

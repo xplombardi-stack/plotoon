@@ -1,7 +1,7 @@
 import { useIsAdmin } from '../lib/admin'
 import type { ComponentType, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
-import { Coins, FolderOpen, House, LayoutGrid, LoaderCircle, Plus, X } from 'lucide-react'
+import { Coins, House, LayoutGrid, LoaderCircle, MessageCircle, Plus, X } from 'lucide-react'
 import { dismissJob, useJobs } from '../lib/jobs'
 import { MentorIcon } from './MentorIcon'
 import type { Route } from '../lib/router'
@@ -9,7 +9,7 @@ import { useAuth } from '../lib/auth'
 import { useStore } from '../lib/store'
 import { useBusiness } from '../lib/business'
 import { formatCredits } from '../lib/pricing'
-import { CREATE_MODULES, MODULES, NAV_GROUPS, moduleFor, type ModuleId } from '../lib/modules'
+import { CREATE_MODULES, FEATURED, MODULES, NAV_GROUPS, moduleFor, type ModuleId } from '../lib/modules'
 import { ModuleDemo } from './FeatureDemos'
 import { ModuleIcon, SoonPill } from './Module'
 import { Logo, cx } from './ui'
@@ -23,6 +23,28 @@ export function useDisplayName() {
 function NavItem({ id, on, onPick }: { id: ModuleId; on: boolean; onPick?: () => void }) {
   const m = MODULES[id]
   const Icon = m.icon
+  const tag = FEATURED[id]
+  if (tag) {
+    // carro-chefe: ícone colorido e uma linha dizendo o que faz
+    return (
+      <a
+        href={`#${id}`}
+        onClick={onPick}
+        aria-current={on ? 'page' : undefined}
+        className={cx(
+          'group relative flex min-h-[58px] items-center gap-3 rounded-[14px] border px-2.5 py-2 no-underline transition-all duration-300',
+          on ? 'border-accent-line bg-gradient-to-r from-[#ff8a3d26] to-[#ff8a3d08] text-ink' : 'border-line bg-surface/60 text-ink hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface',
+        )}
+      >
+        {on && <span aria-hidden className="absolute -left-3 top-3 bottom-3 w-1 rounded-r-full bg-accent shadow-[0_0_12px_#ff8a3d]" />}
+        <ModuleIcon id={id} size="sm" className="!h-9 !w-9 transition-transform duration-300 group-hover:scale-105" />
+        <span className="flex min-w-0 flex-1 flex-col leading-tight">
+          <span className="truncate text-[14.5px] font-bold">{m.name}</span>
+          <span className="truncate text-[12px] text-muted">{tag}</span>
+        </span>
+      </a>
+    )
+  }
   return (
     <a
       href={`#${id}`}
@@ -161,12 +183,12 @@ function BottomBar({ activeId, onCreate, onMore, moreOpen }: { activeId?: Module
     )
   }
   const createOn = activeId ? CREATE_MODULES.includes(activeId) : false
-  const moreOn = moreOpen || (!!activeId && !['inicio', 'mentor', 'biblioteca', ...CREATE_MODULES].includes(activeId))
+  const moreOn = moreOpen || (!!activeId && !['inicio', 'mentor', 'whatsapp', ...CREATE_MODULES].includes(activeId))
   return (
     <nav aria-label="Menu" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-side/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
       <div className="mx-auto flex max-w-[520px] items-end px-2">
         {tab('inicio', 'Início', House)}
-        {tab('mentor', 'Mentor', MentorIcon)}
+        {tab('whatsapp', 'WhatsApp', MessageCircle)}
         <div className="flex flex-1 justify-center">
           <button
             type="button"
@@ -180,7 +202,7 @@ function BottomBar({ activeId, onCreate, onMore, moreOpen }: { activeId?: Module
             <Plus size={28} strokeWidth={2.6} aria-hidden />
           </button>
         </div>
-        {tab('biblioteca', 'Biblioteca', FolderOpen)}
+        {tab('mentor', 'Mentor', MentorIcon)}
         <button type="button" onClick={onMore} aria-expanded={moreOpen} className={cx('press flex min-h-14 flex-1 cursor-pointer flex-col items-center justify-center gap-1 text-[11px] font-semibold', moreOn ? 'text-accent' : 'text-muted')}>
           <LayoutGrid size={22} strokeWidth={moreOn ? 2.3 : 1.9} aria-hidden />
           Mais

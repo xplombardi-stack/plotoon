@@ -1,6 +1,6 @@
 // Atendente WhatsApp: conectar pelo QR code, treinar, testar no simulador e acompanhar as conversas.
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { AlertTriangle, ArrowLeft, Bot, Camera, Check, CheckCheck, GraduationCap, Lightbulb, LoaderCircle, MapPin, MessageCircle, Pause, Pencil, Play, Plus, Power, QrCode, RotateCcw, Send, Smartphone, Trash2, Truck, UserRound, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Bot, Briefcase, Camera, Check, CheckCheck, GraduationCap, Lightbulb, LoaderCircle, Lock, MapPin, MessageCircle, Pause, Pencil, Play, Plus, Power, QrCode, RotateCcw, Send, Smartphone, Store, Trash2, Truck, UserRound, X } from 'lucide-react'
 import { AppShell } from '../components/AppShell'
 import { ModuleHeader } from '../components/Module'
 import { Badge, Button, cx, useToast } from '../components/ui'
@@ -8,6 +8,7 @@ import { useAuth } from '../lib/auth'
 import { useBusiness } from '../lib/business'
 import { useStore } from '../lib/store'
 import { DEMO, supabase } from '../lib/supabase'
+import { NICHOS, nichoPor } from '../lib/nichos'
 
 type Aba = 'conectar' | 'treinar' | 'testar' | 'conversas'
 type Entrega = { local: string; taxa: string; prazo: string }
@@ -21,6 +22,10 @@ type Treino = {
   regras: string
   tom: string
   observacoes: string
+  nicho: string
+  nicho_outro: string
+  frete: string
+  extras: Record<string, string>
   endereco: string
   referencia: string
   mapa: string
@@ -42,6 +47,10 @@ const TREINO_VAZIO: Treino = {
   regras: '',
   tom: TONS[0],
   observacoes: '',
+  nicho: '',
+  nicho_outro: '',
+  frete: '',
+  extras: {},
   endereco: '',
   referencia: '',
   mapa: '',
@@ -271,93 +280,166 @@ function Treinar({ treino, onChange, onSave, salvando, live }: { treino: Treino;
     }
   }
 
+  const nicho = nichoPor(treino.nicho)
+  const temPergunta = (q: string) => treino.perguntas.toLowerCase().includes(q.toLowerCase().replace(/\?$/, ''))
+  const addPergunta = (q: string) => onChange({ ...treino, perguntas: `${treino.perguntas.trim() ? `${treino.perguntas.trim()}\n` : ''}${q} ` })
+  const setExtra = (label: string, v: string) => onChange({ ...treino, extras: { ...treino.extras, [label]: v } })
+  const tituloLocal = nicho?.id === 'servicos' ? 'Onde fica' : nicho?.id === 'fabrica' ? 'Endereço e entrega' : 'Loja e entrega'
+
   return (
     <div className="flex flex-col gap-4">
-      <Secao icon={GraduationCap} titulo="O básico" dica="Ele já usa o que está em Meu Negócio. Aqui você ensina o resto.">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Campo label="Nome do atendente" rows={1} value={treino.nome_atendente} onChange={set('nome_atendente')} placeholder="Ex.: Ana" />
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[14px] font-semibold text-ink">Jeito de falar</span>
-            <select value={treino.tom} onChange={(e) => set('tom')(e.target.value)} className="h-12 rounded-xl border border-line-strong bg-bg px-3 text-[15px] text-ink outline-none focus:border-accent">
-              {TONS.map((t) => (
-                <option key={t}>{t}</option>
-              ))}
-            </select>
-          </label>
-          <Campo label="Horário de atendimento" rows={1} value={treino.horario} onChange={set('horario')} placeholder="Seg a sáb, 9h às 19h" />
-          <Campo label="Como se apresentar" rows={1} value={treino.apresentacao} onChange={set('apresentacao')} placeholder="Oi! Aqui é a Ana da Loja X 😊" />
-        </div>
-      </Secao>
-
-      <Secao icon={Camera} titulo="Cardápio, produtos e preços" dica="É a única fonte de preço que ele usa: o que não estiver aqui, ele não inventa.">
-        <input ref={fotoRef} type="file" accept="image/*" multiple hidden onChange={(e) => lerFotos(e.target.files)} />
-        <button type="button" onClick={() => fotoRef.current?.click()} disabled={!!lendo} className="press flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-bg p-4 text-left hover:border-accent disabled:cursor-wait">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#ff8a3d1a] text-accent">{lendo ? <LoaderCircle size={20} className="animate-spin" /> : <Camera size={20} />}</span>
-          <span className="flex min-w-0 flex-col">
-            <span className="text-[15px] font-semibold text-ink">{lendo ? `Lendo a foto ${lendo}…` : 'Mandar foto do cardápio ou da tabela de preços'}</span>
-            <span className="text-[13px] text-muted">{lendo ? 'Leva uns segundos por foto.' : `Ele lê os itens e os valores e escreve aqui embaixo. ${CREDITOS_FOTO_CARDAPIO} créditos por foto, até 6 de uma vez.`}</span>
-          </span>
-        </button>
-        <Campo label="Itens e preços" dica="Um por linha. Pode escrever, colar ou corrigir o que ele leu da foto." rows={7} value={treino.produtos} onChange={set('produtos')} placeholder={'Pizza grande calabresa: R$ 52,90\nBorda recheada: + R$ 10,00\nRefrigerante 2L: R$ 14,00'} />
-      </Secao>
-
-      <Secao icon={MapPin} titulo="Loja e entrega" dica="Pra ele explicar onde fica e cobrar a taxa certa de cada lugar.">
-        <div className="grid gap-4 md:grid-cols-2">
-          <Campo label="Endereço da loja" rows={1} value={treino.endereco} onChange={set('endereco')} placeholder="Rua das Palmeiras, 230, Centro" />
-          <Campo label="Ponto de referência" rows={1} value={treino.referencia} onChange={set('referencia')} placeholder="Ao lado da farmácia, em frente à praça" />
-        </div>
-        <Campo label="Link do mapa (opcional)" dica="Copie no Google Maps em Compartilhar. Ele manda quando perguntarem onde fica." rows={1} value={treino.mapa} onChange={set('mapa')} placeholder="https://maps.app.goo.gl/…" />
-        <div className="flex flex-col gap-2">
-          <span className="flex items-center gap-2 text-[14px] font-semibold text-ink">
-            <Truck size={16} className="text-accent" /> Onde entrega e quanto custa
-          </span>
-          {treino.entregas.map((e, i) => (
-            <div key={i} className="grid grid-cols-[1fr_1fr_44px] gap-2 rounded-2xl border border-line bg-bg p-2 sm:grid-cols-[1fr_130px_150px_44px] sm:border-0 sm:bg-transparent sm:p-0">
-              <input value={e.local} onChange={(ev) => setEntrega(i, { local: ev.target.value })} placeholder="Bairro ou região" aria-label="Bairro ou região" className={cx(inputCls, 'col-span-3 sm:col-span-1')} />
-              <input value={e.taxa} onChange={(ev) => setEntrega(i, { taxa: ev.target.value })} placeholder="Taxa: R$ 6" aria-label="Taxa de entrega" className={inputCls} />
-              <input value={e.prazo} onChange={(ev) => setEntrega(i, { prazo: ev.target.value })} placeholder="Prazo: 40 min" aria-label="Prazo de entrega" className={inputCls} />
-              <button type="button" onClick={() => onChange({ ...treino, entregas: treino.entregas.filter((_, j) => j !== i) })} aria-label="Remover lugar" className="press flex h-12 w-11 cursor-pointer items-center justify-center rounded-xl text-muted hover:bg-white/5 hover:text-ink">
-                <Trash2 size={17} />
+      <Secao icon={Store} titulo="Qual é o seu negócio?" dica="Cada tipo de negócio tem um treino diferente. Escolha o seu pra liberar os campos certos.">
+        <div role="radiogroup" aria-label="Tipo de negócio" className="grid grid-cols-2 gap-2.5 md:grid-cols-3">
+          {NICHOS.map((n) => {
+            const on = treino.nicho === n.id
+            return (
+              <button key={n.id} type="button" role="radio" aria-checked={on} onClick={() => onChange({ ...treino, nicho: n.id })} className={cx('press flex min-h-[84px] cursor-pointer flex-col items-start gap-1 rounded-2xl border p-3 text-left transition-colors', on ? 'border-accent bg-[#ff8a3d14] shadow-[0_0_0_1px_#ff8a3d]' : 'border-line-strong bg-bg hover:border-[#ff8a3d80]')}>
+                <span className="flex w-full items-center gap-2">
+                  <span className="text-[20px] leading-none">{n.emoji}</span>
+                  <span className="min-w-0 flex-1 text-[14.5px] font-bold leading-tight text-ink">{n.nome}</span>
+                  {on && <Check size={16} className="shrink-0 text-accent" />}
+                </span>
+                <span className="text-[12.5px] leading-snug text-muted">{n.exemplos}</span>
               </button>
-            </div>
-          ))}
-          <button type="button" onClick={() => onChange({ ...treino, entregas: [...treino.entregas, { local: '', taxa: '', prazo: '' }] })} className="press flex h-11 cursor-pointer items-center gap-2 self-start rounded-full border border-line-strong px-4 text-[14px] font-semibold text-soft hover:text-ink">
-            <Plus size={16} /> Adicionar lugar
-          </button>
+            )
+          })}
         </div>
-        <Campo label="Fora dessas áreas" rows={1} value={treino.fora_area} onChange={set('fora_area')} placeholder="Não entregamos, só retirada na loja" />
+        {treino.nicho === 'outro' && <Campo label="Qual é o seu negócio?" rows={1} value={treino.nicho_outro} onChange={set('nicho_outro')} placeholder="Ex.: pet shop, autoescola, imobiliária, loja de materiais de construção" />}
       </Secao>
 
-      <Secao icon={MessageCircle} titulo="Perguntas e regras">
-        <Campo label="Perguntas que os clientes sempre fazem" dica="Pergunta e resposta, do jeito que você responderia." rows={5} value={treino.perguntas} onChange={set('perguntas')} placeholder={'Aceita Pix? Sim, Pix, cartão em até 3x sem juros.\nPode meio a meio? Pode, cobra o sabor mais caro.'} />
-        <Campo label="Regras importantes" dica="O que ele nunca deve fazer, quando chamar você, promoções do momento." rows={3} value={treino.regras} onChange={set('regras')} placeholder={'Não dar desconto sem falar comigo.\nSe pedirem troca, me chame.'} />
-      </Secao>
+      {!nicho ? (
+        <div className="flex flex-col items-center gap-3 rounded-[22px] border border-dashed border-line-strong px-6 py-12 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface text-muted">
+            <Lock size={22} />
+          </span>
+          <p className="m-0 max-w-[360px] text-[15px] font-semibold text-ink">Escolha o tipo do seu negócio aí em cima</p>
+          <p className="m-0 max-w-[380px] text-[13.5px] text-muted">Aí aparecem os campos e as perguntas certas pra ele, com exemplos do seu ramo.</p>
+        </div>
+      ) : (
+        <>
+          <Secao icon={GraduationCap} titulo="O básico" dica="Ele já usa o que está em Meu Negócio. Aqui você ensina o resto.">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Campo label="Nome do atendente" rows={1} value={treino.nome_atendente} onChange={set('nome_atendente')} placeholder="Ex.: Ana" />
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[14px] font-semibold text-ink">Jeito de falar</span>
+                <select value={treino.tom} onChange={(e) => set('tom')(e.target.value)} className="h-12 rounded-xl border border-line-strong bg-bg px-3 text-[15px] text-ink outline-none focus:border-accent">
+                  {TONS.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </label>
+              <Campo label="Horário de atendimento" rows={1} value={treino.horario} onChange={set('horario')} placeholder="Seg a sáb, 9h às 19h" />
+              <Campo label="Como se apresentar" rows={1} value={treino.apresentacao} onChange={set('apresentacao')} placeholder="Oi! Aqui é a Ana da Loja X 😊" />
+            </div>
+          </Secao>
 
-      <Secao icon={Lightbulb} titulo="Observações" dica="Escreva do seu jeito, como se estivesse explicando pra um funcionário novo. Vale qualquer coisa.">
-        <Campo label="O que mais ele precisa saber" rows={5} value={treino.observacoes} onChange={set('observacoes')} placeholder={'Sexta e sábado o movimento é grande, avisa que pode atrasar uns 15 min.\nCliente antigo gosta de ser chamado pelo nome.\nA pizza de chocolate é a que mais sai, sempre ofereça de sobremesa.'} />
-        {treino.licoes.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <span className="text-[14px] font-semibold text-ink">Correções que você fez no simulador</span>
-            {treino.licoes.map((l, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-2xl border border-line bg-bg p-3">
-                <div className="flex min-w-0 flex-1 flex-col gap-1 text-[13.5px]">
-                  {l.cliente && <span className="text-muted">Cliente: "{l.cliente}"</span>}
-                  <span className="text-ink">Responder assim: {l.certo}</span>
-                </div>
-                <button type="button" onClick={() => onChange({ ...treino, licoes: treino.licoes.filter((_, j) => j !== i) })} aria-label="Apagar correção" className="press flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-muted hover:bg-white/5 hover:text-ink">
-                  <Trash2 size={16} />
-                </button>
+          <Secao icon={Camera} titulo={nicho.produtosTitulo} dica="É a única fonte de preço que ele usa: o que não estiver aqui, ele não inventa.">
+            <input ref={fotoRef} type="file" accept="image/*" multiple hidden onChange={(e) => lerFotos(e.target.files)} />
+            <button type="button" onClick={() => fotoRef.current?.click()} disabled={!!lendo} className="press flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-line-strong bg-bg p-4 text-left hover:border-accent disabled:cursor-wait">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#ff8a3d1a] text-accent">{lendo ? <LoaderCircle size={20} className="animate-spin" /> : <Camera size={20} />}</span>
+              <span className="flex min-w-0 flex-col">
+                <span className="text-[15px] font-semibold text-ink">{lendo ? `Lendo a foto ${lendo}…` : nicho.fotoLabel}</span>
+                <span className="text-[13px] text-muted">{lendo ? 'Leva uns segundos por foto.' : `Ele lê os itens e os valores e escreve aqui embaixo. ${CREDITOS_FOTO_CARDAPIO} créditos por foto, até 6 de uma vez.`}</span>
+              </span>
+            </button>
+            <Campo label="Itens e preços" dica="Um por linha. Pode escrever, colar ou corrigir o que ele leu da foto." rows={7} value={treino.produtos} onChange={set('produtos')} placeholder={nicho.produtosPlaceholder} />
+          </Secao>
+
+          {nicho.extras.length > 0 && (
+            <Secao icon={Briefcase} titulo="Como funciona o seu negócio" dica="O que os clientes desse ramo sempre querem saber.">
+              <div className="grid gap-4 md:grid-cols-2">
+                {nicho.extras.map((x) => (
+                  <Campo key={x.label} label={x.label} dica={x.dica} rows={3} value={treino.extras[x.label] ?? ''} onChange={(v) => setExtra(x.label, v)} placeholder={x.placeholder} />
+                ))}
               </div>
-            ))}
-          </div>
-        )}
-      </Secao>
+            </Secao>
+          )}
 
-      <div className="sticky bottom-[92px] z-20 flex justify-end lg:bottom-4">
-        <Button size="lg" onClick={onSave} disabled={salvando} className="shadow-[0_10px_30px_-8px_rgba(0,0,0,.6)]">
-          {salvando ? <LoaderCircle size={18} className="animate-spin" /> : <GraduationCap size={18} />} Salvar treino
-        </Button>
-      </div>
+          {(nicho.endereco !== 'nao' || nicho.entregaBairros || nicho.frete) && (
+            <Secao icon={MapPin} titulo={tituloLocal} dica={nicho.entregaBairros ? 'Pra ele explicar onde fica e cobrar a taxa certa de cada lugar.' : 'Pra ele explicar onde fica e como o cliente recebe.'}>
+              {nicho.endereco !== 'nao' && (
+                <>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Campo label={nicho.endereco === 'opcional' ? 'Endereço (se tiver loja ou fábrica)' : 'Endereço'} rows={1} value={treino.endereco} onChange={set('endereco')} placeholder="Rua das Palmeiras, 230, Centro" />
+                    <Campo label="Ponto de referência" rows={1} value={treino.referencia} onChange={set('referencia')} placeholder="Ao lado da farmácia, em frente à praça" />
+                  </div>
+                  <Campo label="Link do mapa (opcional)" dica="Copie no Google Maps em Compartilhar. Ele manda quando perguntarem onde fica." rows={1} value={treino.mapa} onChange={set('mapa')} placeholder="https://maps.app.goo.gl/…" />
+                </>
+              )}
+              {nicho.entregaBairros && (
+                <>
+                  <div className="flex flex-col gap-2">
+                    <span className="flex items-center gap-2 text-[14px] font-semibold text-ink">
+                      <Truck size={16} className="text-accent" /> Onde entrega e quanto custa
+                    </span>
+                    {treino.entregas.map((e, i) => (
+                      <div key={i} className="grid grid-cols-[1fr_1fr_44px] gap-2 rounded-2xl border border-line bg-bg p-2 sm:grid-cols-[1fr_130px_150px_44px] sm:border-0 sm:bg-transparent sm:p-0">
+                        <input value={e.local} onChange={(ev) => setEntrega(i, { local: ev.target.value })} placeholder="Bairro ou região" aria-label="Bairro ou região" className={cx(inputCls, 'col-span-3 sm:col-span-1')} />
+                        <input value={e.taxa} onChange={(ev) => setEntrega(i, { taxa: ev.target.value })} placeholder="Taxa: R$ 6" aria-label="Taxa de entrega" className={inputCls} />
+                        <input value={e.prazo} onChange={(ev) => setEntrega(i, { prazo: ev.target.value })} placeholder="Prazo: 40 min" aria-label="Prazo de entrega" className={inputCls} />
+                        <button type="button" onClick={() => onChange({ ...treino, entregas: treino.entregas.filter((_, j) => j !== i) })} aria-label="Remover lugar" className="press flex h-12 w-11 cursor-pointer items-center justify-center rounded-xl text-muted hover:bg-white/5 hover:text-ink">
+                          <Trash2 size={17} />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => onChange({ ...treino, entregas: [...treino.entregas, { local: '', taxa: '', prazo: '' }] })} className="press flex h-11 cursor-pointer items-center gap-2 self-start rounded-full border border-line-strong px-4 text-[14px] font-semibold text-soft hover:text-ink">
+                      <Plus size={16} /> Adicionar lugar
+                    </button>
+                  </div>
+                  <Campo label="Fora dessas áreas" rows={1} value={treino.fora_area} onChange={set('fora_area')} placeholder="Não entregamos, só retirada na loja" />
+                </>
+              )}
+              {nicho.frete && <Campo label={nicho.frete.label} rows={3} value={treino.frete} onChange={set('frete')} placeholder={nicho.frete.placeholder} />}
+            </Secao>
+          )}
+
+          <Secao icon={MessageCircle} titulo="Perguntas e regras">
+            <div className="flex flex-col gap-2">
+              <span className="text-[13px] font-semibold text-muted">Perguntas comuns no seu ramo: toque pra adicionar e escreva a resposta</span>
+              <div className="flex flex-wrap gap-2">
+                {nicho.perguntas.map((q) => {
+                  const ja = temPergunta(q)
+                  return (
+                    <button key={q} type="button" disabled={ja} onClick={() => addPergunta(q)} className={cx('press flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium', ja ? 'cursor-default border-[#34d39955] text-[#6ee7b7]' : 'border-line-strong text-soft hover:border-accent hover:text-ink')}>
+                      {ja ? <Check size={13} /> : <Plus size={13} />} {q}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <Campo label="Perguntas que os clientes sempre fazem" dica="Pergunta e resposta, do jeito que você responderia." rows={6} value={treino.perguntas} onChange={set('perguntas')} placeholder={nicho.perguntasPlaceholder} />
+            <Campo label="Regras importantes" dica="O que ele nunca deve fazer, quando chamar você, promoções do momento." rows={3} value={treino.regras} onChange={set('regras')} placeholder={nicho.regrasPlaceholder} />
+          </Secao>
+
+          <Secao icon={Lightbulb} titulo="Observações" dica="Escreva do seu jeito, como se estivesse explicando pra um funcionário novo. Vale qualquer coisa.">
+            <Campo label="O que mais ele precisa saber" rows={5} value={treino.observacoes} onChange={set('observacoes')} placeholder={nicho.observacoesPlaceholder} />
+            {treino.licoes.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <span className="text-[14px] font-semibold text-ink">Correções que você fez no simulador</span>
+                {treino.licoes.map((l, i) => (
+                  <div key={i} className="flex items-start gap-3 rounded-2xl border border-line bg-bg p-3">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1 text-[13.5px]">
+                      {l.cliente && <span className="text-muted">Cliente: "{l.cliente}"</span>}
+                      <span className="text-ink">Responder assim: {l.certo}</span>
+                    </div>
+                    <button type="button" onClick={() => onChange({ ...treino, licoes: treino.licoes.filter((_, j) => j !== i) })} aria-label="Apagar correção" className="press flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-xl text-muted hover:bg-white/5 hover:text-ink">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Secao>
+        </>
+      )}
+
+      {nicho && (
+        <div className="sticky bottom-[92px] z-20 flex justify-end lg:bottom-4">
+          <Button size="lg" onClick={onSave} disabled={salvando} className="shadow-[0_10px_30px_-8px_rgba(0,0,0,.6)]">
+            {salvando ? <LoaderCircle size={18} className="animate-spin" /> : <GraduationCap size={18} />} Salvar treino
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
