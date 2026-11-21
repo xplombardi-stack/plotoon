@@ -1,36 +1,93 @@
-import { ArrowRight, ChevronDown, Ear, MessageCircle, Receipt, Hand } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Play, Sparkles, TrendingDown, X } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { ModuleIcon } from '../components/Module'
-import { Badge, LinkButton, Logo } from '../components/ui'
-import { FEATURED, MODULES, type ModuleId } from '../lib/modules'
-import { DemoAtendente, RoboVsAtendente } from '../components/WhatsAppShowcase'
+import { MentorIcon } from '../components/MentorIcon'
+import { Badge, LinkButton, Logo, cx } from '../components/ui'
+import { MODULES, type ModuleId } from '../lib/modules'
+import { DemoAtendente } from '../components/WhatsAppShowcase'
 
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-// só o essencial: o resto a pessoa vê dentro do app, depois de entrar
-const PRINCIPAIS: Array<{ id: ModuleId; t: string }> = [
-  { id: 'whatsapp', t: 'Atende, tira dúvida e fecha pedido no seu WhatsApp, 24h.' },
-  { id: 'mentor', t: 'Seu estrategista de marketing: diz o que fazer pra vender mais.' },
-  { id: 'estudio-imagem', t: 'Fotos de produto e posts prontos pro Instagram.' },
-  { id: 'estudio-video', t: 'Vídeos curtos pra Reels e anúncios, em minutos.' },
+// o que tem dentro (o resto a pessoa descobre depois de entrar)
+const DENTRO: Array<{ id: ModuleId; t: string }> = [
+  { id: 'whatsapp', t: 'Responde, tira dúvida e fecha pedido no seu WhatsApp, 24h.' },
+  { id: 'mentor', t: 'Estrategista de marketing que diz o que fazer pra vender.' },
+  { id: 'estudio-imagem', t: 'Foto de produto e post prontos pro Instagram.' },
+  { id: 'estudio-video', t: 'Vídeos curtos pra Reels e anúncios.' },
+  { id: 'anuncios', t: 'Diz quais anúncios pausar, manter ou escalar.' },
+  { id: 'copy', t: 'Legendas e textos de venda no seu tom.' },
+  { id: 'calendario', t: 'O mês de posts planejado pra você.' },
+  { id: 'apps', t: 'Seu site ou app criado conversando.' },
 ]
-
-const DIFERENCIAIS = [
-  { icon: MessageCircle, t: 'Conversa como gente' },
-  { icon: Ear, t: 'Ouve áudio e vê foto' },
-  { icon: Receipt, t: 'Fecha o pedido com a taxa certa' },
-  { icon: Hand, t: 'Te chama quando precisa' },
-]
-
-const PASSOS = ['Crie sua conta em 1 minuto', 'Conte o que você vende', 'Conecte o WhatsApp e comece']
 
 const faq = [
-  { q: 'É aquele robô de "digite 1, 2 ou 3"?', a: 'Não. Ele lê o que o cliente escreveu (ou ouve o áudio) e responde curto e natural, como alguém da sua loja. Só usa os preços e regras que você ensinou e, quando o cliente quer fechar ou reclamar, te avisa pra você assumir.' },
-  { q: 'Como conecto o meu WhatsApp?', a: 'Pelo QR code, igual no WhatsApp Web. Leva 1 minuto. Recomendamos um número só pro atendimento.' },
-  { q: 'Quanto custa?', a: 'Você usa créditos: cada resposta, imagem ou vídeo gasta um pouco. Tem planos mensais a partir de R$ 47 e pacotes de créditos a partir de R$ 5, sem fidelidade. Tudo aparece dentro do app depois que você entra.' },
+  { q: 'Serve pro meu negócio?', a: 'Serve pra quem vende: de autônomo a empresa. Pizzaria, barbearia, loja, fábrica, clínica, infoproduto. No começo você escolhe o tipo do seu negócio e tudo no app se ajusta a ele.' },
+  { q: 'O atendente é aquele robô de "digite 1, 2 ou 3"?', a: 'Não. Ele lê o que o cliente escreveu (ou ouve o áudio) e responde curto e natural, como alguém da sua loja. Só usa os preços e regras que você ensinou e te avisa quando o cliente quer fechar.' },
+  { q: 'Quanto custa?', a: 'Você usa créditos: cada resposta, imagem ou vídeo gasta um pouco. Planos mensais a partir de R$ 47 e pacotes a partir de R$ 5, sem fidelidade.' },
   { q: 'Preciso entender de marketing?', a: 'Não. O Mentor te diz o que fazer e cada ferramenta já vem pronta pro seu tipo de negócio.' },
 ]
+
+// cartõezinhos em volta do celular: mostram que é mais que WhatsApp
+function Flutuante({ className, children }: { className: string; children: ReactNode }) {
+  return <div className={cx('absolute z-10 hidden items-center sm:flex gap-2.5 rounded-2xl border border-line-strong bg-[#11141bee] px-3 py-2.5 shadow-[0_20px_40px_-20px_#000] backdrop-blur', className)}>{children}</div>
+}
+
+function HeroVisual() {
+  return (
+    <div className="relative mx-auto w-full max-w-[460px] py-4">
+      <DemoAtendente compact className="max-w-[300px]" />
+      <Flutuante className="-left-1 top-[24%] max-w-[200px] sm:-left-10">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a78bfa] to-[#5b8cff] text-white">
+          <MentorIcon size={16} />
+        </span>
+        <span className="flex flex-col leading-tight">
+          <span className="text-[11px] font-bold text-[#c4b5fd]">Mentor</span>
+          <span className="text-[12.5px] text-ink">Terça tá fraca? Faça a "Terça em dobro".</span>
+        </span>
+      </Flutuante>
+      <Flutuante className="-right-1 top-[56%] sm:-right-10">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#ff8a3d] to-[#ff5d5d] text-white">
+          <Play size={14} fill="currentColor" />
+        </span>
+        <span className="flex flex-col leading-tight">
+          <span className="text-[11px] font-bold text-[#fdba74]">Vídeo</span>
+          <span className="text-[12.5px] text-ink">Reels pronto em 3 min</span>
+        </span>
+      </Flutuante>
+      <Flutuante className="-left-1 bottom-[7%] sm:-left-12">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#38bdf8] to-[#34d399] text-white">
+          <TrendingDown size={15} />
+        </span>
+        <span className="flex flex-col leading-tight">
+          <span className="text-[11px] font-bold text-[#7dd3fc]">Anúncios</span>
+          <span className="text-[12.5px] text-ink">Pausar "Público frio": caro</span>
+        </span>
+      </Flutuante>
+      <div className="mt-4 flex flex-wrap justify-center gap-2 sm:hidden">
+        {[
+          ['Mentor', 'from-[#a78bfa] to-[#5b8cff]'],
+          ['Vídeos', 'from-[#ff8a3d] to-[#ff5d5d]'],
+          ['Imagens', 'from-[#38bdf8] to-[#5b8cff]'],
+          ['Anúncios', 'from-[#38bdf8] to-[#34d399]'],
+        ].map(([t, c]) => (
+          <span key={t} className="flex items-center gap-1.5 rounded-full border border-line-strong bg-surface px-3 py-1.5 text-[12.5px] font-semibold text-soft">
+            <span className={cx('h-2.5 w-2.5 rounded-full bg-gradient-to-br', c)} /> + {t}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function Bolha({ de, children, ruim }: { de: 'cliente' | 'outro'; children: ReactNode; ruim?: boolean }) {
+  return (
+    <span className={cx('max-w-[88%] rounded-xl px-3 py-2 text-[13px] leading-snug', de === 'cliente' ? 'self-end rounded-tr-sm bg-[#005c4b] text-white' : ruim ? 'self-start rounded-tl-sm bg-[#262a31] font-mono text-[12px] text-[#c3c8d0]' : 'self-start rounded-tl-sm bg-[#202c33] text-white')}>
+      {children}
+    </span>
+  )
+}
 
 export function Landing() {
   return (
@@ -42,8 +99,8 @@ export function Landing() {
           </a>
           <nav aria-label="Seções" className="hidden items-center gap-1 md:flex">
             {[
-              ['whatsapp', 'Atendente'],
-              ['funcoes', 'Funções'],
+              ['destaques', 'Destaques'],
+              ['dentro', 'O que tem dentro'],
               ['duvidas', 'Dúvidas'],
             ].map(([id, label]) => (
               <button key={id} type="button" onClick={() => scrollTo(id)} className="min-h-10 cursor-pointer rounded-lg px-3 text-[14px] font-medium text-muted transition-colors hover:text-ink">
@@ -66,81 +123,112 @@ export function Landing() {
         {/* TOPO */}
         <section className="relative overflow-hidden">
           <div className="aurora"><span /></div>
-          <div className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-5 pb-14 pt-10 sm:px-8 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:pb-20 lg:pt-16">
+          <div className="relative mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-8 px-5 pb-12 pt-10 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pb-14 lg:pt-12">
             <div className="flex flex-col gap-5">
-              <Badge tone="accent" className="rise self-start !border-[#34d39955] !bg-[#34d39914] !text-[#6ee7b7]">
-                <MessageCircle size={13} aria-hidden /> Atendente no WhatsApp com IA
+              <Badge tone="accent" className="rise self-start">
+                <Sparkles size={13} aria-hidden /> Atendimento, marketing e vendas com IA
               </Badge>
-              <h1 className="rise rise-1 text-balance m-0 font-display text-[36px] font-extrabold leading-[1.05] tracking-[-0.04em] sm:text-[56px]">
-                Um atendente no WhatsApp que conversa como gente e <span className="text-accent text-glow">vende</span> por você.
+              <h1 className="rise rise-1 text-balance m-0 font-display text-[36px] font-extrabold leading-[1.05] tracking-[-0.04em] sm:text-[52px]">
+                Atenda, divulgue e <span className="text-accent text-glow">venda mais</span>. Tudo com IA, num lugar só.
               </h1>
-              <p className="rise rise-2 m-0 max-w-[520px] text-[17px] leading-relaxed text-muted sm:text-[19px]">
-                Nada de robô com "digite 1". E ainda tem um Mentor de marketing, imagens e vídeos com IA.
+              <p className="rise rise-2 m-0 max-w-[520px] text-[16.5px] leading-relaxed text-muted sm:text-[18px]">
+                Um atendente que responde seus clientes no WhatsApp, um estrategista de marketing que te diz o que fazer, e imagens, vídeos e anúncios prontos. Pra quem vende sozinho ou tem empresa.
               </p>
               <div className="rise rise-3 flex flex-wrap items-center gap-3">
                 <LinkButton to="criar-conta" size="lg" className="pulse">
                   Criar minha conta <ArrowRight size={18} />
                 </LinkButton>
-                <LinkButton to="entrar" variant="ghost" size="lg">
-                  Já tenho conta
-                </LinkButton>
+                <button type="button" onClick={() => scrollTo('dentro')} className="press inline-flex min-h-13 cursor-pointer items-center rounded-xl px-4 text-[15px] font-semibold text-soft hover:text-ink">
+                  Ver o que tem dentro
+                </button>
               </div>
             </div>
-            <DemoAtendente className="rise rise-2" compact />
+            <HeroVisual />
           </div>
         </section>
 
-        {/* ROBÔ X GENTE */}
-        <section id="whatsapp" className="scroll-mt-20 border-y border-line bg-side">
-          <div className="mx-auto flex max-w-[1100px] flex-col gap-8 px-5 py-14 sm:px-8 sm:py-20">
-            <h2 className="text-balance m-0 text-center font-display text-[28px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[42px]">Robô de menu afasta cliente. Atendimento de verdade vende.</h2>
-            <RoboVsAtendente />
-            <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4">
-              {DIFERENCIAIS.map((d) => (
-                <li key={d.t} className="flex items-center gap-2.5 rounded-2xl border border-line bg-surface px-3.5 py-3 text-[14px] font-semibold text-soft">
-                  <d.icon size={17} className="shrink-0 text-[#6ee7b7]" /> {d.t}
-                </li>
-              ))}
-            </ul>
+        {/* DESTAQUES */}
+        <section id="destaques" className="scroll-mt-20 border-y border-line bg-side">
+          <div className="mx-auto grid max-w-[1120px] gap-4 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:py-16">
+            <article className="neon-border flex flex-col gap-4 rounded-[24px] bg-[#0f1713] p-5 sm:p-6">
+              <span className="flex items-center gap-3">
+                <ModuleIcon id="whatsapp" />
+                <span className="flex flex-col leading-tight">
+                  <span className="font-display text-[21px] font-extrabold">Atendente no WhatsApp</span>
+                  <span className="text-[13.5px] text-muted">Conversa como gente, não como robô</span>
+                </span>
+              </span>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="flex flex-col gap-1.5 rounded-2xl bg-[#0b0d11] p-2.5">
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#f87171]">
+                    <X size={12} strokeWidth={3} /> Robô comum
+                  </span>
+                  <Bolha de="cliente">quanto ta a calabresa?</Bolha>
+                  <Bolha de="outro" ruim>Opção inválida. Digite 1, 2 ou 3.</Bolha>
+                </div>
+                <div className="flex flex-col gap-1.5 rounded-2xl bg-[#0b141a] p-2.5">
+                  <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#6ee7b7]">
+                    <Check size={12} strokeWidth={3} /> Plotoon
+                  </span>
+                  <Bolha de="cliente">quanto ta a calabresa?</Bolha>
+                  <Bolha de="outro">A grande sai R$ 52,90 🍕 Inteira ou meio a meio?</Bolha>
+                </div>
+              </div>
+              <p className="m-0 text-[14.5px] text-soft">Ouve áudio, fecha o pedido com a taxa de entrega e te avisa quando precisa de você.</p>
+            </article>
+
+            <article className="flex flex-col gap-4 rounded-[24px] border border-[#a78bfa55] bg-[#13111c] p-5 sm:p-6">
+              <span className="flex items-center gap-3">
+                <ModuleIcon id="mentor" />
+                <span className="flex flex-col leading-tight">
+                  <span className="font-display text-[21px] font-extrabold">Mentor estrategista</span>
+                  <span className="text-[13.5px] text-muted">Você conta o problema, ele monta a estratégia</span>
+                </span>
+              </span>
+              <div className="flex flex-col gap-2 rounded-2xl bg-[#0d0c14] p-3">
+                <span className="self-end rounded-2xl rounded-br-md bg-accent px-3 py-2 text-[13px] font-medium text-accent-ink">Terça é dia fraco na pizzaria. O que eu faço?</span>
+                <span className="flex flex-col gap-1 self-start text-[13px] leading-snug text-soft">
+                  <span>Crie a <b className="text-ink">Terça em dobro</b>: 2ª pizza com 30% off só no WhatsApp.</span>
+                  <span>1. Poste hoje um vídeo de 15s da pizza saindo do forno.</span>
+                  <span>2. Mande a promo pra quem pediu no último mês.</span>
+                </span>
+              </div>
+              <p className="m-0 text-[14.5px] text-soft">Ele já conhece o seu negócio e responde como alguém do seu ramo.</p>
+            </article>
           </div>
         </section>
 
-        {/* O QUE TEM */}
-        <section id="funcoes" className="scroll-mt-20">
-          <div className="mx-auto flex max-w-[1100px] flex-col gap-8 px-5 py-14 sm:px-8 sm:py-20">
-            <h2 className="text-balance m-0 text-center font-display text-[28px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[42px]">Tudo pra vender mais, num lugar só</h2>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {PRINCIPAIS.map((x) => (
-                <article key={x.id} className={`flex flex-col gap-3 rounded-[20px] border p-4 ${FEATURED[x.id] ? 'neon-border bg-[#16110d]' : 'border-line bg-surface'}`}>
-                  <ModuleIcon id={x.id} />
-                  <span className="text-[16px] font-bold leading-tight">{MODULES[x.id].name}</span>
-                  <span className="text-[13.5px] leading-snug text-muted">{x.t}</span>
+        {/* O QUE TEM DENTRO */}
+        <section id="dentro" className="scroll-mt-20">
+          <div className="mx-auto flex max-w-[1120px] flex-col gap-6 px-5 py-12 sm:px-8 lg:py-16">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <h2 className="m-0 font-display text-[28px] font-extrabold tracking-[-0.03em] sm:text-[38px]">O que tem dentro</h2>
+              <p className="m-0 text-[15px] text-muted">Tudo se ajusta ao tipo do seu negócio.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
+              {DENTRO.map((x, i) => (
+                <article key={x.id} className={cx('flex flex-col gap-2.5 rounded-[18px] border p-3.5', i < 2 ? 'border-accent-line bg-[#16110d]' : 'border-line bg-surface')}>
+                  <span className="flex items-center gap-2.5">
+                    <ModuleIcon id={x.id} size="sm" />
+                    <span className="text-[14.5px] font-bold leading-tight">{MODULES[x.id].short ?? MODULES[x.id].name}</span>
+                  </span>
+                  <span className="text-[13px] leading-snug text-muted">{x.t}</span>
                 </article>
               ))}
             </div>
-            <p className="m-0 text-center text-[14.5px] text-muted">E mais: análise de anúncios, textos de venda, calendário de posts e criador de apps.</p>
           </div>
         </section>
 
-        {/* COMO COMEÇAR */}
-        <section className="border-y border-line bg-side">
-          <div className="mx-auto flex max-w-[1100px] flex-col gap-6 px-5 py-12 sm:px-8 sm:py-16">
-            <h2 className="m-0 text-center font-display text-[26px] font-extrabold tracking-[-0.03em] sm:text-[36px]">Comece em 3 passos</h2>
-            <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-3">
-              {PASSOS.map((p, i) => (
-                <li key={p} className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent font-display text-[16px] font-extrabold text-accent-ink">{i + 1}</span>
-                  <span className="text-[15.5px] font-semibold">{p}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        {/* DÚVIDAS */}
-        <section id="duvidas" className="scroll-mt-20">
-          <div className="mx-auto flex max-w-[760px] flex-col gap-6 px-5 py-14 sm:px-8 sm:py-20">
-            <h2 className="m-0 text-center font-display text-[28px] font-extrabold tracking-[-0.03em] sm:text-[42px]">Dúvidas</h2>
+        {/* DÚVIDAS + CHAMADA */}
+        <section id="duvidas" className="scroll-mt-20 border-t border-line bg-side">
+          <div className="mx-auto grid max-w-[1120px] gap-8 px-5 py-12 sm:px-8 lg:grid-cols-[1fr_1.2fr] lg:items-start lg:py-16">
+            <div className="flex flex-col gap-4">
+              <h2 className="text-balance m-0 font-display text-[28px] font-extrabold leading-tight tracking-[-0.03em] sm:text-[38px]">Comece hoje. O resto você descobre lá dentro.</h2>
+              <p className="m-0 text-[15px] text-muted">Crie a conta em 1 minuto, escolha o tipo do seu negócio e use.</p>
+              <LinkButton to="criar-conta" size="lg" className="self-start">
+                Criar minha conta <ArrowRight size={18} />
+              </LinkButton>
+            </div>
             <div className="flex flex-col gap-2.5">
               {faq.map((item) => (
                 <details key={item.q} className="group rounded-[16px] border border-line bg-surface transition-colors open:border-accent-line">
@@ -152,17 +240,6 @@ export function Landing() {
                 </details>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* CHAMADA FINAL */}
-        <section className="relative overflow-hidden border-t border-line">
-          <div className="aurora"><span /></div>
-          <div className="relative mx-auto flex max-w-[1200px] flex-col items-center gap-5 px-5 py-16 text-center sm:px-8 sm:py-24">
-            <h2 className="text-balance m-0 font-display text-[30px] font-extrabold tracking-[-0.03em] sm:text-[48px]">Seu atendente começa hoje.</h2>
-            <LinkButton to="criar-conta" size="lg" className="pulse">
-              Criar minha conta <ArrowRight size={18} />
-            </LinkButton>
           </div>
         </section>
       </main>
