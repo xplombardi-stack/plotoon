@@ -27,6 +27,22 @@ const ROTEIROS: Roteiro[] = [
     ],
   },
   {
+    nome: 'Tráfego do Zero',
+    emoji: '🎓',
+    fim: 'Link de compra enviado',
+    linhas: [
+      { who: 'cliente', at: 400, text: 'vi seu anúncio. o curso serve pra quem nunca anunciou?' },
+      { who: 'ia', at: 2600, text: 'Serve sim! Ele começa do zero, da conta de anúncio até a primeira venda 🚀' },
+      { who: 'ia', at: 3900, text: 'São 42 aulas, acesso por 1 ano e suporte no grupo.' },
+      { who: 'cliente', at: 6200, audio: { dur: '0:06', fala: 'e se eu não gostar? dá pra parcelar no cartão?', ouviu: 7300 } },
+      { who: 'ia', at: 9700, text: 'Tem 7 dias de garantia: não curtiu, devolvemos tudo.' },
+      { who: 'ia', at: 11200, text: 'E dá pra fazer em 12x de R$ 49,70 no cartão. Quer o link?' },
+      { who: 'cliente', at: 14200, text: 'quero!' },
+      { who: 'ia', at: 16500, text: 'Aqui está: pay.trafegodozero.com/curso ✅' },
+      { who: 'ia', at: 17800, text: 'Assim que comprar, o acesso chega no seu e-mail.' },
+    ],
+  },
+  {
     nome: 'Barbearia Navalha',
     emoji: '💈',
     fim: 'Horário marcado na agenda',

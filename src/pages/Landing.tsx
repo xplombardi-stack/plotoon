@@ -25,7 +25,7 @@ const DENTRO: Array<{ id: ModuleId; t: string }> = [
 ]
 
 const faq = [
-  { q: 'Serve pro meu negócio?', a: 'Serve pra quem vende: de autônomo a empresa. Pizzaria, barbearia, loja, fábrica, clínica, infoproduto. No começo você escolhe o tipo do seu negócio e tudo no app se ajusta a ele.' },
+  { q: 'Serve pro meu negócio?', a: 'Serve pra quem vende: de autônomo a empresa. Loja, restaurante, barbearia, clínica, fábrica, e também quem vende curso, mentoria ou serviço de marketing digital. No começo você escolhe o tipo do seu negócio e tudo no app se ajusta a ele.' },
   { q: 'O atendente é aquele robô de "digite 1, 2 ou 3"?', a: 'Não. Ele lê o que o cliente escreveu (ou ouve o áudio) e responde curto e natural, como alguém da sua loja. Só usa os preços e regras que você ensinou e te avisa quando o cliente quer fechar.' },
   { q: 'Quanto custa?', a: 'Você usa créditos: cada resposta, imagem ou vídeo gasta um pouco. Planos mensais a partir de R$ 47 e pacotes a partir de R$ 5, sem fidelidade.' },
   { q: 'Preciso entender de marketing?', a: 'Não. O Mentor te diz o que fazer e cada ferramenta já vem pronta pro seu tipo de negócio.' },
@@ -134,7 +134,7 @@ export function Landing() {
                 Atenda, divulgue e <span className="text-accent">venda mais</span>. Tudo com IA, num lugar só.
               </h1>
               <p className="rise rise-2 m-0 max-w-[520px] text-[16.5px] leading-relaxed text-muted sm:text-[18px]">
-                Um atendente que responde seus clientes no WhatsApp, um estrategista de marketing que te diz o que fazer, e imagens, vídeos e anúncios prontos. Pra quem vende sozinho ou tem empresa.
+                Um atendente que responde seus clientes no WhatsApp, um estrategista de marketing que te diz o que fazer, e imagens, vídeos e anúncios prontos. Pra loja, prestador de serviço, empresa ou quem vende curso online.
               </p>
               <div className="rise rise-3 flex flex-wrap items-center gap-3">
                 <LinkButton to="criar-conta" size="lg" className="pulse">
