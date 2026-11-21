@@ -119,19 +119,46 @@ async function responder(neg: J | null, t: Treino, hist: Hist, imagem?: { b64: s
 
 async function transcrever(b64: string, mime: string) {
   const key = Deno.env.get("GEMINI_API_KEY");
-  if (!key) return "";
-  for (const model of ["gemini-3.1-flash", "gemini-2.5-flash"]) {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: mime.split(";")[0] || "audio/ogg", data: b64 } }, { text: "Transcreva exatamente o que a pessoa fala neste áudio, em português. Responda só com a transcrição." }] }] }),
-    });
-    if (r.status === 404) continue;
-    if (!r.ok) return "";
-    const d = await r.json();
-    return String(d?.candidates?.[0]?.content?.parts?.map((p: J) => p.text ?? "").join("") ?? "").trim();
+  if (!key) {
+    console.error("audio: sem GEMINI_API_KEY");
+    return "";
+  }
+  const tipo = (mime.split(";")[0] || "audio/ogg").trim();
+  for (const model of ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"]) {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify({ contents: [{ parts: [{ inline_data: { mime_type: tipo, data: b64 } }, { text: "Transcreva exatamente o que a pessoa fala neste áudio, em português. Responda só com a transcrição, sem comentários." }] }] }),
+      });
+      if (!r.ok) {
+        console.error(`audio: gemini ${model} ${r.status} ${(await r.text()).slice(0, 200)}`);
+        continue;
+      }
+      const d = await r.json();
+      const t = String(d?.candidates?.[0]?.content?.parts?.map((p: J) => p.text ?? "").join("") ?? "").trim();
+      if (t) return t;
+      console.error(`audio: gemini ${model} voltou vazio`);
+    } catch (e) {
+      console.error(`audio: gemini ${model} erro ${e}`);
+    }
   }
   return "";
+}
+
+// arquivo da mensagem (áudio/foto): vem junto no aviso ou é baixado da Evolution
+async function midia(instance: string, d: J, m: J) {
+  const junto = str(m.base64) || str(d.base64);
+  if (junto) return junto;
+  try {
+    const r = await evo(`/chat/getBase64FromMediaMessage/${instance}`, "POST", { message: { key: obj(d.key) }, convertToMp4: false });
+    const b = str(r.data.base64);
+    if (!b) console.error(`midia: evolution ${r.status} sem base64 ${JSON.stringify(r.data).slice(0, 200)}`);
+    return b;
+  } catch (e) {
+    console.error(`midia: erro ${e}`);
+    return "";
+  }
 }
 
 /* ---------------- avisos da Evolution ---------------- */
@@ -165,12 +192,15 @@ async function aviso(db: SupabaseClient, body: J, instance: string) {
   let texto = str(m.conversation) || str(obj(m.extendedTextMessage).text) || str(obj(m.imageMessage).caption) || str(obj(m.videoMessage).caption);
   let tipo = "texto";
   let imagem: { b64: string; mime: string } | null = null;
-  const b64 = str(m.base64);
-  if (tipoMsg === "audioMessage" || m.audioMessage) {
+  const ehAudio = tipoMsg === "audioMessage" || !!m.audioMessage;
+  const ehFoto = !ehAudio && (tipoMsg === "imageMessage" || !!m.imageMessage);
+  const b64 = ehAudio || ehFoto ? await midia(instance, d, m) : "";
+  if (ehAudio) {
     tipo = "audio";
     texto = b64 ? await transcrever(b64, str(obj(m.audioMessage).mimetype) || "audio/ogg") : "";
-    texto = texto ? `[áudio] ${texto}` : "[mandou um áudio]";
-  } else if (tipoMsg === "imageMessage" || m.imageMessage) {
+    if (!b64) console.error("audio: sem arquivo");
+    texto = texto ? `[áudio] ${texto}` : "[mandou um áudio que não deu pra ouvir]";
+  } else if (ehFoto) {
     tipo = "imagem";
     if (b64) imagem = { b64, mime: (str(obj(m.imageMessage).mimetype) || "image/jpeg").split(";")[0] };
     texto = texto ? `[foto] ${texto}` : "[mandou uma foto]";
